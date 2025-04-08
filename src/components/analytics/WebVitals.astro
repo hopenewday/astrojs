@@ -1,0 +1,187 @@
+---
+/**
+ * WebVitals.astro
+ * Tracks Core Web Vitals and other performance metrics
+ * Reports data to Umami analytics or custom endpoint
+ * 
+ * @example
+ * ```astro
+ * <WebVitals enabled={true} debug={true} endpoint="/api/analytics/web-vitals" />
+ * ```
+ */
+
+interface Props {
+  /**
+   * Whether to enable Web Vitals tracking
+   * @default true
+   */
+  enabled?: boolean;
+  
+  /**
+   * Whether to log metrics to console in development
+   * @default true
+   */
+  debug?: boolean;
+  
+  /**
+   * Custom endpoint to send metrics to (optional)
+   * If not provided, metrics will only be sent to Umami if available
+   */
+  endpoint?: string;
+}
+
+const {
+  enabled = true,
+  debug = true,
+  endpoint,
+} = Astro.props;
+
+// Only enable in production unless debug is true
+const isDevelopment = import.meta.env.DEV;
+const shouldRun = enabled && (!isDevelopment || debug);
+---
+
+{shouldRun && (
+  <script define:vars={{ endpoint, debug }}>
+    // Dynamic import for web-vitals to avoid bundling when not needed
+    import('https://unpkg.com/web-vitals@3/dist/web-vitals.attribution.iife.js')
+      .then(({ onCLS, onFID, onLCP, onTTFB, onINP, onFCP }) => {
+        const analyticsEndpoint = endpoint;
+        const umamiEnabled = typeof window.umami !== 'undefined';
+        const hasConsent = typeof window.hasAnalyticsConsent === 'function' ? 
+          window.hasAnalyticsConsent() : true;
+        
+        // Function to handle metric data
+        function sendToAnalytics({ name, delta, id, attribution, navigationType, value }) {
+          // Prepare the data to send
+          const metricData = {
+            name,
+            id,
+            value: Math.round(name === 'CLS' ? delta * 1000 : delta),
+            rating: getRating(name, delta),
+            delta,
+            navigationType,
+          };
+          
+          // Add attribution data if available
+          if (attribution) {
+            const attributionData = {};
+            for (const key of Object.keys(attribution)) {
+              // Special handling for element attribution
+              if (key === 'element' && attribution.element) {
+                attributionData.elementInfo = getElementIdentifier(attribution.element);
+              } else if (key === 'largestShiftTarget' && attribution.largestShiftTarget) {
+                attributionData.largestShiftTargetInfo = 
+                  getElementIdentifier(attribution.largestShiftTarget);
+              } else if (key === 'loadState') {
+                attributionData.loadState = attribution.loadState;
+              } else if (attribution[key] !== undefined && attribution[key] !== null) {
+                attributionData[key] = attribution[key];
+              }
+            }
+            metricData.attribution = attributionData;
+          }
+
+          // Debug logging
+          if (debug) {
+            console.log(`[Web Vitals] ${name}:`, metricData);
+          }
+
+          // Send to Umami if available and consent is given
+          if (umamiEnabled && hasConsent) {
+            window.umami.track(`web-vital-${name.toLowerCase()}`, metricData);
+          }
+          
+          // Send to custom endpoint if provided
+          if (analyticsEndpoint) {
+            const blob = new Blob([JSON.stringify(metricData)], { type: 'application/json' });
+            // Use sendBeacon if available, fall back to fetch
+            try {
+              if (navigator.sendBeacon) {
+                const success = navigator.sendBeacon(analyticsEndpoint, blob);
+                if (!success) {
+                  if (debug) console.warn('[Web Vitals] SendBeacon failed, falling back to fetch');
+                  sendWithFetch();
+                }
+              } else {
+                sendWithFetch();
+              }
+            } catch (error) {
+              if (debug) console.error('[Web Vitals] Error sending metrics:', error);
+            }
+            
+            function sendWithFetch() {
+              fetch(analyticsEndpoint, {
+                body: blob,
+                method: 'POST',
+                keepalive: true,
+                headers: { 'Content-Type': 'application/json' }
+              }).catch(error => {
+                if (debug) console.error('[Web Vitals] Error sending metrics with fetch:', error);
+              });
+            }
+          }
+        }
+
+        // Get a performance rating (good, needs-improvement, poor)
+        function getRating(metric, value) {
+          // Thresholds based on Google's Core Web Vitals
+          const thresholds = {
+            CLS: [0.1, 0.25],    // Cumulative Layout Shift
+            FID: [100, 300],     // First Input Delay
+            LCP: [2500, 4000],   // Largest Contentful Paint
+            TTFB: [800, 1800],   // Time to First Byte
+            INP: [200, 500],     // Interaction to Next Paint
+            FCP: [1800, 3000]    // First Contentful Paint
+          };
+
+          if (!thresholds[metric]) return 'unknown';
+          return value <= thresholds[metric][0] ? 'good' : 
+                 value <= thresholds[metric][1] ? 'needs-improvement' : 'poor';
+        }
+
+        // Get a useful identifier for DOM elements
+        function getElementIdentifier(element) {
+          if (!element || !element.tagName) return 'unknown';
+          
+          let identifier = element.tagName.toLowerCase();
+          
+          // Add id if available
+          if (element.id) {
+            identifier += `#${element.id}`;
+          }
+          
+          // Add up to 3 classes
+          if (element.classList && element.classList.length) {
+            const classes = Array.from(element.classList).slice(0, 3);
+            identifier += `.${classes.join('.')}`;
+          }
+          
+          // Add element dimensions
+          if (element.getBoundingClientRect) {
+            try {
+              const rect = element.getBoundingClientRect();
+              if (rect) {
+                identifier += ` (${Math.round(rect.width)}x${Math.round(rect.height)})`;
+              }
+            } catch (e) {
+              // Ignore errors from getBoundingClientRect
+            }
+          }
+          
+          return identifier;
+        }
+
+        // Register metrics
+        onCLS(sendToAnalytics);
+        onFID(sendToAnalytics);
+        onLCP(sendToAnalytics);
+        onTTFB(sendToAnalytics);
+        onINP(sendToAnalytics);
+        onFCP(sendToAnalytics);
+      })
+      .catch(err => {
+        console.error('[Web Vitals] Failed to load:', err);
+      });
+  </script>
+)}

@@ -1,0 +1,148 @@
+/**
+ * FlashFeed.css - Styles for the mobile-only Flash feed experience
+ */
+
+.flash-feed {
+  width: 100%;
+  height: 100vh;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  position: relative;
+  background-color: #000;
+}
+
+/* Back button */
+.flash-back-button {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.flash-back-button:hover {
+  background: rgba(0, 0, 0, 0.7);
+  transform: scale(1.1);
+}
+
+/* Individual post styles */
+.flash-post {
+  width: 100%;
+  height: 100vh;
+  scroll-snap-align: start;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  box-sizing: border-box;
+  opacity: 0.8;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.flash-post.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Post content container */
+.flash-post-content {
+  width: 100%;
+  max-width: 90%;
+  color: white;
+  text-align: left;
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Typography */
+.flash-post-category {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+  color: #ff8c33;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.flash-post-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+.flash-post-excerpt {
+  font-size: 1.2rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* Meta information */
+.flash-post-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+}
+
+.author-name {
+  font-weight: 600;
+}
+
+.flash-post-date {
+  opacity: 0.8;
+}
+
+/* Read more link */
+.flash-post-link {
+  display: inline-block;
+  background: linear-gradient(45deg, #ff5733, #ff8c33);
+  color: white;
+  text-decoration: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 2rem;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(255, 87, 51, 0.4);
+  transition: all 0.3s ease;
+}
+
+.flash-post-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(255, 87, 51, 0.6);
+}
+
+/* Make sure this is only visible on mobile */
+@media (min-width: 769px) {
+  .flash-feed {
+    display: none;
+  }
+}

@@ -1,0 +1,359 @@
+---
+/**
+ * Image Component Examples
+ * 
+ * This page demonstrates various usage examples of the Image component
+ * with different configurations and features.
+ */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Image from "../../components/common/Image.astro";
+
+// Example image paths
+const images = {
+  hero: "/images/tech/ai-future.jpg",
+  portrait: "/images/authors/alex-johnson.jpg",
+  landscape: "/images/science/climate.jpg",
+  mobile: "/images/tech/mobile-ui.jpg",
+  desktop: "/images/tech/web-dev.jpg",
+};
+---
+
+<BaseLayout title="Image Component Examples" description="Examples of using the Image component with different configurations">
+  <main class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">Image Component Examples</h1>
+    
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Basic Usage</h2>
+      <p class="mb-4">Simple image with width and height specified:</p>
+      
+      <div class="p-4 border border-gray-200 rounded-lg">
+        <Image 
+          src={images.hero} 
+          alt="AI Future Technology" 
+          width={800} 
+          height={450} 
+          className="rounded-lg"
+        />
+        
+        <pre class="mt-4 p-4 bg-gray-100 rounded overflow-x-auto">
+          <code>{
+`<Image 
+  src="/images/tech/ai-future.jpg" 
+  alt="AI Future Technology" 
+  width={800} 
+  height={450} 
+  className="rounded-lg"
+/>`
+          }</code>
+        </pre>
+      </div>
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Responsive Images</h2>
+      <p class="mb-4">Image with multiple widths for different screen sizes:</p>
+      
+      <div class="p-4 border border-gray-200 rounded-lg">
+        <Image 
+          src={images.landscape} 
+          alt="Climate Change Research" 
+          widths={[400, 800, 1200, 1600]} 
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 800px" 
+          className="rounded-lg w-full"
+        />
+        
+        <pre class="mt-4 p-4 bg-gray-100 rounded overflow-x-auto">
+          <code>{
+`<Image 
+  src="/images/science/climate.jpg" 
+  alt="Climate Change Research" 
+  widths={[400, 800, 1200, 1600]} 
+  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 800px" 
+  className="rounded-lg w-full"
+/>`
+          }</code>
+        </pre>
+      </div>
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Art Direction</h2>
+      <p class="mb-4">Different images for different screen sizes (resize your browser to see the effect):</p>
+      
+      <div class="p-4 border border-gray-200 rounded-lg">
+        <Image 
+          src={images.desktop} 
+          alt="Web Development" 
+          width={800}
+          height={450}
+          artDirected={[
+            {
+              media: "(max-width: 640px)",
+              src: images.mobile,
+              widths: [300, 600]
+            }
+          ]}
+          className="rounded-lg w-full"
+        />
+        
+        <pre class="mt-4 p-4 bg-gray-100 rounded overflow-x-auto">
+          <code>{
+`<Image 
+  src="/images/tech/web-dev.jpg" 
+  alt="Web Development" 
+  width={800}
+  height={450}
+  artDirected={[
+    {
+      media: "(max-width: 640px)",
+      src: "/images/tech/mobile-ui.jpg",
+      widths: [300, 600]
+    }
+  ]}
+  className="rounded-lg w-full"
+/>`
+          }</code>
+        </pre>
+      </div>
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Image Cropping & Focus</h2>
+      <p class="mb-4">Different cropping and focus points:</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
+        <div>
+          <p class="mb-2 text-center">Original</p>
+          <Image 
+            src={images.landscape} 
+            alt="Original image" 
+            width={300} 
+            height={200} 
+            className="rounded-lg"
+          />
+        </div>
+        
+        <div>
+          <p class="mb-2 text-center">Square crop (center focus)</p>
+          <Image 
+            src={images.landscape} 
+            alt="Square crop with center focus" 
+            width={200} 
+            height={200} 
+            aspectRatio="1:1"
+            crop="force"
+            focus="center"
+            className="rounded-lg"
+          />
+        </div>
+        
+        <div>
+          <p class="mb-2 text-center">Square crop (top focus)</p>
+          <Image 
+            src={images.landscape} 
+            alt="Square crop with top focus" 
+            width={200} 
+            height={200} 
+            aspectRatio="1:1"
+            crop="force"
+            focus="top"
+            className="rounded-lg"
+          />
+        </div>
+      </div>
+      
+      <pre class="mt-4 p-4 bg-gray-100 rounded overflow-x-auto">
+        <code>{
+`<!-- Square crop with center focus -->
+<Image 
+  src="/images/science/climate.jpg" 
+  alt="Square crop with center focus" 
+  width={200} 
+  height={200} 
+  aspectRatio="1:1"
+  crop="force"
+  focus="center"
+  className="rounded-lg"
+/>
+
+<!-- Square crop with top focus -->
+<Image 
+  src="/images/science/climate.jpg" 
+  alt="Square crop with top focus" 
+  width={200} 
+  height={200} 
+  aspectRatio="1:1"
+  crop="force"
+  focus="top"
+  className="rounded-lg"
+/>`
+        }</code>
+      </pre>
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Error Handling</h2>
+      <p class="mb-4">Different fallback strategies for handling image loading errors:</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg">
+        <div>
+          <p class="mb-2 text-center">Silent fallback (default)</p>
+          <Image 
+            src="/non-existent-image.jpg" 
+            alt="This image doesn't exist - silent fallback" 
+            width={400} 
+            height={300} 
+            fallbackStrategy="silent"
+            className="rounded-lg"
+          />
+        </div>
+        
+        <div>
+          <p class="mb-2 text-center">Placeholder fallback</p>
+          <Image 
+            src="/non-existent-image.jpg" 
+            alt="This image doesn't exist - placeholder fallback" 
+            width={400} 
+            height={300} 
+            fallbackStrategy="placeholder"
+            className="rounded-lg"
+          />
+        </div>
+      </div>
+      
+      <pre class="mt-4 p-4 bg-gray-100 rounded overflow-x-auto">
+        <code>{
+`<!-- Silent fallback -->
+<Image 
+  src="/non-existent-image.jpg" 
+  alt="This image doesn't exist - silent fallback" 
+  width={400} 
+  height={300} 
+  fallbackStrategy="silent"
+  className="rounded-lg"
+/>
+
+<!-- Placeholder fallback -->
+<Image 
+  src="/non-existent-image.jpg" 
+  alt="This image doesn't exist - placeholder fallback" 
+  width={400} 
+  height={300} 
+  fallbackStrategy="placeholder"
+  className="rounded-lg"
+/>`
+        }</code>
+      </pre>
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Performance Optimization</h2>
+      <p class="mb-4">High-priority loading for above-the-fold images:</p>
+      
+      <div class="p-4 border border-gray-200 rounded-lg">
+        <Image 
+          src={images.hero} 
+          alt="High priority image" 
+          width={800} 
+          height={450} 
+          loading="eager" 
+          fetchpriority="high"
+          className="rounded-lg"
+        />
+        
+        <pre class="mt-4 p-4 bg-gray-100 rounded overflow-x-auto">
+          <code>{
+`<Image 
+  src="/images/tech/ai-future.jpg" 
+  alt="High priority image" 
+  width={800} 
+  height={450} 
+  loading="eager" 
+  fetchpriority="high"
+  className="rounded-lg"
+/>`
+          }</code>
+        </pre>
+      </div>
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Object Fit & Position</h2>
+      <p class="mb-4">Different object-fit and object-position values:</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg">
+        <div>
+          <p class="mb-2 text-center">cover (default)</p>
+          <Image 
+            src={images.landscape} 
+            alt="Object-fit: cover" 
+            width={200} 
+            height={200} 
+            objectFit="cover"
+            className="rounded-lg"
+          />
+        </div>
+        
+        <div>
+          <p class="mb-2 text-center">contain</p>
+          <Image 
+            src={images.landscape} 
+            alt="Object-fit: contain" 
+            width={200} 
+            height={200} 
+            objectFit="contain"
+            className="rounded-lg bg-gray-100"
+          />
+        </div>
+        
+        <div>
+          <p class="mb-2 text-center">cover (top position)</p>
+          <Image 
+            src={images.landscape} 
+            alt="Object-fit: cover, position: top" 
+            width={200} 
+            height={200} 
+            objectFit="cover"
+            objectPosition="top"
+            className="rounded-lg"
+          />
+        </div>
+      </div>
+      
+      <pre class="mt-4 p-4 bg-gray-100 rounded overflow-x-auto">
+        <code>{
+`<!-- Object-fit: cover (default) -->
+<Image 
+  src="/images/science/climate.jpg" 
+  alt="Object-fit: cover" 
+  width={200} 
+  height={200} 
+  objectFit="cover"
+  className="rounded-lg"
+/>
+
+<!-- Object-fit: contain -->
+<Image 
+  src="/images/science/climate.jpg" 
+  alt="Object-fit: contain" 
+  width={200} 
+  height={200} 
+  objectFit="contain"
+  className="rounded-lg bg-gray-100"
+/>
+
+<!-- Object-fit: cover, position: top -->
+<Image 
+  src="/images/science/climate.jpg" 
+  alt="Object-fit: cover, position: top" 
+  width={200} 
+  height={200} 
+  objectFit="cover"
+  objectPosition="top"
+  className="rounded-lg"
+/>`
+        }</code>
+      </pre>
+    </section>
+  </main>
+</BaseLayout>

@@ -1,0 +1,177 @@
+---
+/**
+ * PageTransition Component
+ * 
+ * A component that provides smooth transitions between pages using Lottie animations.
+ * This component should be included in the BaseLayout to enable transitions site-wide.
+ */
+
+interface Props {
+  /** Type of transition animation */
+  type?: 'fade' | 'slide' | 'zoom' | 'wipe' | 'custom';
+  /** URL to custom Lottie JSON file (required if type is 'custom') */
+  customAnimation?: string;
+  /** Duration of the transition in milliseconds */
+  duration?: number;
+  /** CSS class to apply to the container */
+  class?: string;
+}
+
+const {
+  type = 'fade',
+  customAnimation,
+  duration = 800,
+  class: className = ''
+} = Astro.props;
+
+// Map of default transition animations by type
+const defaultAnimations = {
+  fade: 'https://assets5.lottiefiles.com/packages/lf20_abqjugn0.json',
+  slide: 'https://assets7.lottiefiles.com/packages/lf20_xlkxtmul.json',
+  zoom: 'https://assets8.lottiefiles.com/packages/lf20_nxuowtsj.json',
+  wipe: 'https://assets1.lottiefiles.com/packages/lf20_yfsytcor.json'
+};
+
+// Determine the animation source
+const animationSrc = customAnimation || defaultAnimations[type] || defaultAnimations.fade;
+
+// Generate a unique ID for the transition container
+const transitionId = `page-transition-${Math.random().toString(36).substring(2, 11)}`;
+---
+
+<div 
+  id={transitionId}
+  class={`page-transition ${type}-transition ${className}`}
+  data-animation-src={animationSrc}
+  data-transition-duration={duration.toString()}
+  style="display: none;"
+></div>
+
+<style>
+  .page-transition {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
+
+<script>
+  import { initLottieAnimation } from '../../utils/animations';
+  
+  // Store animation instances
+  const transitionInstances = new Map();
+  let isTransitioning = false;
+  
+  // Initialize page transition animations
+  function initPageTransitions() {
+    const transitionElements = document.querySelectorAll('.page-transition');
+    
+    transitionElements.forEach(async (element) => {
+      const id = element.id;
+      const src = element.getAttribute('data-animation-src');
+      const duration = parseInt(element.getAttribute('data-transition-duration') || '800');
+      
+      if (id && src) {
+        try {
+          // Pre-initialize the animation but don't autoplay
+          const anim = await initLottieAnimation(id, src, {
+            loop: false,
+            autoplay: false,
+            renderer: 'svg'
+          });
+          
+          if (anim) {
+            // Store the animation instance
+            transitionInstances.set(id, {
+              animation: anim,
+              duration,
+              element
+            });
+          }
+        } catch (error) {
+          console.error('Failed to initialize page transition animation:', error);
+        }
+      }
+    });
+    
+    // Set up navigation event listeners
+    setupNavigationListeners();
+  }
+  
+  // Set up listeners for navigation events
+  function setupNavigationListeners() {
+    // Handle link clicks for same-origin navigation
+    document.addEventListener('click', (event) => {
+      // Only handle link clicks
+      const link = event.target.closest('a');
+      if (!link) return;
+      
+      // Only handle same-origin links
+      const url = new URL(link.href, window.location.origin);
+      const isSameOrigin = url.origin === window.location.origin;
+      
+      // Skip if it's an anchor link, has a target, or is a download
+      const isAnchor = link.getAttribute('href')?.startsWith('#');
+      const hasTarget = link.hasAttribute('target');
+      const isDownload = link.hasAttribute('download');
+      
+      if (!isSameOrigin || isAnchor || hasTarget || isDownload || isTransitioning) {
+        return;
+      }
+      
+      // Prevent default navigation
+      event.preventDefault();
+      
+      // Play transition animation and then navigate
+      playTransitionAnimation().then(() => {
+        window.location.href = url.href;
+      });
+    });
+    
+    // Handle browser back/forward navigation
+    window.addEventListener('popstate', () => {
+      if (!isTransitioning) {
+        playTransitionAnimation(true);
+      }
+    });
+  }
+  
+  // Play the transition animation
+  async function playTransitionAnimation(isBackNavigation = false) {
+    if (isTransitioning) return;
+    isTransitioning = true;
+    
+    // Get the first available transition
+    const transitionData = transitionInstances.values().next().value;
+    if (!transitionData) {
+      isTransitioning = false;
+      return;
+    }
+    
+    const { animation, duration, element } = transitionData;
+    
+    // Show the transition element
+    element.style.display = 'flex';
+    
+    // Reset and play the animation
+    animation.goToAndStop(0, true);
+    animation.play();
+    
+    // Wait for the animation to complete
+    await new Promise(resolve => setTimeout(resolve, duration));
+    
+    // Hide the transition element if this is a back navigation
+    // (otherwise we keep it visible for the next page to handle)
+    if (isBackNavigation) {
+      element.style.display = 'none';
+    }
+    
+    isTransitioning = false;
+  }

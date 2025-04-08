@@ -1,0 +1,100 @@
+---
+/**
+ * ThemeProvider.astro - Theme context provider component
+ *
+ * This component handles theme detection from user preferences,
+ * provides theme toggling capabilities, and persists theme choices.
+ * It works with the existing theme.css styles and ThemeToggle component.
+ */
+
+interface Props {
+  /** Initial theme to use (defaults to system preference) */
+  initialTheme?: 'light' | 'dark' | 'system';
+}
+
+const { initialTheme = 'system' } = Astro.props;
+---
+
+<div id="theme-provider">
+  <slot />
+</div>
+
+<script define:vars={{ initialTheme }}>
+  // Theme Provider functionality
+  class ThemeManager {
+    constructor(initialPreference) {
+      this.initialPreference = initialPreference;
+      this.themeKey = 'theme';
+      this.initialize();
+    }
+
+    // Get theme from localStorage or system preference
+    getThemePreference() {
+      if (typeof localStorage !== 'undefined' && localStorage.getItem(this.themeKey)) {
+        return localStorage.getItem(this.themeKey);
+      }
+      
+      if (this.initialPreference !== 'system') {
+        return this.initialPreference;
+      }
+      
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    // Apply theme to document
+    setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem(this.themeKey, theme);
+      
+      // Dispatch custom event for other components to listen to
+      window.dispatchEvent(new CustomEvent('theme-change', { detail: { theme } }));
+    }
+
+    // Toggle between light and dark themes
+    toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      this.setTheme(newTheme);
+      return newTheme;
+    }
+
+    // Initialize theme
+    initialize() {
+      // Apply theme immediately to prevent flash of incorrect theme
+      const theme = this.getThemePreference();
+      this.setTheme(theme);
+
+      // Listen for system theme changes if using system preference
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (localStorage.getItem(this.themeKey) === null || 
+            localStorage.getItem(this.themeKey) === 'system') {
+          this.setTheme(e.matches ? 'dark' : 'light');
+        }
+      });
+
+      // Make theme manager available globally
+      window.themeManager = this;
+    }
+  }
+
+  // Initialize theme manager
+  const themeManager = new ThemeManager(initialTheme);
+
+  // Add event listener for theme toggle buttons
+  document.addEventListener('DOMContentLoaded', () => {
+    const themeToggles = document.querySelectorAll('[id^="theme-toggle"]');
+    
+    themeToggles.forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        themeManager.toggleTheme();
+      });
+    });
+  });
+</script>
+
+<style>
+  /* The theme provider doesn't affect layout */
+  #theme-provider {
+    display: contents;
+  }
+</style>

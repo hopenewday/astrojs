@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="#4F46E5"/>
+  
+  <!-- Stylized 'A' for Astro -->
+  <path d="M256 96L384 416H128L256 96Z" fill="white"/>
+  
+  <!-- News elements -->
+  <rect x="176" y="320" width="160" height="16" rx="8" fill="white"/>
+  <rect x="176" y="352" width="120" height="16" rx="8" fill="white"/>
+  <rect x="176" y="384" width="80" height="16" rx="8" fill="white"/>
+</svg>

@@ -1,0 +1,71 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+  canonicalURL?: string;
+  image?: string;
+  favicon?: string;
+  themeColor?: string;
+  ogType?: 'website' | 'article';
+  twitterCard?: 'summary' | 'summary_large_image';
+}
+
+const {
+  title,
+  description = 'A modern magazine-style publication built with Astro.js',
+  canonicalURL = Astro.url.href,
+  image = '/images/default-og.jpg',
+  favicon = '/favicon.ico',
+  themeColor = '#3b82f6', // blue-500
+  ogType = 'website',
+  twitterCard = 'summary_large_image',
+} = Astro.props;
+
+// Ensure image URLs are absolute
+const ogImageUrl = new URL(image, Astro.site).toString();
+---
+
+<!-- Base Meta Tags -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="generator" content={Astro.generator} />
+
+<!-- Primary Meta Tags -->
+<title>{title}</title>
+<meta name="title" content={title} />
+<meta name="description" content={description} />
+
+<!-- Canonical URL -->
+<link rel="canonical" href={canonicalURL} />
+
+<!-- Favicons -->
+<link rel="icon" type="image/x-icon" href={favicon} />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+<link rel="manifest" href="/site.webmanifest" />
+
+<!-- Theme Color -->
+<meta name="theme-color" content={themeColor} />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content={ogType} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={ogImageUrl} />
+
+<!-- Twitter -->
+<meta property="twitter:card" content={twitterCard} />
+<meta property="twitter:url" content={canonicalURL} />
+<meta property="twitter:title" content={title} />
+<meta property="twitter:description" content={description} />
+<meta property="twitter:image" content={ogImageUrl} />
+
+<!-- Preconnect to External Domains -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preconnect" href="https://ik.imagekit.io" crossorigin />
+
+<!-- Slot for additional head elements -->
+<slot />

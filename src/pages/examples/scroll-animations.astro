@@ -1,0 +1,265 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ContentAnimation from '../../components/common/ContentAnimation.astro';
+import SectionTransition from '../../components/common/SectionTransition.astro';
+
+const title = 'Scroll Animation Examples';
+const description = 'Examples of scroll-triggered animations for content sections using the ContentAnimation component and scrollAnimations utility.';
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Scroll Animation Examples</h1>
+    
+    <!-- Introduction -->
+    <ContentAnimation type="fade">
+      <div class="mb-8 p-6 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg">
+        <p class="mb-4">
+          This page demonstrates how to use scroll-triggered animations to enhance content sections across the site.
+          All animations are optimized for performance and accessibility, with reduced motion options for users who prefer minimal animations.
+        </p>
+        <div class="text-sm bg-black/5 dark:bg-white/5 p-4 rounded">
+          <p class="font-semibold">Implementation details:</p>
+          <ul class="list-disc pl-5 mt-2 space-y-1">
+            <li>ContentAnimation component for declarative animation setup</li>
+            <li>scrollAnimations utility for programmatic animation setup</li>
+            <li>GSAP ScrollTrigger for high-performance scroll animations</li>
+            <li>Optimized for performance with minimal impact on page speed</li>
+          </ul>
+        </div>
+      </div>
+    </ContentAnimation>
+    
+    <SectionTransition type="fade" />
+    
+    <!-- Basic Content Animation Examples -->
+    <div class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Basic Content Animations</h2>
+      <p class="mb-6">
+        The ContentAnimation component makes it easy to add scroll-triggered animations to any content section.
+        Simply wrap your content in the component and specify the animation type.
+      </p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+        <ContentAnimation type="fade" start="top 80%">
+          <div class="p-6 border rounded-lg shadow-sm">
+            <h3 class="text-xl font-bold mb-2">Fade Animation</h3>
+            <p>This card fades in when it enters the viewport.</p>
+          </div>
+        </ContentAnimation>
+        
+        <ContentAnimation type="slide" start="top 80%">
+          <div class="p-6 border rounded-lg shadow-sm">
+            <h3 class="text-xl font-bold mb-2">Slide Animation</h3>
+            <p>This card slides up when it enters the viewport.</p>
+          </div>
+        </ContentAnimation>
+        
+        <ContentAnimation type="scale" start="top 80%">
+          <div class="p-6 border rounded-lg shadow-sm">
+            <h3 class="text-xl font-bold mb-2">Scale Animation</h3>
+            <p>This card scales in when it enters the viewport.</p>
+          </div>
+        </ContentAnimation>
+        
+        <ContentAnimation type="rotate" start="top 80%">
+          <div class="p-6 border rounded-lg shadow-sm">
+            <h3 class="text-xl font-bold mb-2">Rotate Animation</h3>
+            <p>This card rotates in when it enters the viewport.</p>
+          </div>
+        </ContentAnimation>
+      </div>
+    </div>
+    
+    <SectionTransition type="slide" />
+    
+    <!-- Staggered Animation Example -->
+    <div class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Staggered Animations</h2>
+      <p class="mb-6">
+        You can animate multiple elements with a staggered delay using the stagger option.
+        This creates a sequence of animations as the user scrolls.
+      </p>
+      
+      <ContentAnimation type="fade" stagger={true} staggerDelay={0.1}>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+          <div class="p-4 border rounded-lg shadow-sm">
+            <h3 class="text-lg font-bold mb-2">Step 1</h3>
+            <p>First item in the staggered sequence.</p>
+          </div>
+          
+          <div class="p-4 border rounded-lg shadow-sm">
+            <h3 class="text-lg font-bold mb-2">Step 2</h3>
+            <p>Second item in the staggered sequence.</p>
+          </div>
+          
+          <div class="p-4 border rounded-lg shadow-sm">
+            <h3 class="text-lg font-bold mb-2">Step 3</h3>
+            <p>Third item in the staggered sequence.</p>
+          </div>
+        </div>
+      </ContentAnimation>
+    </div>
+    
+    <SectionTransition type="wipe" />
+    
+    <!-- Scroll-Linked Animation Example -->
+    <div class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Scroll-Linked Animations</h2>
+      <p class="mb-6">
+        You can link animations directly to the scroll position using the scrub option.
+        This creates a smooth, interactive animation that responds to the user's scrolling.
+      </p>
+      
+      <div class="relative border rounded-lg p-6 mb-4">
+        <div id="progress-container" class="absolute top-0 left-0 w-full h-1 bg-gray-200">
+          <div id="progress-bar" class="h-full bg-primary w-0"></div>
+        </div>
+        
+        <ContentAnimation type="fade" scrub={true} start="top 80%" end="bottom 20%">
+          <div class="py-4">
+            <h3 class="text-xl font-bold mb-2">Scroll-Linked Content</h3>
+            <p class="mb-4">This content fades in and out as you scroll, linked directly to your scroll position.</p>
+            
+            <div class="space-y-4">
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam in dui mauris. Vivamus hendrerit arcu sed erat molestie vehicula.</p>
+              <p>Ut in nulla enim. Phasellus molestie magna non est bibendum non venenatis nisl tempor. Suspendisse dictum feugiat nisl ut dapibus.</p>
+              <p>Praesent id metus massa, ut blandit odio. Proin quis tortor orci. Etiam at risus et justo dignissim congue.</p>
+            </div>
+          </div>
+        </ContentAnimation>
+      </div>
+    </div>
+    
+    <SectionTransition type="zoom" />
+    
+    <!-- Article Section Example -->
+    <div class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Article Section Example</h2>
+      <p class="mb-6">
+        Here's an example of how scroll animations can enhance an article section,
+        making the content more engaging as the user reads.
+      </p>
+      
+      <article class="prose prose-lg max-w-none dark:prose-invert">
+        <ContentAnimation type="fade">
+          <h3>Article Heading</h3>
+          <p>
+            This is an example of how scroll animations can be applied to article content.
+            As the user scrolls through the article, different sections animate into view,
+            creating a more engaging reading experience.
+          </p>
+        </ContentAnimation>
+        
+        <ContentAnimation type="slide">
+          <figure class="my-8">
+            <div class="bg-gray-200 dark:bg-gray-700 rounded-lg h-64 flex items-center justify-center">
+              <span class="text-gray-500 dark:text-gray-400">Image Placeholder</span>
+            </div>
+            <figcaption class="text-center mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Figure caption with animation
+            </figcaption>
+          </figure>
+        </ContentAnimation>
+        
+        <ContentAnimation type="fade">
+          <h4>Subheading with Animation</h4>
+          <p>
+            Each section of the article can have its own animation type and timing.
+            This creates a dynamic reading experience that guides the user through the content.
+          </p>
+        </ContentAnimation>
+        
+        <ContentAnimation type="scale">
+          <blockquote>
+            "Scroll-triggered animations can significantly improve engagement with content
+            when used appropriately and with performance in mind."
+          </blockquote>
+        </ContentAnimation>
+        
+        <ContentAnimation type="fade">
+          <p>
+            The animations are optimized for performance and accessibility, ensuring that
+            they enhance the user experience without causing issues for users with motion sensitivity
+            or devices with limited processing power.
+          </p>
+        </ContentAnimation>
+      </article>
+    </div>
+    
+    <!-- Implementation Guide -->
+    <div class="mt-16 mb-12 p-6 bg-black/5 dark:bg-white/5 rounded-lg">
+      <h2 class="text-2xl font-bold mb-4">Implementation Guide</h2>
+      
+      <div class="mb-6">
+        <h3 class="text-xl font-bold mb-2">Using the ContentAnimation Component</h3>
+        <p class="mb-4">Add scroll-triggered animations to any content section with the ContentAnimation component:</p>
+        <pre class="text-xs bg-black/10 dark:bg-white/10 p-3 rounded overflow-x-auto"><code>&lt;ContentAnimation type="fade" start="top 80%"&gt;
+  &lt;div class="your-content"&gt;
+    Content to animate
+  &lt;/div&gt;
+&lt;/ContentAnimation&gt;</code></pre>
+      </div>
+      
+      <div class="mb-6">
+        <h3 class="text-xl font-bold mb-2">Using the scrollAnimations Utility</h3>
+        <p class="mb-4">For more programmatic control, use the scrollAnimations utility in your client-side scripts:</p>
+        <pre class="text-xs bg-black/10 dark:bg-white/10 p-3 rounded overflow-x-auto"><code>import { initContentSectionAnimations, animateChildrenOnScroll } from '../utils/scrollAnimations';
+
+// Initialize all content section animations
+initContentSectionAnimations();
+
+// Or animate specific container's children
+animateChildrenOnScroll('.your-container', {
+  childSelector: '.item',
+  animationType: 'fade',
+  staggerDelay: 0.1
+});</code></pre>
+      </div>
+      
+      <div>
+        <h3 class="text-xl font-bold mb-2">Performance Considerations</h3>
+        <ul class="list-disc pl-5 space-y-2">
+          <li>Animations use GPU-accelerated properties (transform, opacity) for better performance</li>
+          <li>Scroll events are properly throttled to prevent performance issues</li>
+          <li>Animations respect the user's reduced motion preference</li>
+          <li>Elements outside the viewport don't trigger unnecessary calculations</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { initAnimations, createScrollAnimation } from '../../utils/animations';
+  import { initContentSectionAnimations } from '../../utils/scrollAnimations';
+  
+  // Initialize animations when the DOM is ready
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Check for reduced motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
+    if (!prefersReducedMotion) {
+      // Initialize GSAP and plugins
+      await initAnimations();
+      
+      // Initialize content section animations
+      initContentSectionAnimations();
+      
+      // Set up progress bar for scroll section
+      const progressContainer = document.getElementById('progress-container');
+      const progressBar = document.getElementById('progress-bar');
+      
+      if (progressContainer && progressBar) {
+        const scrollTrigger = ScrollTrigger.create({
+          trigger: progressContainer.parentElement,
+          start: 'top 80%',
+          end: 'bottom 20%',
+          onUpdate: (self) => {
+            progressBar.style.width = `${self.progress * 100}%`;
+          }
+        });
+      }
+    }
+  });
+</script>

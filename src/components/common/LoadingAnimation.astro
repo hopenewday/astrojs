@@ -1,0 +1,141 @@
+---
+/**
+ * LoadingAnimation Component
+ * 
+ * A high-performance loading animation component using Lottie animations
+ * that leverages web workers for optimal performance.
+ */
+
+import { initLottieAnimation } from '../../utils/animations';
+
+interface Props {
+  /** ID for the animation container */
+  id?: string;
+  /** Type of loading animation to display */
+  type?: 'spinner' | 'dots' | 'pulse' | 'progress' | 'custom';
+  /** URL to custom Lottie JSON file (required if type is 'custom') */
+  src?: string;
+  /** Width of the animation container */
+  width?: number | string;
+  /** Height of the animation container */
+  height?: number | string;
+  /** Whether the animation should loop */
+  loop?: boolean;
+  /** Animation speed (1 is normal speed) */
+  speed?: number;
+  /** CSS class to apply to the container */
+  class?: string;
+  /** Whether to autoplay the animation */
+  autoplay?: boolean;
+  /** Whether to use the web worker for processing */
+  useWorker?: boolean;
+}
+
+const {
+  id = `lottie-loading-${Math.random().toString(36).substring(2, 11)}`,
+  type = 'spinner',
+  src,
+  width = '100px',
+  height = '100px',
+  loop = true,
+  speed = 1,
+  class: className = '',
+  autoplay = true,
+  useWorker = true
+} = Astro.props;
+
+// Map of default animation sources by type
+const defaultAnimations = {
+  spinner: 'https://assets9.lottiefiles.com/packages/lf20_b88nh30c.json',
+  dots: 'https://assets2.lottiefiles.com/packages/lf20_usmfx6bp.json',
+  pulse: 'https://assets4.lottiefiles.com/private_files/lf30_fup2uejx.json',
+  progress: 'https://assets5.lottiefiles.com/packages/lf20_ngzw3wdt.json'
+};
+
+// Determine the animation source
+const animationSrc = src || defaultAnimations[type] || defaultAnimations.spinner;
+
+// Set dimensions with units if they're numbers
+const widthStyle = typeof width === 'number' ? `${width}px` : width;
+const heightStyle = typeof height === 'number' ? `${height}px` : height;
+---
+
+<div 
+  id={id} 
+  class={`lottie-loading-animation ${className}`}
+  style={`width: ${widthStyle}; height: ${heightStyle};`}
+  data-animation-src={animationSrc}
+  data-animation-loop={loop.toString()}
+  data-animation-speed={speed.toString()}
+  data-animation-autoplay={autoplay.toString()}
+  data-use-worker={useWorker.toString()}
+></div>
+
+<style>
+  .lottie-loading-animation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background-color: transparent;
+  }
+</style>
+
+<script>
+  import { initLottieAnimation } from '../../utils/animations';
+  
+  // Initialize all loading animations on the page
+  function initLoadingAnimations() {
+    const animationElements = document.querySelectorAll('.lottie-loading-animation');
+    
+    animationElements.forEach(async (element) => {
+      const id = element.id;
+      const src = element.getAttribute('data-animation-src');
+      const loop = element.getAttribute('data-animation-loop') !== 'false';
+      const speed = parseFloat(element.getAttribute('data-animation-speed') || '1');
+      const autoplay = element.getAttribute('data-animation-autoplay') !== 'false';
+      
+      if (id && src) {
+        try {
+          // Initialize the Lottie animation
+          const anim = await initLottieAnimation(id, src, {
+            loop,
+            autoplay,
+            speed,
+            renderer: 'svg'
+          });
+          
+          // Store the animation instance on the element for later reference
+          if (anim) {
+            // @ts-ignore - Custom property
+            element.lottieInstance = anim;
+          }
+        } catch (error) {
+          console.error('Failed to initialize loading animation:', error);
+        }
+      }
+    });
+  }
+  
+  // Initialize animations when the DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLoadingAnimations);
+  } else {
+    initLoadingAnimations();
+  }
+  
+  // Initialize animations when new content is added to the DOM
+  // This is useful for client-side navigation in SPA-like sites
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      if (mutation.addedNodes.length) {
+        initLoadingAnimations();
+      }
+    });
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+</script>

@@ -1,0 +1,166 @@
+---
+/**
+ * Ad System Example Page
+ * 
+ * This page demonstrates the ad management system components and their usage.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { AdSlot, LeaderboardAd, RectangleAd, SidebarAd, MobileAd } from '../../components/ads';
+import CategoryTheme from '../../components/common/CategoryTheme.astro';
+
+const title = 'Ad Management System Example';
+const description = 'Demonstration of the ad management system components and their usage';
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Ad Management System</h1>
+    
+    <p class="mb-8">
+      This page demonstrates the ad management system components and their integration with the category theming system.
+      The components provide standardized ad containers with features like lazy loading, placeholders, and responsive behavior.
+    </p>
+    
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Leaderboard Ad (728×90)</h2>
+      <p class="mb-4">Typically displayed at the top of content or between content sections.</p>
+      
+      <LeaderboardAd id="demo-leaderboard" />
+      
+      <pre class="bg-gray-100 p-4 mt-4 rounded overflow-x-auto dark:bg-gray-800">
+        <code>
+&lt;LeaderboardAd id="demo-leaderboard" /&gt;
+        </code>
+      </pre>
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Rectangle Ad (300×250)</h2>
+      <p class="mb-4">Commonly used within content or sidebar areas.</p>
+      
+      <div class="flex flex-wrap gap-8">
+        <div>
+          <RectangleAd id="demo-rectangle" />
+        </div>
+        
+        <div>
+          <CategoryTheme category="tech">
+            <RectangleAd id="tech-rectangle" />
+          </CategoryTheme>
+        </div>
+      </div>
+      
+      <pre class="bg-gray-100 p-4 mt-4 rounded overflow-x-auto dark:bg-gray-800">
+        <code>
+&lt;RectangleAd id="demo-rectangle" /&gt;
+
+&lt;CategoryTheme category="tech"&gt;
+  &lt;RectangleAd id="tech-rectangle" /&gt;
+&lt;/CategoryTheme&gt;
+        </code>
+      </pre>
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Sidebar Ad (300×600)</h2>
+      <p class="mb-4">Tall ad units typically displayed in sidebar areas.</p>
+      
+      <div class="flex flex-wrap gap-8">
+        <SidebarAd id="demo-sidebar" />
+      </div>
+      
+      <pre class="bg-gray-100 p-4 mt-4 rounded overflow-x-auto dark:bg-gray-800">
+        <code>
+&lt;SidebarAd id="demo-sidebar" /&gt;
+        </code>
+      </pre>
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Mobile Ad (320×50)</h2>
+      <p class="mb-4">Banner ads for mobile devices, typically at the top or bottom of the viewport.</p>
+      
+      <MobileAd id="demo-mobile" class="mb-8" />
+      
+      <pre class="bg-gray-100 p-4 mt-4 rounded overflow-x-auto dark:bg-gray-800">
+        <code>
+&lt;MobileAd id="demo-mobile" /&gt;
+        </code>
+      </pre>
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Category Theming Integration</h2>
+      <p class="mb-4">Ad components can be wrapped with CategoryTheme to apply category-specific styling.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <CategoryTheme category="science">
+          <div class="p-4 border rounded">
+            <h3 class="text-xl font-bold mb-2 text-category">Science Category</h3>
+            <p class="mb-4">This content inherits science category theming.</p>
+            <RectangleAd id="science-rectangle" />
+          </div>
+        </CategoryTheme>
+        
+        <CategoryTheme category="culture">
+          <div class="p-4 border rounded">
+            <h3 class="text-xl font-bold mb-2 text-category">Culture Category</h3>
+            <p class="mb-4">This content inherits culture category theming.</p>
+            <RectangleAd id="culture-rectangle" />
+          </div>
+        </CategoryTheme>
+      </div>
+      
+      <pre class="bg-gray-100 p-4 mt-4 rounded overflow-x-auto dark:bg-gray-800">
+        <code>
+&lt;CategoryTheme category="science"&gt;
+  &lt;div class="p-4 border rounded"&gt;
+    &lt;h3 class="text-xl font-bold mb-2 text-category"&gt;Science Category&lt;/h3&gt;
+    &lt;p class="mb-4"&gt;This content inherits science category theming.&lt;/p&gt;
+    &lt;RectangleAd id="science-rectangle" /&gt;
+  &lt;/div&gt;
+&lt;/CategoryTheme&gt;
+        </code>
+      </pre>
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Advanced CategoryTheme Features</h2>
+      <p class="mb-4">The CategoryTheme component supports gradient backgrounds and subtle tints.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <CategoryTheme category="business" gradient={true}>
+          <div class="p-4">
+            <h3 class="text-xl font-bold mb-2">Business with Gradient</h3>
+            <p>Content with category-colored gradient background.</p>
+          </div>
+        </CategoryTheme>
+        
+        <CategoryTheme category="politics" tint={true}>
+          <div class="p-4">
+            <h3 class="text-xl font-bold mb-2 text-category">Politics with Tint</h3>
+            <p>Content with subtle category-colored background tint.</p>
+          </div>
+        </CategoryTheme>
+      </div>
+      
+      <pre class="bg-gray-100 p-4 mt-4 rounded overflow-x-auto dark:bg-gray-800">
+        <code>
+&lt;CategoryTheme category="business" gradient={true}&gt;
+  &lt;div class="p-4"&gt;
+    &lt;h3 class="text-xl font-bold mb-2"&gt;Business with Gradient&lt;/h3&gt;
+    &lt;p&gt;Content with category-colored gradient background.&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/CategoryTheme&gt;
+
+&lt;CategoryTheme category="politics" tint={true}&gt;
+  &lt;div class="p-4"&gt;
+    &lt;h3 class="text-xl font-bold mb-2 text-category"&gt;Politics with Tint&lt;/h3&gt;
+    &lt;p&gt;Content with subtle category-colored background tint.&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/CategoryTheme&gt;
+        </code>
+      </pre>
+    </section>
+  </div>
+</BaseLayout>

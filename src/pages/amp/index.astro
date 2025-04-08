@@ -1,0 +1,456 @@
+---
+/**
+ * AMP version of the homepage
+ * 
+ * This page provides an AMP-compatible version of the main homepage
+ * for faster mobile loading and better user experience.
+ */
+import AmpBaseLayout from "../../layouts/AmpBaseLayout.astro";
+import { transformToAmpHtml } from '../../utils/ampUtils';
+
+// Sample data for demonstration (same as in regular index.astro)
+const articles = [
+  {
+    id: "1",
+    title: "The Future of Artificial Intelligence in 2023",
+    slug: "future-of-ai-2023",
+    excerpt: "Exploring the latest advancements in AI and what they mean for society, business, and everyday life.",
+    image: "/images/tech/ai-future.jpg",
+    category: {
+      name: "Tech",
+      slug: "tech"
+    },
+    author: {
+      name: "Alex Johnson",
+      slug: "alex-johnson",
+      avatar: "/images/authors/alex-johnson.jpg"
+    },
+    publishDate: new Date("2023-06-15"),
+    trending: true,
+    featured: true
+  },
+  {
+    id: "2",
+    title: "Modern Web Development Frameworks Compared",
+    slug: "web-frameworks-compared",
+    excerpt: "An in-depth analysis of the most popular web development frameworks in 2023, including React, Vue, and Svelte.",
+    image: "/images/tech/web-dev.jpg",
+    category: {
+      name: "Tech",
+      slug: "tech"
+    },
+    author: {
+      name: "Sarah Chen",
+      slug: "sarah-chen",
+      avatar: "/images/authors/sarah-chen.jpg"
+    },
+    publishDate: new Date("2023-06-10")
+  },
+  {
+    id: "3",
+    title: "The Renaissance of Indie Filmmaking",
+    slug: "indie-film-renaissance",
+    excerpt: "How digital technology and streaming platforms are giving independent filmmakers unprecedented opportunities.",
+    image: "/images/culture/indie-film.jpg",
+    category: {
+      name: "Culture",
+      slug: "culture"
+    },
+    author: {
+      name: "Michael Rivera",
+      slug: "michael-rivera",
+      avatar: "/images/authors/michael-rivera.jpg"
+    },
+    publishDate: new Date("2023-06-05")
+  },
+  {
+    id: "4",
+    title: "Climate Change: The Latest Research",
+    slug: "climate-change-research",
+    excerpt: "A summary of the most recent scientific findings on climate change and their implications for global policy.",
+    image: "/images/science/climate.jpg",
+    category: {
+      name: "Science",
+      slug: "science"
+    },
+    author: {
+      name: "Dr. Emily Wong",
+      slug: "emily-wong",
+      avatar: "/images/authors/emily-wong.jpg"
+    },
+    publishDate: new Date("2023-06-01"),
+    trending: true
+  },
+  {
+    id: "5",
+    title: "The Global Economy in a Post-Pandemic World",
+    slug: "post-pandemic-economy",
+    excerpt: "Analyzing the long-term economic impacts of the pandemic and strategies for sustainable recovery.",
+    image: "/images/business/economy.jpg",
+    category: {
+      name: "Business",
+      slug: "business"
+    },
+    author: {
+      name: "Robert Kiyosaki",
+      slug: "robert-kiyosaki",
+      avatar: "/images/authors/robert-kiyosaki.jpg"
+    },
+    publishDate: new Date("2023-05-28")
+  },
+  {
+    id: "6",
+    title: "Quantum Computing Explained for Non-Scientists",
+    slug: "quantum-computing-explained",
+    excerpt: "Breaking down the complex principles of quantum computing into understandable concepts for the general public.",
+    image: "/images/tech/quantum.jpg",
+    category: {
+      name: "Tech",
+      slug: "tech"
+    },
+    author: {
+      name: "Alex Johnson",
+      slug: "alex-johnson",
+      avatar: "/images/authors/alex-johnson.jpg"
+    },
+    publishDate: new Date("2023-05-25")
+  }
+];
+
+// Format date for display
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+// Get featured article
+const featuredArticle = articles.find(article => article.featured) || articles[0];
+
+// Get trending articles (excluding featured)
+const trendingArticles = articles
+  .filter(article => article.trending && article.id !== featuredArticle.id)
+  .slice(0, 2);
+
+// Get remaining articles (excluding featured and trending)
+const remainingArticles = articles
+  .filter(article => 
+    article.id !== featuredArticle.id && 
+    !trendingArticles.some(trending => trending.id === article.id)
+  )
+  .slice(0, 4);
+
+// Generate canonical URL (non-AMP version)
+const canonicalUrl = new URL('/', Astro.site).toString();
+---
+
+<AmpBaseLayout 
+  title="ChakrirChain - Modern Magazine" 
+  description="A modern magazine-style publication built with Astro.js"
+  canonicalURL={canonicalUrl}
+  ampContent={`
+    <amp-img></amp-img>
+    <amp-sidebar></amp-sidebar>
+    <amp-carousel></amp-carousel>
+  `}
+>
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-container">
+      <a href="/amp/" class="site-logo">chakrirchain</a>
+      
+      <button on="tap:sidebar.toggle" class="menu-button" aria-label="Menu">
+        <span>☰</span>
+      </button>
+    </div>
+  </header>
+  
+  <!-- Sidebar Menu -->
+  <amp-sidebar id="sidebar" layout="nodisplay" side="right">
+    <button on="tap:sidebar.close" class="close-sidebar" aria-label="Close menu">✕</button>
+    
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="/amp/">Home</a></li>
+        <li><a href="/amp/category/tech">Tech</a></li>
+        <li><a href="/amp/category/culture">Culture</a></li>
+        <li><a href="/amp/category/science">Science</a></li>
+        <li><a href="/amp/category/business">Business</a></li>
+        <li><a href="/amp/category/politics">Politics</a></li>
+        <li><a href="/about">About</a></li>
+      </ul>
+    </nav>
+  </amp-sidebar>
+  
+  <main class="main-content">
+    <!-- Featured Article -->
+    <section class="featured-article">
+      <a href={`/article/amp/${featuredArticle.slug}`} class="article-link">
+        <amp-img 
+          src={featuredArticle.image} 
+          width="1200" 
+          height="675" 
+          layout="responsive" 
+          alt={featuredArticle.title}
+        ></amp-img>
+        
+        <div class="article-info">
+          <span class="category-tag">{featuredArticle.category.name}</span>
+          <h2 class="article-title">{featuredArticle.title}</h2>
+          <p class="article-excerpt">{featuredArticle.excerpt}</p>
+          
+          <div class="article-meta">
+            <span class="author-name">{featuredArticle.author.name}</span>
+            <span class="publish-date">{formatDate(featuredArticle.publishDate)}</span>
+          </div>
+        </div>
+      </a>
+    </section>
+    
+    <!-- Trending Articles -->
+    <section class="trending-section">
+      <h3 class="section-title">Trending</h3>
+      
+      <div class="trending-articles">
+        {trendingArticles.map(article => (
+          <a href={`/article/amp/${article.slug}`} class="trending-article">
+            <amp-img 
+              src={article.image} 
+              width="400" 
+              height="225" 
+              layout="responsive" 
+              alt={article.title}
+            ></amp-img>
+            
+            <div class="article-info">
+              <span class="category-tag">{article.category.name}</span>
+              <h3 class="article-title">{article.title}</h3>
+              
+              <div class="article-meta">
+                <span class="author-name">{article.author.name}</span>
+                <span class="publish-date">{formatDate(article.publishDate)}</span>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+    
+    <!-- Latest Articles -->
+    <section class="latest-section">
+      <h3 class="section-title">Latest</h3>
+      
+      <div class="latest-articles">
+        {remainingArticles.map(article => (
+          <a href={`/article/amp/${article.slug}`} class="latest-article">
+            <amp-img 
+              src={article.image} 
+              width="300" 
+              height="169" 
+              layout="responsive" 
+              alt={article.title}
+            ></amp-img>
+            
+            <div class="article-info">
+              <span class="category-tag">{article.category.name}</span>
+              <h3 class="article-title">{article.title}</h3>
+              
+              <div class="article-meta">
+                <span class="author-name">{article.author.name}</span>
+                <span class="publish-date">{formatDate(article.publishDate)}</span>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  </main>
+  
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-logo">
+        <span class="logo-text">chakrirchain</span>
+        <p class="footer-tagline">Modern insights for the digital age</p>
+      </div>
+      
+      <div class="footer-bottom">
+        <p class="copyright">&copy; {new Date().getFullYear()} ChakrirChain. All rights reserved.</p>
+        <p class="amp-link"><a href="/">View non-AMP version</a></p>
+      </div>
+    </div>
+  </footer>
+</AmpBaseLayout>
+
+<style amp-custom>
+  /* Featured Article */
+  .featured-article {
+    margin-bottom: 2rem;
+  }
+  
+  .featured-article .article-link {
+    display: block;
+    position: relative;
+    color: inherit;
+    text-decoration: none;
+  }
+  
+  .featured-article .article-info {
+    padding: 1rem 0;
+  }
+  
+  .featured-article .article-title {
+    font-size: 1.5rem;
+    margin: 0.5rem 0;
+    line-height: 1.3;
+  }
+  
+  .featured-article .article-excerpt {
+    margin: 0.5rem 0 1rem;
+    color: var(--color-text-light);
+  }
+  
+  /* Trending Section */
+  .trending-section {
+    margin-bottom: 2rem;
+  }
+  
+  .section-title {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  
+  .trending-articles {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  @media (min-width: 640px) {
+    .trending-articles {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  
+  .trending-article {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+  
+  .trending-article .article-info {
+    padding: 0.75rem 0;
+  }
+  
+  .trending-article .article-title {
+    font-size: 1.125rem;
+    margin: 0.5rem 0;
+    line-height: 1.3;
+  }
+  
+  /* Latest Section */
+  .latest-section {
+    margin-bottom: 2rem;
+  }
+  
+  .latest-articles {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  @media (min-width: 640px) {
+    .latest-articles {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  
+  @media (min-width: 768px) {
+    .latest-articles {
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+  }
+  
+  .latest-article {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+  
+  .latest-article .article-info {
+    padding: 0.75rem 0;
+  }
+  
+  .latest-article .article-title {
+    font-size: 1rem;
+    margin: 0.5rem 0;
+    line-height: 1.3;
+  }
+  
+  /* Common Article Styles */
+  .category-tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .article-meta {
+    display: flex;
+    font-size: 0.75rem;
+    color: var(--color-text-light);
+  }
+  
+  .author-name {
+    font-weight: 500;
+    margin-right: 0.5rem;
+  }
+  
+  .author-name:after {
+    content: "•";
+    margin-left: 0.5rem;
+  }
+  
+  /* Footer Styles */
+  .site-footer {
+    margin-top: 2rem;
+    padding: 1.5rem 1rem;
+    border-top: 1px solid var(--color-border);
+    text-align: center;
+  }
+  
+  .footer-logo {
+    margin-bottom: 1rem;
+  }
+  
+  .logo-text {
+    font-weight: bold;
+    font-size: 1.25rem;
+    color: var(--color-primary);
+  }
+  
+  .footer-tagline {
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+    margin: 0.5rem 0;
+  }
+  
+  .footer-bottom {
+    font-size: 0.75rem;
+    color: var(--color-text-light);
+  }
+  
+  .copyright {
+    margin-bottom: 0.5rem;
+  }
+  
+  .amp-link a {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+</style>

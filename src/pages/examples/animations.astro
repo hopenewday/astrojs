@@ -1,0 +1,730 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const title = 'Animation Examples';
+const description = 'Comprehensive demonstration of advanced animation techniques including GSAP animations, Lottie vector animations, scroll-triggered effects, and seamless page transitions';
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Animation Examples</h1>
+    
+    <!-- Introduction -->
+    <div class="mb-8 p-6 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg">
+      <p class="mb-4">
+        This page demonstrates advanced animation techniques that enhance user experience across the site.
+        All animations are optimized for performance and accessibility, with reduced motion options for users who prefer minimal animations.
+      </p>
+      <div class="text-sm bg-black/5 dark:bg-white/5 p-4 rounded">
+        <p class="font-semibold">Implementation details:</p>
+        <ul class="list-disc pl-5 mt-2 space-y-1">
+          <li>GSAP for complex, fluid animations</li>
+          <li>Lottie for high-quality vector animations</li>
+          <li>Scroll-triggered animations for engaging content reveals</li>
+          <li>Page transitions for seamless navigation</li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">GSAP Fade-In Animations</h2>
+      <p class="mb-4">
+        Elements below will fade in with different directions when they enter the viewport.
+        Scroll down to see them in action.
+      </p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+        <div class="fade-in-bottom p-6 border rounded-lg shadow-sm">
+          <h3 class="text-xl font-bold mb-2">Fade from Bottom</h3>
+          <p>This card fades in from the bottom when it enters the viewport.</p>
+        </div>
+        
+        <div class="fade-in-top p-6 border rounded-lg shadow-sm">
+          <h3 class="text-xl font-bold mb-2">Fade from Top</h3>
+          <p>This card fades in from the top when it enters the viewport.</p>
+        </div>
+        
+        <div class="fade-in-left p-6 border rounded-lg shadow-sm">
+          <h3 class="text-xl font-bold mb-2">Fade from Left</h3>
+          <p>This card fades in from the left when it enters the viewport.</p>
+        </div>
+        
+        <div class="fade-in-right p-6 border rounded-lg shadow-sm">
+          <h3 class="text-xl font-bold mb-2">Fade from Right</h3>
+          <p>This card fades in from the right when it enters the viewport.</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Advanced GSAP Animations -->
+    <div class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Advanced GSAP Animations</h2>
+      <p class="mb-4">
+        GSAP enables complex, fluid animations with precise control. The examples below showcase more sophisticated animation techniques.
+      </p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+        <div class="p-6 border rounded-lg shadow-sm">
+          <h3 class="text-xl font-bold mb-2">Staggered Animation</h3>
+          <p class="mb-4">Elements animate in sequence with staggered timing.</p>
+          <div class="stagger-container flex flex-wrap gap-2">
+            <div class="stagger-item w-8 h-8 bg-primary rounded"></div>
+            <div class="stagger-item w-8 h-8 bg-primary rounded"></div>
+            <div class="stagger-item w-8 h-8 bg-primary rounded"></div>
+            <div class="stagger-item w-8 h-8 bg-primary rounded"></div>
+            <div class="stagger-item w-8 h-8 bg-primary rounded"></div>
+            <div class="stagger-item w-8 h-8 bg-primary rounded"></div>
+            <div class="stagger-item w-8 h-8 bg-primary rounded"></div>
+            <div class="stagger-item w-8 h-8 bg-primary rounded"></div>
+          </div>
+          <button id="play-stagger" class="mt-4 px-3 py-1 bg-primary text-white text-sm rounded hover:bg-primary-dark transition-colors">
+            Replay Animation
+          </button>
+        </div>
+        
+        <div class="p-6 border rounded-lg shadow-sm">
+          <h3 class="text-xl font-bold mb-2">Morphing Animation</h3>
+          <p class="mb-4">Shape morphing demonstrates fluid transitions between states.</p>
+          <div class="flex justify-center">
+            <svg id="morph-svg" width="200" height="100" viewBox="0 0 200 100">
+              <path id="morph-path" fill="var(--color-primary)" d="M20,50 C20,30 50,30 50,50 C50,70 80,70 80,50 C80,30 110,30 110,50 C110,70 140,70 140,50 C140,30 170,30 170,50 C170,70 180,70 180,50"></path>
+            </svg>
+          </div>
+          <button id="toggle-morph" class="mt-4 px-3 py-1 bg-primary text-white text-sm rounded hover:bg-primary-dark transition-colors">
+            Toggle Shape
+          </button>
+        </div>
+        
+        <div class="p-6 border rounded-lg shadow-sm">
+          <h3 class="text-xl font-bold mb-2">Text Animation</h3>
+          <p class="mb-4">Character-by-character text animation for engaging reveals.</p>
+          <div id="text-animation" class="text-xl font-bold min-h-[60px] flex items-center justify-center">
+            <span class="text-char">A</span>
+            <span class="text-char">n</span>
+            <span class="text-char">i</span>
+            <span class="text-char">m</span>
+            <span class="text-char">a</span>
+            <span class="text-char">t</span>
+            <span class="text-char">e</span>
+            <span class="text-char">d</span>
+            <span class="text-char">&nbsp;</span>
+            <span class="text-char">T</span>
+            <span class="text-char">e</span>
+            <span class="text-char">x</span>
+            <span class="text-char">t</span>
+          </div>
+          <button id="play-text" class="mt-4 px-3 py-1 bg-primary text-white text-sm rounded hover:bg-primary-dark transition-colors">
+            Replay Animation
+          </button>
+        </div>
+        
+        <div class="p-6 border rounded-lg shadow-sm">
+          <h3 class="text-xl font-bold mb-2">3D Card Effect</h3>
+          <p class="mb-4">Hover to see a 3D rotation effect powered by GSAP.</p>
+          <div class="flex justify-center">
+            <div id="card-3d" class="w-48 h-64 bg-gradient-to-br from-primary to-secondary rounded-lg shadow-lg flex items-center justify-center text-white font-bold text-xl cursor-pointer">
+              Hover Me
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Parallax Effects</h2>
+      <p class="mb-4">
+        The images below demonstrate parallax scrolling effects. Scroll to see them move at different speeds.
+      </p>
+      
+      <div class="relative h-[400px] overflow-hidden rounded-lg mb-8">
+        <div class="parallax-bg absolute inset-0 bg-cover bg-center" style="background-image: url('/images/placeholder.svg'); height: 120%;"></div>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <h3 class="text-2xl font-bold text-white bg-black/50 px-4 py-2 rounded">Parallax Background</h3>
+        </div>
+      </div>
+      
+      <div class="flex justify-center space-x-8 mb-8">
+        <div class="parallax-slow w-24 h-24 bg-primary rounded-full flex items-center justify-center text-white font-bold">Slow</div>
+        <div class="parallax-medium w-24 h-24 bg-secondary rounded-full flex items-center justify-center text-white font-bold">Medium</div>
+        <div class="parallax-fast w-24 h-24 bg-accent rounded-full flex items-center justify-center text-white font-bold">Fast</div>
+      </div>
+    </div>
+    
+    <!-- Enhanced Scroll-Triggered Animations -->
+    <div class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Enhanced Scroll-Triggered Animations</h2>
+      <p class="mb-4">
+        These animations are triggered by scroll position, creating an engaging narrative as users explore the page.
+      </p>
+      
+      <div id="sequence-container" class="py-8">
+        <div class="sequence-item p-4 border rounded-lg shadow-sm mb-4">
+          <h3 class="text-xl font-bold">Step 1: Research</h3>
+          <p>Begin with thorough research and planning.</p>
+        </div>
+        
+        <div class="sequence-item p-4 border rounded-lg shadow-sm mb-4">
+          <h3 class="text-xl font-bold">Step 2: Design</h3>
+          <p>Create detailed designs and prototypes.</p>
+        </div>
+        
+        <div class="sequence-item p-4 border rounded-lg shadow-sm mb-4">
+          <h3 class="text-xl font-bold">Step 3: Develop</h3>
+          <p>Build the solution with clean, efficient code.</p>
+        </div>
+        
+        <div class="sequence-item p-4 border rounded-lg shadow-sm mb-4">
+          <h3 class="text-xl font-bold">Step 4: Test</h3>
+          <p>Thoroughly test all aspects of the solution.</p>
+        </div>
+        
+        <div class="sequence-item p-4 border rounded-lg shadow-sm">
+          <h3 class="text-xl font-bold">Step 5: Deploy</h3>
+          <p>Launch and monitor the solution in production.</p>
+        </div>
+      </div>
+      
+      <!-- Scroll Progress Indicator -->
+      <div class="mt-12 mb-8">
+        <h3 class="text-xl font-bold mb-4">Scroll Progress Indicator</h3>
+        <p class="mb-4">This progress bar shows your position as you scroll through this section.</p>
+        
+        <div id="scroll-section" class="relative border rounded-lg p-6 mb-4">
+          <div id="progress-container" class="absolute top-0 left-0 w-full h-1 bg-gray-200">
+            <div id="progress-bar" class="h-full bg-primary w-0"></div>
+          </div>
+          
+          <h4 class="text-lg font-bold mb-2">Scroll-Linked Content</h4>
+          <p class="mb-4">As you scroll through this section, the progress bar at the top will update.</p>
+          
+          <div class="space-y-4">
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam in dui mauris. Vivamus hendrerit arcu sed erat molestie vehicula. Sed auctor neque eu tellus rhoncus ut eleifend nibh porttitor.</p>
+            <p>Ut in nulla enim. Phasellus molestie magna non est bibendum non venenatis nisl tempor. Suspendisse dictum feugiat nisl ut dapibus. Mauris iaculis porttitor posuere.</p>
+            <p>Praesent id metus massa, ut blandit odio. Proin quis tortor orci. Etiam at risus et justo dignissim congue. Donec congue lacinia dui, a porttitor lectus condimentum laoreet.</p>
+            <p>Nunc eu ullamcorper orci. Quisque eget odio ac lectus vestibulum faucibus eget in metus. In pellentesque faucibus vestibulum. Nulla at nulla justo, eget luctus tortor.</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Reveal on Scroll -->
+      <div class="mt-12">
+        <h3 class="text-xl font-bold mb-4">Reveal on Scroll</h3>
+        <p class="mb-4">Elements reveal with different effects as you scroll down.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+          <div class="scroll-reveal fade p-6 border rounded-lg shadow-sm">
+            <h4 class="text-lg font-bold mb-2">Fade In</h4>
+            <p>This element fades in when scrolled into view.</p>
+          </div>
+          
+          <div class="scroll-reveal scale p-6 border rounded-lg shadow-sm">
+            <h4 class="text-lg font-bold mb-2">Scale In</h4>
+            <p>This element scales in when scrolled into view.</p>
+          </div>
+          
+          <div class="scroll-reveal rotate p-6 border rounded-lg shadow-sm">
+            <h4 class="text-lg font-bold mb-2">Rotate In</h4>
+            <p>This element rotates in when scrolled into view.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Page Transitions</h2>
+      <p class="mb-4">
+        Click the buttons below to see different page transition effects.
+        These transitions can be applied when navigating between pages for a seamless user experience.
+      </p>
+      
+      <div class="flex flex-wrap gap-4">
+        <button id="fade-transition" class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors">
+          Fade Transition
+        </button>
+        
+        <button id="slide-transition" class="px-4 py-2 bg-secondary text-white rounded hover:bg-secondary-dark transition-colors">
+          Slide Transition
+        </button>
+        
+        <button id="zoom-transition" class="px-4 py-2 bg-accent text-white rounded hover:bg-accent-dark transition-colors">
+          Zoom Transition
+        </button>
+        
+        <button id="flip-transition" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
+          Flip Transition
+        </button>
+      </div>
+      
+      <!-- Page Transition Integration -->
+      <div class="mt-8 p-4 bg-black/5 dark:bg-white/5 rounded-lg">
+        <h3 class="text-lg font-bold mb-2">Integration with Navigation</h3>
+        <p class="mb-4">Page transitions are integrated with the site's navigation system for seamless page changes.</p>
+        <pre class="text-xs bg-black/10 dark:bg-white/10 p-3 rounded overflow-x-auto"><code>// Example of navigation with page transition
+document.querySelectorAll('a[data-transition]').forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    const href = link.getAttribute('href');
+    const transitionType = link.dataset.transition || 'fade';
+    
+    // Play exit animation
+    const tl = createPageTransition({ 
+      type: transitionType, 
+      direction: 'out' 
+    });
+    
+    // Navigate after animation completes
+    tl.eventCallback('onComplete', () => {
+      window.location.href = href;
+    });
+  });
+});</code></pre>
+      </div>
+    </div>
+    
+    <div class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Lottie Animation</h2>
+      <p class="mb-4">
+        Lottie enables high-quality vector animations with small file sizes.
+        These animations are resolution-independent and can be controlled programmatically.
+      </p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Basic Lottie Example -->
+        <div class="p-6 border rounded-lg shadow-sm">
+          <h3 class="text-lg font-bold mb-2">Basic Lottie Animation</h3>
+          <p class="mb-4">A simple Lottie animation with playback controls.</p>
+          
+          <div class="flex justify-center">
+            <div id="lottie-container" class="w-64 h-64"></div>
+          </div>
+          
+          <div class="flex justify-center mt-4 space-x-4">
+            <button id="lottie-play" class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors">
+              Play
+            </button>
+            
+            <button id="lottie-pause" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
+              Pause
+            </button>
+            
+            <button id="lottie-stop" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
+              Stop
+            </button>
+          </div>
+        </div>
+        
+        <!-- Interactive Lottie Example -->
+        <div class="p-6 border rounded-lg shadow-sm">
+          <h3 class="text-lg font-bold mb-2">Interactive Lottie Animation</h3>
+          <p class="mb-4">This Lottie animation responds to user interaction.</p>
+          
+          <div class="flex justify-center">
+            <div id="interactive-lottie" class="w-64 h-64 cursor-pointer"></div>
+          </div>
+          
+          <div class="mt-4">
+            <p class="text-sm text-center">Click or hover over the animation to interact with it</p>
+            <div class="flex justify-center mt-2">
+              <input 
+                type="range" 
+                id="lottie-scrubber" 
+                min="0" 
+                max="100" 
+                value="0" 
+                class="w-full max-w-xs"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Performance Considerations -->
+    <div class="mt-16 mb-12 p-6 bg-black/5 dark:bg-white/5 rounded-lg">
+      <h2 class="text-2xl font-bold mb-4">Performance Considerations</h2>
+      <p class="mb-4">
+        All animations on this site are optimized for performance and accessibility.
+        Here are some of the techniques used:
+      </p>
+      
+      <ul class="list-disc pl-5 space-y-2">
+        <li>Animations use GPU-accelerated properties (transform, opacity) when possible</li>
+        <li>Scroll-linked animations are throttled to prevent performance issues</li>
+        <li>Animations respect user preferences for reduced motion</li>
+        <li>Lottie animations are loaded on-demand to reduce initial page load</li>
+        <li>GSAP animations are optimized with proper cleanup to prevent memory leaks</li>
+      </ul>
+      
+      <div class="mt-6">
+        <h3 class="text-lg font-bold mb-2">Reduced Motion Support</h3>
+        <p class="mb-4">
+          Users with the "prefers-reduced-motion" setting enabled will see simplified animations
+          or no animations, depending on the context.
+        </p>
+        <pre class="text-xs bg-black/10 dark:bg-white/10 p-3 rounded overflow-x-auto"><code>// Example of reduced motion detection
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Apply appropriate animations based on preference
+if (prefersReducedMotion) {
+  // Use simplified animations or none at all
+  gsap.set(elements, { clearProps: 'all' });
+} else {
+  // Apply full animations
+  createFadeInAnimation(elements, options);
+}</code></pre>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { 
+    initAnimations, 
+    createFadeInAnimation, 
+    createParallaxEffect, 
+    createScrollSequence, 
+    createPageTransition,
+    initLottieAnimation,
+    cleanupAnimations
+  } from '../../utils/animations';
+  
+  // Initialize animations when the DOM is ready
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Check for reduced motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
+    // Initialize GSAP and plugins
+    await initAnimations();
+    
+    // Set up fade-in animations
+    createFadeInAnimation('.fade-in-bottom', { from: 'bottom', distance: 50 });
+    createFadeInAnimation('.fade-in-top', { from: 'top', distance: 50 });
+    createFadeInAnimation('.fade-in-left', { from: 'left', distance: 50 });
+    createFadeInAnimation('.fade-in-right', { from: 'right', distance: 50 });
+    
+    // Set up parallax effects
+    createParallaxEffect('.parallax-bg', { speed: 0.3 });
+    createParallaxEffect('.parallax-slow', { speed: 0.1, direction: 'vertical' });
+    createParallaxEffect('.parallax-medium', { speed: 0.2, direction: 'vertical' });
+    createParallaxEffect('.parallax-fast', { speed: 0.4, direction: 'vertical' });
+    
+    // Set up scroll sequence
+    createScrollSequence('#sequence-container', '.sequence-item', {
+      animationType: 'fade',
+      stagger: 0.2,
+      scrub: true
+    });
+    
+    // Set up page transition buttons
+    document.getElementById('fade-transition')?.addEventListener('click', () => {
+      const tl = createPageTransition({ type: 'fade', direction: 'out' });
+      tl.eventCallback('onComplete', () => {
+        setTimeout(() => {
+          createPageTransition({ type: 'fade', direction: 'in' });
+        }, 500);
+      });
+    });
+    
+    document.getElementById('slide-transition')?.addEventListener('click', () => {
+      const tl = createPageTransition({ type: 'slide', direction: 'out' });
+      tl.eventCallback('onComplete', () => {
+        setTimeout(() => {
+          createPageTransition({ type: 'slide', direction: 'in' });
+        }, 500);
+      });
+    });
+    
+    document.getElementById('zoom-transition')?.addEventListener('click', () => {
+      const tl = createPageTransition({ type: 'zoom', direction: 'out' });
+      tl.eventCallback('onComplete', () => {
+        setTimeout(() => {
+          createPageTransition({ type: 'zoom', direction: 'in' });
+        }, 500);
+      });
+    });
+    
+    // New flip transition
+    document.getElementById('flip-transition')?.addEventListener('click', () => {
+      // Create a custom flip transition using GSAP
+      const gsapModule = await import('gsap');
+      const gsap = gsapModule.gsap;
+      
+      // Create a full-screen overlay
+      let overlay = document.querySelector('.page-transition-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'page-transition-overlay';
+        Object.assign(overlay.style, {
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: '#000',
+          zIndex: 9999,
+          pointerEvents: 'none',
+          opacity: 0,
+          visibility: 'visible',
+        });
+        document.body.appendChild(overlay);
+      }
+      
+      // Flip out
+      const tlOut = gsap.timeline();
+      tlOut.to(document.body, {
+        duration: 0.5,
+        rotationY: 90,
+        ease: 'power2.in',
+        onComplete: () => {
+          gsap.set(overlay, { opacity: 1 });
+          
+          // Flip in after delay
+          setTimeout(() => {
+            gsap.set(document.body, { rotationY: -90 });
+            const tlIn = gsap.timeline();
+            tlIn.to(document.body, {
+              duration: 0.5,
+              rotationY: 0,
+              ease: 'power2.out',
+            });
+            tlIn.to(overlay, {
+              opacity: 0,
+              duration: 0.3,
+              onComplete: () => {
+                overlay.style.visibility = 'hidden';
+              }
+            }, '-=0.3');
+          }, 500);
+        }
+      });
+    });
+    
+    // Initialize Lottie animation
+    // Using a sample animation URL - replace with your actual animation path
+    const lottieAnim = await initLottieAnimation('lottie-container', 'https://assets5.lottiefiles.com/packages/lf20_UJNc2t.json', {
+      autoplay: false,
+      loop: true
+    });
+    
+    // Set up Lottie control buttons
+    if (lottieAnim) {
+      document.getElementById('lottie-play')?.addEventListener('click', () => {
+        lottieAnim.play();
+      });
+      
+      document.getElementById('lottie-pause')?.addEventListener('click', () => {
+        lottieAnim.pause();
+      });
+      
+      document.getElementById('lottie-stop')?.addEventListener('click', () => {
+        lottieAnim.stop();
+      });
+    }
+    
+    // Initialize interactive Lottie animation
+    const interactiveLottie = await initLottieAnimation('interactive-lottie', 'https://assets2.lottiefiles.com/packages/lf20_khzniaya.json', {
+      autoplay: true,
+      loop: true
+    });
+    
+    if (interactiveLottie) {
+      // Make Lottie interactive
+      const lottieElement = document.getElementById('interactive-lottie');
+      const lottieScrubber = document.getElementById('lottie-scrubber');
+      
+      // Pause on hover
+      lottieElement?.addEventListener('mouseenter', () => {
+        interactiveLottie.pause();
+      });
+      
+      // Resume on mouse leave
+      lottieElement?.addEventListener('mouseleave', () => {
+        interactiveLottie.play();
+      });
+      
+      // Control animation with scrubber
+      lottieScrubber?.addEventListener('input', (e) => {
+        const target = e.target as HTMLInputElement;
+        const frame = (interactiveLottie.totalFrames * parseInt(target.value)) / 100;
+        interactiveLottie.goToAndStop(frame, true);
+      });
+      
+      // Update scrubber position when animation plays
+      interactiveLottie.addEventListener('enterFrame', () => {
+        if (lottieScrubber && interactiveLottie.isLoaded) {
+          const currentFrame = interactiveLottie.currentFrame;
+          const totalFrames = interactiveLottie.totalFrames;
+          const percentage = (currentFrame / totalFrames) * 100;
+          lottieScrubber.value = percentage.toString();
+        }
+      });
+    }
+    
+    // Set up advanced GSAP animations
+    if (!prefersReducedMotion) {
+      setupAdvancedAnimations();
+    }
+    
+    // Set up scroll-triggered animations
+    setupScrollAnimations();
+  });
+  
+  // Set up advanced GSAP animations
+  async function setupAdvancedAnimations() {
+    const gsapModule = await import('gsap');
+    const gsap = gsapModule.gsap;
+    
+    // Staggered animation
+      const staggerItems = document.querySelectorAll('.stagger-item');
+      gsap.set(staggerItems, { scale: 0, opacity: 0 });
+      
+      function playStaggerAnimation() {
+        gsap.to(staggerItems, {
+          scale: 1,
+          opacity: 1,
+          duration: 0.5,
+          stagger: 0.1,
+          ease: 'back.out(1.7)',
+          clearProps: 'all'
+        });
+      }
+      
+      // Play stagger animation initially and on button click
+      playStaggerAnimation();
+      document.getElementById('play-stagger')?.addEventListener('click', () => {
+        gsap.set(staggerItems, { scale: 0, opacity: 0 });
+        playStaggerAnimation();
+      });
+      
+      // Morphing animation
+      const morphPath = document.getElementById('morph-path');
+      let morphState = 0;
+      
+      const morphShapes = [
+        'M20,50 C20,30 50,30 50,50 C50,70 80,70 80,50 C80,30 110,30 110,50 C110,70 140,70 140,50 C140,30 170,30 170,50 C170,70 180,70 180,50',
+        'M20,50 C20,80 50,80 50,50 C50,20 80,20 80,50 C80,80 110,80 110,50 C110,20 140,20 140,50 C140,80 170,80 170,50 C170,20 180,20 180,50'
+      ];
+      
+      document.getElementById('toggle-morph')?.addEventListener('click', () => {
+        morphState = morphState === 0 ? 1 : 0;
+        gsap.to(morphPath, {
+          attr: { d: morphShapes[morphState] },
+          duration: 1,
+          ease: 'power2.inOut'
+        });
+      });
+      
+      // Text animation
+      const textChars = document.querySelectorAll('.text-char');
+      gsap.set(textChars, { opacity: 0, y: 20 });
+      
+      function playTextAnimation() {
+        gsap.to(textChars, {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          stagger: 0.05,
+          ease: 'back.out',
+          clearProps: 'all'
+        });
+      }
+      
+      // Play text animation initially and on button click
+      playTextAnimation();
+      document.getElementById('play-text')?.addEventListener('click', () => {
+        gsap.set(textChars, { opacity: 0, y: 20 });
+        playTextAnimation();
+      });
+      
+      // 3D Card effect
+      const card = document.getElementById('card-3d');
+      if (card) {
+        card.addEventListener('mousemove', (e) => {
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          
+          const xPercent = (x / rect.width - 0.5) * 2; // -1 to 1
+          const yPercent = (y / rect.height - 0.5) * 2; // -1 to 1
+          
+          gsap.to(card, {
+            rotationY: xPercent * 10,
+            rotationX: -yPercent * 10,
+            transformPerspective: 500,
+            duration: 0.5,
+            ease: 'power1.out'
+          });
+        });
+        
+        card.addEventListener('mouseleave', () => {
+          gsap.to(card, {
+            rotationY: 0,
+            rotationX: 0,
+            duration: 0.5,
+            ease: 'power1.out'
+          });
+        });
+      }
+    }
+    
+    // Set up scroll-triggered animations
+    function setupScrollAnimations() {
+      // Progress bar for scroll section
+      const scrollSection = document.getElementById('scroll-section');
+      const progressBar = document.getElementById('progress-bar');
+      
+      if (scrollSection && progressBar) {
+        const scrollTrigger = ScrollTrigger.create({
+          trigger: scrollSection,
+          start: 'top 80%',
+          end: 'bottom 20%',
+          onUpdate: (self) => {
+            gsap.to(progressBar, {
+              width: `${self.progress * 100}%`,
+              duration: 0.1,
+              ease: 'none'
+            });
+          }
+        });
+      }
+      
+      // Reveal animations
+      const revealElements = document.querySelectorAll('.scroll-reveal');
+      
+      revealElements.forEach(element => {
+        const type = element.classList.contains('fade') ? 'fade' :
+                    element.classList.contains('scale') ? 'scale' :
+                    element.classList.contains('rotate') ? 'rotate' : 'fade';
+        
+        let fromVars = { opacity: 0 };
+        
+        if (type === 'scale') {
+          fromVars = { ...fromVars, scale: 0.8 };
+        } else if (type === 'rotate') {
+          fromVars = { ...fromVars, rotation: -10 };
+        }
+        
+        gsap.set(element, fromVars);
+        
+        ScrollTrigger.create({
+          trigger: element,
+          start: 'top 80%',
+          onEnter: () => {
+            gsap.to(element, {
+              opacity: 1,
+              scale: type === 'scale' ? 1 : undefined,
+              rotation: type === 'rotate' ? 0 : undefined,
+              duration: 0.8,
+              ease: 'power2.out'
+            });
+          },
+          once: true
+        });
+      });
+    }
+    
+    // Clean up animations when the component is unmounted
+    document.addEventListener('astro:before-swap', () => {
+      cleanupAnimations();
+    });
+</script>

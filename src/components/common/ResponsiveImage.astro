@@ -1,0 +1,142 @@
+---
+/**
+ * Responsive Image component with CDN failover
+ * Provides responsive images with srcset and sizes attributes
+ * Automatically switches between ImageKit and Tebi S3 storage
+ * based on service availability
+ * 
+ * Features:
+ * - Responsive images with srcset and sizes
+ * - Automatic CDN failover
+ * - Optimized image loading
+ * - AVIF format support with automatic detection
+ */
+import { getResponsiveImageAttributes } from '../../lib/media';
+import { detectAvifSupport } from '../../utils/imageOptimizer';
+
+interface Props {
+  src: string;
+  alt: string;
+  widths: number[];
+  sizes: string;
+  baseWidth?: number;
+  baseHeight?: number;
+  className?: string;
+  loading?: 'lazy' | 'eager';
+  decoding?: 'async' | 'sync' | 'auto';
+  aspectRatio?: string;
+  quality?: number;
+  format?: 'auto' | 'webp' | 'avif' | 'jpg' | 'png';
+  focus?: 'center' | 'top' | 'left' | 'bottom' | 'right' | 'top_left' | 'top_right' | 'bottom_left' | 'bottom_right';
+  lqip?: boolean;
+  fetchpriority?: 'high' | 'low' | 'auto';
+}
+
+const {
+  src,
+  alt,
+  widths,
+  sizes,
+  baseWidth,
+  baseHeight,
+  className = '',
+  loading = 'lazy',
+  decoding = 'async',
+  aspectRatio,
+  quality = 80,
+  format = 'auto',
+  focus = 'center',
+  lqip = true,
+  fetchpriority = 'auto',
+} = Astro.props;
+
+// Check for AVIF support if format is 'auto'
+let requestedFormat = format;
+if (format === 'auto' && typeof window !== 'undefined') {
+  try {
+    const avifSupported = await detectAvifSupport();
+    requestedFormat = avifSupported ? 'avif' : 'webp';
+    console.log(`AVIF support detected: ${avifSupported}, using format: ${requestedFormat}`);
+  } catch (error) {
+    console.error('Error detecting AVIF support:', error);
+    requestedFormat = 'webp'; // Fallback to WebP if detection fails
+  }
+}
+
+// Get responsive image attributes with automatic CDN failover
+const {
+  src: imageSrc,
+  srcset,
+  sizes: sizesAttr,
+  lqip: lqipUrl,
+  width: imageWidth,
+  height: imageHeight,
+} = await getResponsiveImageAttributes({
+  src,
+  alt,
+  widths,
+  sizes,
+  baseWidth,
+  baseHeight,
+  quality,
+  format: requestedFormat,
+  aspectRatio,
+  focus,
+  lqip,
+});
+
+// Generate unique ID for this image if using LQIP
+const id = lqipUrl ? `img-${Math.random().toString(36).substring(2, 11)}` : undefined;
+
+// Inline styles for blur-up effect
+const blurUpStyles = lqipUrl ? `
+  #${id} {
+    transition: filter 0.5s ease-out;
+    filter: blur(10px);
+  }
+  #${id}.loaded {
+    filter: blur(0);
+  }
+` : '';
+---
+
+{lqipUrl && (
+  <style set:html={blurUpStyles}></style>
+)}
+
+<img
+  id={id}
+  src={imageSrc}
+  srcset={srcset}
+  sizes={sizesAttr}
+  alt={alt}
+  class={className}
+  loading={loading}
+  decoding={decoding}
+  width={imageWidth}
+  height={imageHeight}
+  fetchpriority={fetchpriority}
+/>
+
+{lqipUrl && (
+  <script define:vars={{ id, lqipUrl }}>
+    // Create new image to preload the full resolution version
+    const img = document.getElementById(id);
+    if (img) {
+      // Set initial background image to LQIP
+      img.style.backgroundImage = `url(${lqipUrl})`;
+      img.style.backgroundSize = 'cover';
+      img.style.backgroundPosition = 'center';
+      
+      // When the main image loads, remove blur
+      img.onload = () => {
+        img.classList.add('loaded');
+      };
+      
+      // If image already loaded (from cache), add loaded class immediately
+      if (img.complete) {
+        img.classList.add('loaded');
+      }
+    }
+  </script>
+)}

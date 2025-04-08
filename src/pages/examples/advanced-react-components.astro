@@ -1,0 +1,95 @@
+---
+/**
+ * Example page demonstrating advanced React components in Astro.js
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ReactCounter from '../../components/common/ReactCounter.tsx';
+import ReactContextDemo from '../../components/common/ReactContextDemo.tsx';
+import ReactHooksDemo from '../../components/common/ReactHooksDemo.tsx';
+import ReactFetchDemo from '../../components/common/ReactFetchDemo.tsx';
+
+const title = 'Advanced React Components Example';
+const description = 'This page demonstrates how to use advanced React components with TypeScript within Astro.js';
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">{title}</h1>
+    
+    <p class="mb-8">
+      This page demonstrates how to use advanced React components with TypeScript within Astro.js.
+      The examples below showcase various React patterns and features that can be used in an Astro.js project.
+    </p>
+    
+    <div class="space-y-10">
+      <!-- TypeScript React Counter with Themes -->
+      <section class="mb-8">
+        <h2 class="text-2xl font-bold mb-4">TypeScript React Component with Themes</h2>
+        <p class="mb-4">
+          This example demonstrates a React component written in TypeScript with theme support.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <ReactCounter client:load initialCount={5} theme="default" label="Default Theme" />
+          <ReactCounter client:load initialCount={10} theme="primary" label="Primary Theme" />
+          <ReactCounter client:load initialCount={15} theme="secondary" label="Secondary Theme" />
+          <ReactCounter client:load initialCount={20} theme="dark" label="Dark Theme" />
+        </div>
+        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <h3 class="text-lg font-bold mb-2">TypeScript Benefits</h3>
+          <ul class="list-disc pl-6 space-y-1">
+            <li>Strong typing for props and state</li>
+            <li>Better IDE support with autocompletion</li>
+            <li>Catch errors during development</li>
+            <li>Self-documenting code with interfaces</li>
+          </ul>
+        </div>
+      </section>
+      
+      <!-- React Context API Demo -->
+      <section class="mb-8">
+        <h2 class="text-2xl font-bold mb-4">React Context API for State Management</h2>
+        <p class="mb-4">
+          This example demonstrates using React Context API for state management across components.
+        </p>
+        <ReactContextDemo client:load initialCount={0} />
+      </section>
+      
+      <!-- React Hooks Demo -->
+      <section class="mb-8">
+        <h2 class="text-2xl font-bold mb-4">React Hooks Usage</h2>
+        <p class="mb-4">
+          This example demonstrates using various React hooks (useState, useEffect, useCallback, useMemo).
+        </p>
+        <ReactHooksDemo client:load />
+      </section>
+      
+      <!-- React Fetch Demo -->
+      <section class="mb-8">
+        <h2 class="text-2xl font-bold mb-4">Data Fetching with React</h2>
+        <p class="mb-4">
+          This example demonstrates fetching and displaying data from an external API.
+        </p>
+        <ReactFetchDemo client:load postLimit={3} />
+      </section>
+      
+      <!-- Hydration Directives -->
+      <section class="mb-8">
+        <h2 class="text-2xl font-bold mb-4">Client Hydration Directives</h2>
+        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <h3 class="text-lg font-bold mb-2">Available client directives:</h3>
+          <ul class="list-disc pl-6 space-y-2">
+            <li><code class="bg-gray-100 px-1 rounded">client:load</code> - Hydrate the component as soon as the page loads</li>
+            <li><code class="bg-gray-100 px-1 rounded">client:idle</code> - Hydrate when the browser is idle</li>
+            <li><code class="bg-gray-100 px-1 rounded">client:visible</code> - Hydrate when the component is visible in the viewport</li>
+            <li><code class="bg-gray-100 px-1 rounded">client:media="(query)"</code> - Hydrate when a CSS media query is matched</li>
+            <li><code class="bg-gray-100 px-1 rounded">client:only="react"</code> - Only render on the client, skipping server-side rendering</li>
+          </ul>
+          <p class="mt-4">
+            Choose the appropriate directive based on when you want the component to be interactive.
+            This can significantly improve performance by deferring hydration until necessary.
+          </p>
+        </div>
+      </section>
+    </div>
+  </div>
+</BaseLayout>

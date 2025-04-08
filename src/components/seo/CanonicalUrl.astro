@@ -1,0 +1,52 @@
+---
+/**
+ * CanonicalUrl.astro - URL normalization component
+ * 
+ * This component generates the canonical URL tag to prevent duplicate content issues
+ * and ensure search engines index the preferred version of a page.
+ */
+
+interface Props {
+  url?: string;
+  trailingSlash?: boolean;
+  removeQueryParams?: boolean;
+  removeFallbackLocale?: boolean;
+  fallbackLocale?: string;
+}
+
+const {
+  url = Astro.url.href,
+  trailingSlash = false,
+  removeQueryParams = true,
+  removeFallbackLocale = true,
+  fallbackLocale = 'en',
+} = Astro.props;
+
+// Parse the URL
+let canonicalURL = new URL(url);
+
+// Remove query parameters if specified
+if (removeQueryParams && canonicalURL.search) {
+  canonicalURL.search = '';
+}
+
+// Handle trailing slash
+if (trailingSlash && !canonicalURL.pathname.endsWith('/')) {
+  canonicalURL.pathname = `${canonicalURL.pathname}/`;
+} else if (!trailingSlash && canonicalURL.pathname.endsWith('/') && canonicalURL.pathname !== '/') {
+  canonicalURL.pathname = canonicalURL.pathname.slice(0, -1);
+}
+
+// Remove fallback locale from path if specified
+if (removeFallbackLocale && canonicalURL.pathname.startsWith(`/${fallbackLocale}/`)) {
+  canonicalURL.pathname = canonicalURL.pathname.replace(`/${fallbackLocale}`, '');
+  if (canonicalURL.pathname === '') {
+    canonicalURL.pathname = '/';
+  }
+}
+
+// Convert to string
+const canonicalURLString = canonicalURL.toString();
+---
+
+<link rel="canonical" href={canonicalURLString} />

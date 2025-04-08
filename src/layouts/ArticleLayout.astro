@@ -1,0 +1,1376 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import { formatDate, formatRelativeTime, calculateReadingTime, formatReadingTime } from "@utils/dateFormatters";
+import { getImageKitUrl } from "@utils/imageHelpers";
+import { generateArticleSchema } from "@utils/schemaGenerators";
+import Comments from "../components/common/Comments.astro";
+
+interface Author {
+  name: string;
+  slug: string;
+  avatar?: string;
+  bio?: string;
+  socialLinks?: {
+    twitter?: string;
+    linkedin?: string;
+    website?: string;
+  };
+}
+
+interface Category {
+  name: string;
+  slug: string;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  image: string;
+  publishDate: Date;
+  modifiedDate?: Date;
+  author: Author;
+  category: Category;
+  tags?: string[];
+  content: string;
+  relatedArticles?: any[];
+  estimatedReadingTime?: number;
+  showTableOfContents?: boolean;
+  showComments?: boolean;
+}
+
+const {
+  title,
+  description,
+  image,
+  publishDate,
+  modifiedDate,
+  author,
+  category,
+  tags = [],
+  content,
+  relatedArticles = [],
+  estimatedReadingTime = calculateReadingTime(content),
+  showTableOfContents = true,
+  showComments = true,
+} = Astro.props;
+
+// Format dates
+const formattedPublishDate = formatDate(publishDate);
+const relativePublishDate = formatRelativeTime(publishDate);
+const formattedModifiedDate = modifiedDate ? formatDate(modifiedDate) : null;
+
+// Reading time
+const readingTime = formatReadingTime(estimatedReadingTime);
+
+// Generate category-specific theme class
+const getCategoryThemeClass = (categorySlug: string) => {
+  const themes = {
+    tech: 'theme-tech',
+    culture: 'theme-culture',
+    science: 'theme-science',
+    business: 'theme-business',
+    politics: 'theme-politics',
+  };
+  
+  return themes[categorySlug as keyof typeof themes] || '';
+};
+
+// Generate structured data for SEO
+const articleSchema = generateArticleSchema({
+  headline: title,
+  description,
+  image: new URL(image, Astro.site).toString(),
+  datePublished: new Date(publishDate).toISOString(),
+  dateModified: modifiedDate ? new Date(modifiedDate).toISOString() : new Date(publishDate).toISOString(),
+  author: {
+    name: author.name,
+    url: new URL(`/author/${author.slug}`, Astro.site).toString(),
+    image: author.avatar ? new URL(author.avatar, Astro.site).toString() : undefined,
+  },
+  publisher: {
+    name: "ChakrirChain",
+    url: new URL("/", Astro.site).toString(),
+    logo: new URL("/images/logo.png", Astro.site).toString(),
+  },
+  url: Astro.url.toString(),
+  keywords: tags,
+  articleSection: category.name,
+  wordCount: content.split(/\s+/).length,
+});
+
+// Extract headings for table of contents
+const headings = content.match(/<h[2-3][^>]*>(.+?)<\/h[2-3]>/g)?.map(heading => {
+  const level = heading.match(/<h([2-3])/)?.[1];
+  const text = heading.replace(/<[^>]+>/g, '');
+  const id = text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+  return { level, text, id };
+}) || [];
+---
+
+<BaseLayout 
+  title={title}
+  description={description}
+  image={image}
+  pubDate={publishDate}
+  modDate={modifiedDate}
+  author={author.name}
+  ogType="article"
+  structuredData={articleSchema}
+>
+  <link slot="head" rel="amphtml" href={new URL(`/article/amp/${Astro.params.slug || ''}`, Astro.site).toString()} />
+>
+  <div class={`article-container ${getCategoryThemeClass(category.slug)}`}>
+    <!-- Hero Section -->
+    <div class="article-hero">
+      <div class="hero-image-container">
+        <picture>
+          <!-- Mobile image (portrait crop) -->
+          <source 
+            media="(max-width: 767px)" 
+            srcset={`${getImageKitUrl(image, { width: 600, aspectRatio: '4:5', crop: 'force', focus: 'center' })} 600w`}
+          />
+          <!-- Desktop image (landscape) -->
+          <source 
+            media="(min-width: 768px)" 
+            srcset={`
+              ${getImageKitUrl(image, { width: 1200, quality: 80 })} 1200w,
+              ${getImageKitUrl(image, { width: 1600, quality: 80 })} 1600w,
+              ${getImageKitUrl(image, { width: 2000, quality: 80 })} 2000w
+            `}
+            sizes="(min-width: 1280px) 1200px, 100vw"
+          />
+          <img 
+            src={getImageKitUrl(image, { width: 1200, quality: 80 })}
+            alt={title}
+            width="1200"
+            height="675"
+            class="hero-image"
+          />
+        </picture>
+        
+        <!-- Category-themed gradient overlay -->
+        <div class="gradient-overlay"></div>
+      </div>
+      
+      <!-- Image caption if available -->
+      <figcaption class="image-caption">
+        Photo credit: ChakrirChain Media
+      </figcaption>
+    </div>
+    
+    <!-- Article Header -->
+    <header class="article-header">
+      <div class="category-link-container">
+        <a href={`/category/${category.slug}`} class="category-link">
+          {category.name}
+        </a>
+      </div>
+      
+      <h1 class="article-title">{title}</h1>
+      
+      <p class="article-description">{description}</p>
+      
+      <!-- Article Metadata -->
+      <div class="article-meta">
+        <!-- Author Info -->
+        <div class="author-info">
+          {author.avatar && (
+            <a href={`/author/${author.slug}`} class="author-avatar-link">
+              <img 
+                src={getImageKitUrl(author.avatar, { width: 48, height: 48 })}
+                alt={author.name}
+                width="48"
+                height="48"
+                class="author-avatar"
+              />
+            </a>
+          )}
+          
+          <div class="author-details">
+            <a href={`/author/${author.slug}`} class="author-name">
+              {author.name}
+            </a>
+            
+            <div class="publish-info">
+              <time datetime={new Date(publishDate).toISOString()} title={formattedPublishDate}>
+                {relativePublishDate}
+              </time>
+              
+              {modifiedDate && (
+                <span class="modified-date" title={formattedModifiedDate}>
+                  (Updated)
+                </span>
+              )}
+              
+              <span class="reading-time">{readingTime}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Share Buttons -->
+        <div class="share-buttons">
+          <button type="button" class="share-button" data-share="twitter" aria-label="Share on Twitter">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+            </svg>
+            <span class="share-text">Tweet</span>
+          </button>
+          
+          <button type="button" class="share-button" data-share="facebook" aria-label="Share on Facebook">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+            </svg>
+            <span class="share-text">Share</span>
+          </button>
+          
+          <button type="button" class="share-button" data-share="linkedin" aria-label="Share on LinkedIn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+              <rect x="2" y="9" width="4" height="12"></rect>
+              <circle cx="4" cy="4" r="2"></circle>
+            </svg>
+            <span class="share-text">Post</span>
+          </button>
+          
+          <button type="button" class="share-button" data-share="copy" aria-label="Copy link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            <span class="share-text">Copy</span>
+          </button>
+          
+          <button type="button" class="save-button" data-article-url={Astro.url.pathname} aria-label="Save article">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="bookmark-icon">
+              <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path>
+            </svg>
+            <span class="save-text">Save</span>
+          </button>
+        </div>
+      </div>
+    </header>
+    
+    <!-- Table of Contents -->
+    {showTableOfContents && headings.length > 0 && (
+      <div class="table-of-contents">
+        <h2 class="toc-title">Table of Contents</h2>
+        <ul class="toc-list">
+          {headings.map(heading => (
+            <li class={`toc-item toc-level-${heading.level}`}>
+              <a href={`#${heading.id}`} class="toc-link">{heading.text}</a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+    
+    <!-- Article Content -->
+    <div class="article-content">
+      <!-- First paragraph with drop cap -->
+      <div class="content-wrapper" set:html={content} />
+    </div>
+    
+    <!-- Tags -->
+    {tags.length > 0 && (
+      <div class="article-tags">
+        <h2 class="tags-title">Related Topics</h2>
+        <div class="tags-list">
+          {tags.map(tag => (
+            <a href={`/tag/${tag.toLowerCase().replace(/\s+/g, '-')}`} class="tag-link">
+              {tag}
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+    
+    <!-- Author Bio -->
+    {author.bio && (
+      <div class="author-bio">
+        <div class="author-bio-header">
+          {author.avatar && (
+            <img 
+              src={getImageKitUrl(author.avatar, { width: 80, height: 80 })}
+              alt={author.name}
+              width="80"
+              height="80"
+              class="author-bio-avatar"
+            />
+          )}
+          
+          <div class="author-bio-info">
+            <h3 class="author-bio-name">{author.name}</h3>
+            
+            {author.socialLinks && (
+              <div class="author-social-links">
+                {author.socialLinks.twitter && (
+                  <a href={author.socialLinks.twitter} class="social-link" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+                    </svg>
+                  </a>
+                )}
+                
+                {author.socialLinks.linkedin && (
+                  <a href={author.socialLinks.linkedin} class="social-link" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                      <rect x="2" y="9" width="4" height="12"></rect>
+                      <circle cx="4" cy="4" r="2"></circle>
+                    </svg>
+                  </a>
+                )}
+                
+                {author.socialLinks.website && (
+                  <a href={author.socialLinks.website} class="social-link" target="_blank" rel="noopener noreferrer" aria-label="Website">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="2" y1="12" x2="22" y2="12"></line>
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                    </svg>
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <p class="author-bio-text">{author.bio}</p>
+        
+        <a href={`/author/${author.slug}`} class="author-more-link">
+          More from {author.name}
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"></path>
+            <path d="m12 5 7 7-7 7"></path>
+          </svg>
+        </a>
+      </div>
+    )}
+    
+    <!-- Related Articles -->
+    {relatedArticles.length > 0 && (
+      <div class="related-articles">
+        <h2 class="related-title">Related Articles</h2>
+        
+        <div class="related-grid">
+          {relatedArticles.map(article => (
+            <a href={`/article/${article.slug}`} class="related-article">
+              <div class="related-image-container">
+                <img 
+                  src={getImageKitUrl(article.image, { width: 300, height: 200, crop: 'at_least' })}
+                  alt={article.title}
+                  width="300"
+                  height="200"
+                  loading="lazy"
+                  class="related-image"
+                />
+              </div>
+              
+              <div class="related-content">
+                <h3 class="related-article-title">{article.title}</h3>
+                <span class="related-article-date">{formatDate(article.publishDate)}</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+    
+    <!-- Comments Section -->
+    {showComments && (
+      <div class="comments-section">
+        <Comments 
+          pageId={Astro.url.pathname}
+          pageTitle={title}
+          pageUrl={Astro.url.href}
+          theme="auto"
+        />
+      </div>
+    )}
+    
+    <!-- Next Article Teaser -->
+    {relatedArticles.length > 0 && (
+      <div class="next-article-teaser">
+        <a href={`/article/${relatedArticles[0].slug}`} class="next-article-link">
+          <div class="next-article-progress">
+            <div class="progress-bar"></div>
+          </div>
+          
+          <div class="next-article-content">
+            <span class="next-label">Read Next</span>
+            <h3 class="next-article-title">{relatedArticles[0].title}</h3>
+          </div>
+        </a>
+      </div>
+    )}
+  </div>
+</BaseLayout>
+
+<script>
+  // Client-side functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    // Share buttons functionality
+    const shareButtons = document.querySelectorAll('.share-button');
+    
+    shareButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const shareType = button.getAttribute('data-share');
+        const url = window.location.href;
+        const title = document.title;
+        
+        switch (shareType) {
+          case 'twitter':
+            window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank');
+            break;
+          case 'facebook':
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+            break;
+          case 'linkedin':
+            window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
+            break;
+          case 'copy':
+            navigator.clipboard.writeText(url).then(() => {
+              // Show copied confirmation
+              const shareText = button.querySelector('.share-text');
+              const originalText = shareText.textContent;
+              shareText.textContent = 'Copied!';
+              
+              setTimeout(() => {
+                shareText.textContent = originalText;
+              }, 2000);
+            });
+            break;
+        }
+      });
+    });
+    
+    // Save article functionality
+    const saveButton = document.querySelector('.save-button');
+    
+    if (saveButton) {
+      const articleUrl = saveButton.getAttribute('data-article-url');
+      const savedArticles = JSON.parse(localStorage.getItem('savedArticles') || '[]');
+      
+      // Check if already saved
+      if (savedArticles.some(article => article.url === articleUrl)) {
+        saveButton.classList.add('saved');
+        saveButton.querySelector('.save-text').textContent = 'Saved';
+      }
+      
+      saveButton.addEventListener('click', () => {
+        const isSaved = saveButton.classList.contains('saved');
+        const articleTitle = document.querySelector('.article-title').textContent;
+        
+        if (isSaved) {
+          // Remove from saved
+          const updatedArticles = savedArticles.filter(article => article.url !== articleUrl);
+          localStorage.setItem('savedArticles', JSON.stringify(updatedArticles));
+          
+          saveButton.classList.remove('saved');
+          saveButton.querySelector('.save-text').textContent = 'Save';
+        } else {
+          // Add to saved
+          savedArticles.push({
+            url: articleUrl,
+            title: articleTitle,
+            savedAt: new Date().toISOString()
+          });
+          
+          localStorage.setItem('savedArticles', JSON.stringify(savedArticles));
+          
+          saveButton.classList.add('saved');
+          saveButton.querySelector('.save-text').textContent = 'Saved';
+        }
+      });
+    }
+    
+    // Table of contents highlighting
+    const observeHeadings = () => {
+      const headings = Array.from(document.querySelectorAll('h2[id], h3[id]'));
+      const tocLinks = document.querySelectorAll('.toc-link');
+      
+      if (headings.length === 0 || tocLinks.length === 0) return;
+      
+      const observerOptions = {
+        rootMargin: '-100px 0px -80% 0px',
+        threshold: 0
+      };
+      
+      // Initialize scroll animations for article content
+if (typeof window !== 'undefined') {
+  import('../utils/scrollAnimations.ts').then(module => {
+    module.setupArticleSectionAnimations();
+  }).catch(error => {
+    console.error('Failed to initialize article animations:', error);
+  });
+}
+
+const headingObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          const id = entry.target.getAttribute('id');
+          const tocLink = document.querySelector(`.toc-link[href="#${id}"]`);
+          
+          if (tocLink) {
+            if (entry.isIntersecting) {
+              // Remove active class from all links
+              tocLinks.forEach(link => link.classList.remove('active'));
+              // Add active class to current link
+              tocLink.classList.add('active');
+            }
+          }
+        });
+      }, observerOptions);
+      
+      headings.forEach(heading => {
+        headingObserver.observe(heading);
+      });
+    };
+    
+    // Initialize heading observation
+    observeHeadings();
+    
+    // Next article progress bar
+    const updateProgressBar = () => {
+      const progressBar = document.querySelector('.progress-bar');
+      if (!progressBar) return;
+      
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      
+      // Calculate how far the user has scrolled as a percentage
+      const scrollPercentage = (scrollTop / (documentHeight - windowHeight)) * 100;
+      
+      // Update the progress bar width
+      progressBar.style.width = `${Math.min(scrollPercentage, 100)}%`;
+    };
+    
+    // Listen for scroll events
+    window.addEventListener('scroll', updateProgressBar);
+    
+    // Initialize progress bar
+    updateProgressBar();
+    
+    // Comments are now handled by the Comments component
+    // The component handles lazy loading and theme detection
+  });
+</script>
+
+<style>
+  /* Article Container */
+  .article-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  /* Hero Section */
+  .article-hero {
+    margin: 2rem 0;
+    position: relative;
+  }
+  
+  .hero-image-container {
+    position: relative;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+  }
+  
+  @media (max-width: 767px) {
+    .hero-image-container {
+      aspect-ratio: 4/5;
+    }
+  }
+  
+  .hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .gradient-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 100%);
+    pointer-events: none;
+  }
+  
+  .theme-tech .gradient-overlay {
+    background: linear-gradient(to bottom, rgba(59,130,246,0.1) 0%, rgba(29,78,216,0.3) 100%);
+  }
+  
+  .theme-culture .gradient-overlay {
+    background: linear-gradient(to bottom, rgba(139,92,246,0.1) 0%, rgba(109,40,217,0.3) 100%);
+  }
+  
+  .theme-science .gradient-overlay {
+    background: linear-gradient(to bottom, rgba(34,197,94,0.1) 0%, rgba(21,128,61,0.3) 100%);
+  }
+  
+  .image-caption {
+    font-size: 0.875rem;
+    color: #6b7280;
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+  
+  /* Article Header */
+  .article-header {
+    max-width: 800px;
+    margin: 0 auto 2rem;
+    padding: 0 1rem;
+  }
+  
+  .category-link-container {
+    margin-bottom: 1rem;
+  }
+  
+  .category-link {
+    display: inline-block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #3b82f6;
+    text-decoration: none;
+    letter-spacing: 0.05em;
+  }
+  
+  .theme-tech .category-link {
+    color: #3b82f6;
+  }
+  
+  .theme-culture .category-link {
+    color: #8b5cf6;
+  }
+  
+  .theme-science .category-link {
+    color: #22c55e;
+  }
+  
+  .article-title {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 0 0 1rem;
+    color: #1f2937;
+  }
+  
+  @media (min-width: 768px) {
+    .article-title {
+      font-size: 2.5rem;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .article-title {
+      font-size: 3rem;
+    }
+  }
+  
+  .article-description {
+    font-size: 1.25rem;
+    line-height: 1.5;
+    color: #4b5563;
+    margin: 0 0 1.5rem;
+  }
+  
+  /* Article Metadata */
+  .article-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+  }
+  
+  .author-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .author-details {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .author-name {
+    font-weight: 600;
+    color: #1f2937;
+    text-decoration: none;
+  }
+  
+  .author-name:hover {
+    text-decoration: underline;
+  }
+  
+  .publish-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    flex-wrap: wrap;
+  }
+  
+  .modified-date {
+    font-style: italic;
+  }
+  
+  .reading-time {
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  .reading-time::before {
+    content: '•';
+    margin-right: 0.5rem;
+  }
+  
+  /* Share Buttons */
+  .share-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .share-button,
+  .save-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    background-color: #f3f4f6;
+    border: none;
+    color: #4b5563;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  
+  .share-button:hover,
+  .save-button:hover {
+    background-color: #e5e7eb;
+  }
+  
+  .save-button.saved {
+    color: #3b82f6;
+  }
+  
+  .save-button.saved .bookmark-icon {
+    fill: #3b82f6;
+  }
+  
+  /* Table of Contents */
+  .table-of-contents {
+    max-width: 800px;
+    margin: 0 auto 2rem;
+    padding: 1.5rem;
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+  }
+  
+  .toc-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    color: #1f2937;
+  }
+  
+  .toc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .toc-item {
+    margin-bottom: 0.5rem;
+  }
+  
+  .toc-level-2 {
+    margin-left: 0;
+  }
+  
+  .toc-level-3 {
+    margin-left: 1.5rem;
+  }
+  
+  .toc-link {
+    color: #4b5563;
+    text-decoration: none;
+    transition: color 0.2s;
+    display: inline-block;
+    padding: 0.25rem 0;
+    font-size: 0.9375rem;
+  }
+  
+  .toc-link:hover,
+  .toc-link.active {
+    color: #3b82f6;
+  }
+  
+  .theme-tech .toc-link:hover,
+  .theme-tech .toc-link.active {
+    color: #3b82f6;
+  }
+  
+  .theme-culture .toc-link:hover,
+  .theme-culture .toc-link.active {
+    color: #8b5cf6;
+  }
+  
+  .theme-science .toc-link:hover,
+  .theme-science .toc-link.active {
+    color: #22c55e;
+  }
+  
+  /* Article Content */
+  .article-content {
+    max-width: 800px;
+    margin: 0 auto 3rem;
+    font-size: 1.125rem;
+    line-height: 1.8;
+    color: #1f2937;
+  }
+  
+  /* Drop cap for first paragraph */
+  .content-wrapper > p:first-of-type::first-letter {
+    float: left;
+    font-size: 3.5rem;
+    line-height: 1;
+    font-weight: 700;
+    margin-right: 0.5rem;
+    margin-top: 0.25rem;
+  }
+  
+  .theme-tech .content-wrapper > p:first-of-type::first-letter {
+    color: #3b82f6;
+  }
+  
+  .theme-culture .content-wrapper > p:first-of-type::first-letter {
+    color: #8b5cf6;
+  }
+  
+  .theme-science .content-wrapper > p:first-of-type::first-letter {
+    color: #22c55e;
+  }
+  
+  /* Content styling */
+  .content-wrapper h2 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin: 2.5rem 0 1.5rem;
+    position: relative;
+  }
+  
+  .content-wrapper h2::before {
+    content: '';
+    position: absolute;
+    left: -1rem;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 4px;
+    border-radius: 4px;
+    background-color: #3b82f6;
+  }
+  
+  .theme-tech .content-wrapper h2::before {
+    background-color: #3b82f6;
+  }
+  
+  .theme-culture .content-wrapper h2::before {
+    background-color: #8b5cf6;
+  }
+  
+  .theme-science .content-wrapper h2::before {
+    background-color: #22c55e;
+  }
+  
+  .content-wrapper h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 2rem 0 1rem;
+  }
+  
+  .content-wrapper p {
+    margin: 1.5rem 0;
+  }
+  
+  .content-wrapper a {
+    color: #3b82f6;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+  
+  .theme-tech .content-wrapper a {
+    color: #3b82f6;
+  }
+  
+  .theme-culture .content-wrapper a {
+    color: #8b5cf6;
+  }
+  
+  .theme-science .content-wrapper a {
+    color: #22c55e;
+  }
+  
+  .content-wrapper blockquote {
+    border-left: 4px solid #e5e7eb;
+    padding-left: 1.5rem;
+    margin: 2rem 0;
+    font-style: italic;
+    color: #4b5563;
+  }
+  
+  .theme-tech .content-wrapper blockquote {
+    border-left-color: #93c5fd;
+  }
+  
+  .theme-culture .content-wrapper blockquote {
+    border-left-color: #c4b5fd;
+  }
+  
+  .theme-science .content-wrapper blockquote {
+    border-left-color: #86efac;
+  }
+  
+  .content-wrapper figure {
+    margin: 2rem 0;
+  }
+  
+  .content-wrapper figcaption {
+    font-size: 0.875rem;
+    color: #6b7280;
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+  
+  .content-wrapper pre {
+    background-color: #1f2937;
+    color: #f9fafb;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin: 2rem 0;
+  }
+  
+  .content-wrapper code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875em;
+    background-color: #f3f4f6;
+    padding: 0.2em 0.4em;
+    border-radius: 0.25rem;
+  }
+  
+  .content-wrapper pre code {
+    background-color: transparent;
+    padding: 0;
+  }
+  
+  .content-wrapper ul,
+  .content-wrapper ol {
+    margin: 1.5rem 0;
+    padding-left: 1.5rem;
+  }
+  
+  .content-wrapper li {
+    margin-bottom: 0.5rem;
+  }
+  
+  .content-wrapper img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    margin: 2rem 0;
+  }
+  
+  .content-wrapper hr {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 3rem 0;
+  }
+  
+  /* Tags */
+  .article-tags {
+    max-width: 800px;
+    margin: 0 auto 3rem;
+  }
+  
+  .tags-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    color: #1f2937;
+  }
+  
+  .tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .tag-link {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: #f3f4f6;
+    border-radius: 9999px;
+    color: #4b5563;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  
+  .tag-link:hover {
+    background-color: #e5e7eb;
+    color: #1f2937;
+  }
+  
+  /* Author Bio */
+  .author-bio {
+    max-width: 800px;
+    margin: 0 auto 3rem;
+    padding: 2rem;
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+  }
+  
+  .author-bio-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .author-bio-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .author-bio-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+    color: #1f2937;
+  }
+  
+  .author-social-links {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .social-link {
+    color: #6b7280;
+    transition: color 0.2s;
+  }
+  
+  .social-link:hover {
+    color: #3b82f6;
+  }
+  
+  .theme-tech .social-link:hover {
+    color: #3b82f6;
+  }
+  
+  .theme-culture .social-link:hover {
+    color: #8b5cf6;
+  }
+  
+  .theme-science .social-link:hover {
+    color: #22c55e;
+  }
+  
+  .author-bio-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #4b5563;
+    margin: 0 0 1.5rem;
+  }
+  
+  .author-more-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9375rem;
+  }
+  
+  .theme-tech .author-more-link {
+    color: #3b82f6;
+  }
+  
+  .theme-culture .author-more-link {
+    color: #8b5cf6;
+  }
+  
+  .theme-science .author-more-link {
+    color: #22c55e;
+  }
+  
+  .author-more-link:hover {
+    text-decoration: underline;
+  }
+  
+  /* Related Articles */
+  .related-articles {
+    max-width: 800px;
+    margin: 0 auto 3rem;
+  }
+  
+  .related-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 1.5rem;
+    color: #1f2937;
+  }
+  
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 1.5rem;
+  }
+  
+  @media (min-width: 640px) {
+    .related-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (min-width: 768px) {
+    .related-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  .related-article {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.2s;
+  }
+  
+  .related-article:hover {
+    transform: translateY(-4px);
+  }
+  
+  .related-image-container {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+    aspect-ratio: 16/9;
+  }
+  
+  .related-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  
+  .related-article:hover .related-image {
+    transform: scale(1.05);
+  }
+  
+  .related-article-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+    color: #1f2937;
+    line-height: 1.4;
+  }
+  
+  .related-article-date {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+  
+  /* Comments Section */
+  .comments-section {
+    max-width: 800px;
+    margin: 0 auto 3rem;
+  }
+  
+  /* Comments component styling is now handled in the Comments.astro component */
+  
+  /* Next Article Teaser */
+  .next-article-teaser {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: white;
+    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    z-index: 20;
+  }
+  
+  .next-article-teaser.visible {
+    transform: translateY(0);
+  }
+  
+  .next-article-link {
+    display: block;
+    padding: 1rem;
+    text-decoration: none;
+    color: inherit;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .next-article-progress {
+    height: 4px;
+    background-color: #e5e7eb;
+    margin-bottom: 0.75rem;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  
+  .progress-bar {
+    height: 100%;
+    background-color: #3b82f6;
+    width: 0;
+    transition: width 0.2s;
+  }
+  
+  .theme-tech .progress-bar {
+    background-color: #3b82f6;
+  }
+  
+  .theme-culture .progress-bar {
+    background-color: #8b5cf6;
+  }
+  
+  .theme-science .progress-bar {
+    background-color: #22c55e;
+  }
+  
+  .next-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6b7280;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+  
+  .next-article-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+  }
+  
+  /* Dark Mode Styles */
+  :global(.dark) .article-title,
+  :global(.dark) .toc-title,
+  :global(.dark) .tags-title,
+  :global(.dark) .related-title,
+  :global(.dark) .author-bio-name,
+  :global(.dark) .related-article-title,
+  :global(.dark) .next-article-title {
+    color: #f9fafb;
+  }
+  
+  :global(.dark) .article-description,
+  :global(.dark) .author-bio-text,
+  :global(.dark) .article-content {
+    color: #d1d5db;
+  }
+  
+  :global(.dark) .image-caption,
+  :global(.dark) .publish-info,
+  :global(.dark) .related-article-date,
+  :global(.dark) .next-label {
+    color: #9ca3af;
+  }
+  
+  :global(.dark) .article-meta {
+    border-top-color: #374151;
+  }
+  
+  :global(.dark) .author-name {
+    color: #e5e7eb;
+  }
+  
+  :global(.dark) .share-button,
+  :global(.dark) .save-button {
+    background-color: #374151;
+    color: #d1d5db;
+  }
+  
+  :global(.dark) .share-button:hover,
+  :global(.dark) .save-button:hover {
+    background-color: #4b5563;
+  }
+  
+  :global(.dark) .table-of-contents,
+  :global(.dark) .author-bio {
+    background-color: #1f2937;
+  }
+  
+  :global(.dark) .toc-link {
+    color: #d1d5db;
+  }
+  
+  :global(.dark) .content-wrapper blockquote {
+    border-left-color: #4b5563;
+    color: #9ca3af;
+  }
+  
+  :global(.dark) .content-wrapper pre {
+    background-color: #111827;
+  }
+  
+  :global(.dark) .content-wrapper code {
+    background-color: #374151;
+  }
+  
+  :global(.dark) .content-wrapper hr {
+    border-top-color: #374151;
+  }
+  
+  :global(.dark) .tag-link {
+    background-color: #374151;
+    color: #d1d5db;
+  }
+  
+  :global(.dark) .tag-link:hover {
+    background-color: #4b5563;
+    color: #f9fafb;
+  }
+  
+  :global(.dark) .social-link {
+    color: #9ca3af;
+  }
+  
+  :global(.dark) .next-article-teaser {
+    background-color: #111827;
+  }
+  
+  :global(.dark) .next-article-progress {
+    background-color: #374151;
+  }
+}

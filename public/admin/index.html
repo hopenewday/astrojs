@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChakrirChain CMS</title>
+    <!-- Include Sveltia CMS styles and scripts -->
+    <link href="/admin/config.yml" type="text/yaml" rel="cms-config-url" />
+    <!-- Optimize loading with preconnect -->
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="preconnect" href="https://identity.netlify.com" />
+  </head>
+  <body>
+    <!-- Sveltia CMS App will mount here -->
+    <script src="https://unpkg.com/sveltia-cms@^1.0.0/dist/sveltia-cms.js"></script>
+    <script src="https://unpkg.com/react@^16/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@^16/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/prop-types@^15/prop-types.min.js"></script>
+    <script>
+      const h = React.createElement;
+      const createClass = React.createClass || window.createReactClass;
+    </script>
+    <script>
+      // Initialize CMS with custom config
+      window.CMS.init();
+
+      // Add custom preview styles to match the frontend
+      CMS.registerPreviewStyle('/admin/preview.css');
+    </script>
+    <!-- Custom preview templates -->
+    <script src="/admin/preview-templates.js"></script>
+  </body>
+</html>

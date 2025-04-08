@@ -1,0 +1,326 @@
+---
+/**
+ * AdSlot.astro - Configurable ad container component
+ * 
+ * This component provides a standardized container for displaying advertisements
+ * with features like lazy loading, placeholder management, and responsive behavior.
+ */
+
+export interface Props {
+  /** Unique identifier for the ad slot */
+  id: string;
+  /** Ad format (leaderboard, rectangle, sidebar, mobile) */
+  format: 'leaderboard' | 'rectangle' | 'sidebar' | 'mobile';
+  /** Whether to lazy load the ad based on viewport proximity */
+  lazyLoad?: boolean;
+  /** Additional class names */
+  class?: string;
+  /** Whether to show a placeholder before the ad loads */
+  showPlaceholder?: boolean;
+  /** Whether to hide the ad if consent is not given */
+  requireConsent?: boolean;
+}
+
+const { 
+  id, 
+  format, 
+  lazyLoad = true, 
+  class: className = '',
+  showPlaceholder = true,
+  requireConsent = true
+} = Astro.props;
+
+// Format-specific dimensions
+const dimensions = {
+  leaderboard: { width: 728, height: 90, label: '728×90' },
+  rectangle: { width: 300, height: 250, label: '300×250' },
+  sidebar: { width: 300, height: 600, label: '300×600' },
+  mobile: { width: 320, height: 50, label: '320×50' }
+};
+
+// Get dimensions for the current format
+const { width, height, label } = dimensions[format];
+
+// Check if consent is given (if required)
+const hasConsent = !requireConsent || (typeof localStorage !== 'undefined' && localStorage.getItem('adConsent') === 'true');
+
+// Generate a unique ID if not provided
+const adId = id || `ad-${format}-${Math.random().toString(36).substring(2, 9)}`;
+---
+
+<div 
+  class:list={[
+    'ad-slot', 
+    `ad-format-${format}`, 
+    { 'ad-lazy': lazyLoad },
+    className
+  ]}
+  data-ad-format={format}
+  data-ad-id={adId}
+  style={`min-height: ${height}px;`}
+>
+  <div class="ad-container">
+    <div class="ad-label">Advertisement</div>
+    <div class="ad-content" id={adId}>
+      {showPlaceholder && (
+        <div class="ad-placeholder" aria-hidden="true">
+          <div class="ad-placeholder-text">Ad</div>
+          <div class="ad-placeholder-size">{label}</div>
+        </div>
+      )}
+      {hasConsent ? (
+        <slot />
+      ) : (
+        <div class="ad-consent-required">
+          <p>Ads require consent</p>
+          <button class="ad-consent-button">Allow Ads</button>
+        </div>
+      )}
+    </div>
+  </div>
+</div>
+
+<script>
+  // Ad loading and management functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    // Initialize ad slots with lazy loading
+    const adSlots = document.querySelectorAll('.ad-slot.ad-lazy');
+    
+    if (adSlots.length > 0) {
+      initializeAdLoading(adSlots);
+    }
+    
+    // Handle consent buttons
+    const consentButtons = document.querySelectorAll('.ad-consent-button');
+    consentButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        localStorage.setItem('adConsent', 'true');
+        window.location.reload(); // Reload to show ads
+      });
+    });
+  });
+  
+  // Initialize lazy loading for ad slots
+  function initializeAdLoading(elements) {
+    // Create intersection observer for lazy loading
+    const adObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          loadAd(entry.target);
+          adObserver.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '200px' }); // Load ads when they're within 200px of viewport
+    
+    // Start observing each ad slot
+    elements.forEach(adSlot => {
+      adObserver.observe(adSlot);
+    });
+  }
+  
+  // Load ad content
+  function loadAd(adSlot) {
+    const adContent = adSlot.querySelector('.ad-content');
+    const adFormat = adSlot.getAttribute('data-ad-format');
+    const adId = adSlot.getAttribute('data-ad-id');
+    
+    // Remove placeholder
+    const placeholder = adContent.querySelector('.ad-placeholder');
+    if (placeholder) {
+      placeholder.style.display = 'none';
+    }
+    
+    // In a real implementation, this would load the actual ad
+    // For example, using Google Ad Manager, AdSense, or a custom ad server
+    // This is a simplified example that just shows a colored rectangle
+    
+    // Simulate ad loading delay
+    setTimeout(() => {
+      // Create a demo ad element
+      const demoAd = document.createElement('div');
+      demoAd.className = 'demo-ad';
+      demoAd.innerHTML = `<div class="demo-ad-content">Ad Content (${adFormat})</div>`;
+      
+      // Apply format-specific styling
+      const dimensions = {
+        leaderboard: { width: '728px', height: '90px', background: '#3b82f6' },
+        rectangle: { width: '300px', height: '250px', background: '#8b5cf6' },
+        sidebar: { width: '300px', height: '600px', background: '#10b981' },
+        mobile: { width: '320px', height: '50px', background: '#f59e0b' }
+      };
+      
+      Object.assign(demoAd.style, {
+        width: dimensions[adFormat].width,
+        height: dimensions[adFormat].height,
+        background: dimensions[adFormat].background,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'white',
+        fontWeight: 'bold',
+        margin: '0 auto'
+      });
+      
+      // Add to the DOM
+      adContent.appendChild(demoAd);
+      
+      // Track impression (in a real implementation)
+      console.log(`Ad impression: ${adId} (${adFormat})`);
+      
+      // Dispatch event for ad loaded
+      adSlot.dispatchEvent(new CustomEvent('adLoaded', { 
+        bubbles: true,
+        detail: { adId, format: adFormat }
+      }));
+    }, 500); // Simulate loading delay
+  }
+  
+  // Frequency capping functionality
+  function checkFrequencyCap(adId) {
+    // In a real implementation, this would check if the user has seen this ad too many times
+    // and potentially prevent it from showing again
+    const caps = JSON.parse(localStorage.getItem('adFrequencyCaps') || '{}');
+    const now = Date.now();
+    const adCap = caps[adId] || { count: 0, lastSeen: 0 };
+    
+    // Example: Cap at 5 views per hour
+    const hourInMs = 60 * 60 * 1000;
+    const isWithinTimeframe = (now - adCap.lastSeen) < hourInMs;
+    
+    if (isWithinTimeframe && adCap.count >= 5) {
+      return false; // Capped
+    }
+    
+    // Update cap
+    if (isWithinTimeframe) {
+      adCap.count++;
+    } else {
+      adCap.count = 1;
+    }
+    
+    adCap.lastSeen = now;
+    caps[adId] = adCap;
+    localStorage.setItem('adFrequencyCaps', JSON.stringify(caps));
+    
+    return true; // Not capped
+  }
+</script>
+
+<style>
+  /* Base styles for ad slots */
+  .ad-slot {
+    width: 100%;
+    margin: var(--spacing-4) 0;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .ad-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .ad-label {
+    font-size: 0.75rem;
+    color: var(--color-text-lighter);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--spacing-1);
+    text-align: center;
+  }
+  
+  .ad-content {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  /* Placeholder styles */
+  .ad-placeholder {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-background-alt);
+    border: 1px dashed var(--color-border);
+    width: 100%;
+    height: 100%;
+    min-height: inherit;
+    padding: var(--spacing-4);
+    box-sizing: border-box;
+  }
+  
+  .ad-placeholder-text {
+    font-weight: bold;
+    color: var(--color-text-light);
+  }
+  
+  .ad-placeholder-size {
+    font-size: 0.875rem;
+    color: var(--color-text-lighter);
+    margin-top: var(--spacing-1);
+  }
+  
+  /* Consent message */
+  .ad-consent-required {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-background-alt);
+    border: 1px solid var(--color-border);
+    width: 100%;
+    height: 100%;
+    min-height: inherit;
+    padding: var(--spacing-4);
+    box-sizing: border-box;
+  }
+  
+  .ad-consent-button {
+    margin-top: var(--spacing-2);
+    padding: var(--spacing-1) var(--spacing-3);
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+  }
+  
+  .ad-consent-button:hover {
+    background-color: var(--color-primary-dark);
+  }
+  
+  /* Format-specific styles */
+  .ad-format-leaderboard {
+    max-width: 728px;
+  }
+  
+  .ad-format-rectangle {
+    max-width: 300px;
+  }
+  
+  .ad-format-sidebar {
+    max-width: 300px;
+  }
+  
+  .ad-format-mobile {
+    max-width: 320px;
+  }
+  
+  /* Dark mode styles */
+  :global(.dark) .ad-placeholder {
+    background-color: var(--color-background-alt);
+    border-color: var(--color-border-dark);
+  }
+  
+  :global(.dark) .ad-consent-required {
+    background-color: var(--color-background-alt);
+    border-color: var(--color-border-dark);
+  }
+</style>

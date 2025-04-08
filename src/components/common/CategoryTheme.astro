@@ -1,0 +1,101 @@
+---
+/**
+ * CategoryTheme.astro - Component for category-specific theming
+ * 
+ * This component applies category-specific theme classes to its children
+ * based on the provided category slug. It works with the theme system to
+ * provide consistent styling across the application.
+ * 
+ * It leverages CSS variables defined in src/styles/components/category-theme.css
+ * to provide a consistent theming experience that works with both light and dark modes.
+ */
+
+export interface Props {
+  /** The category slug (e.g., 'tech', 'culture', 'science') */
+  category: string;
+  /** Optional additional class names */
+  class?: string;
+  /** Whether to apply gradient background */
+  gradient?: boolean;
+  /** Whether to apply subtle background tint */
+  tint?: boolean;
+}
+
+const { 
+  category, 
+  class: className = '',
+  gradient = false,
+  tint = false
+} = Astro.props;
+
+// Generate category-specific theme class
+const getCategoryThemeClass = (categorySlug: string) => {
+  const themes = {
+    tech: 'theme-tech',
+    culture: 'theme-culture',
+    science: 'theme-science',
+    business: 'theme-business',
+    politics: 'theme-politics',
+  };
+  
+  return themes[categorySlug as keyof typeof themes] || '';
+};
+
+const themeClass = getCategoryThemeClass(category);
+
+// Generate additional styling classes based on props
+const gradientClass = gradient ? 'category-gradient-bg' : '';
+const tintClass = tint ? 'category-tint-bg' : '';
+
+// Import the category theme CSS
+import '../../styles/components/category-theme.css';
+
+---
+
+<div class:list={[themeClass, gradientClass, tintClass, className]}>
+  <slot />
+</div>
+
+<style>
+  /* Base styling for the themed container */
+  div {
+    display: contents; /* Makes the div not affect layout while still applying theme */
+  }
+  
+  /* Apply gradient background when gradient prop is true */
+  :global(.category-gradient-bg) {
+    background: var(--category-gradient, linear-gradient(to bottom right, var(--color-primary-dark), var(--color-primary)));
+    color: white;
+    padding: var(--spacing-4);
+    border-radius: 0.5rem;
+  }
+  
+  /* Apply subtle background tint when tint prop is true */
+  :global(.category-tint-bg) {
+    background-color: var(--category-color-light, var(--color-primary-light))/10%;
+    padding: var(--spacing-2);
+    border-radius: 0.25rem;
+    border-left: 3px solid var(--category-color, var(--color-primary));
+  }
+  
+  /* Dark mode adjustments */
+  :global([data-theme="dark"] .category-tint-bg) {
+    background-color: var(--category-color-dark, var(--color-primary-dark))/20%;
+  }
+  
+  /* Example of how to use this component in other files:
+  
+  <CategoryTheme category="tech">
+    <h1>Tech Article Title</h1>
+    <p>This content will inherit tech-themed styling</p>
+  </CategoryTheme>
+  
+  <CategoryTheme category="science" gradient={true}>
+    <div>Content with gradient background</div>
+  </CategoryTheme>
+  
+  <CategoryTheme category="culture" tint={true}>
+    <blockquote>Subtle background tint</blockquote>
+  </CategoryTheme>
+  */
+</style>

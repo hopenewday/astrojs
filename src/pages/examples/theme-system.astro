@@ -1,0 +1,194 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ThemeProvider from '../../components/common/ThemeProvider.astro';
+
+const title = 'Theme System Demo';
+const description = 'Demonstration of the theme system and dark mode functionality';
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Theme System & Dark Mode</h1>
+    
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold mb-4">Theme Provider</h2>
+      <p class="mb-4">
+        The site uses a <code>ThemeProvider</code> component that manages theme detection, toggling, and persistence.
+        It automatically detects your system preference and allows you to override it with your choice.
+      </p>
+      <p class="mb-4">
+        The theme toggle in the header allows you to switch between light and dark modes.
+        Your preference is saved and will be remembered when you return to the site.
+      </p>
+    </div>
+
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold mb-4">Theme Demo</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Theme Colors -->
+        <div class="p-6 border rounded-lg shadow-sm">
+          <h3 class="text-xl font-bold mb-4">Theme Colors</h3>
+          <div class="space-y-4">
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded bg-primary mr-4"></div>
+              <span>Primary Color</span>
+            </div>
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded mr-4" style="background-color: var(--color-text);"></div>
+              <span>Text Color</span>
+            </div>
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded mr-4" style="background-color: var(--color-background-alt);"></div>
+              <span>Background Alt</span>
+            </div>
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded mr-4" style="background-color: var(--color-border);"></div>
+              <span>Border Color</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Category Themes -->
+        <div class="p-6 border rounded-lg shadow-sm">
+          <h3 class="text-xl font-bold mb-4">Category Themes</h3>
+          <div class="space-y-4">
+            <div class="theme-tech p-3 rounded">
+              <span class="text-tech font-bold">Technology</span>
+              <div class="h-2 bg-gradient-to-r from-blue-500 to-blue-700 rounded mt-2"></div>
+            </div>
+            <div class="theme-culture p-3 rounded">
+              <span class="text-culture font-bold">Culture</span>
+              <div class="h-2 bg-gradient-to-r from-purple-500 to-purple-700 rounded mt-2"></div>
+            </div>
+            <div class="theme-science p-3 rounded">
+              <span class="text-science font-bold">Science</span>
+              <div class="h-2 bg-gradient-to-r from-emerald-500 to-emerald-700 rounded mt-2"></div>
+            </div>
+            <div class="theme-business p-3 rounded">
+              <span class="text-business font-bold">Business</span>
+              <div class="h-2 bg-gradient-to-r from-amber-500 to-amber-700 rounded mt-2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold mb-4">Theme API</h2>
+      <p class="mb-4">
+        The theme system provides a JavaScript API that you can use to programmatically control the theme:
+      </p>
+      
+      <div class="bg-background-alt p-4 rounded-lg mb-4 overflow-x-auto">
+        <pre><code>// Toggle between light and dark themes
+window.themeManager.toggleTheme();
+
+// Set a specific theme
+window.themeManager.setTheme('dark');
+
+// Get the current theme preference
+const currentTheme = window.themeManager.getThemePreference();</code></pre>
+      </div>
+      
+      <div class="flex space-x-4 mt-6">
+        <button id="toggle-theme" class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors">
+          Toggle Theme
+        </button>
+        <button id="set-light" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors">
+          Set Light Theme
+        </button>
+        <button id="set-dark" class="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors">
+          Set Dark Theme
+        </button>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  // Theme control buttons
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggleBtn = document.getElementById('toggle-theme');
+    const setLightBtn = document.getElementById('set-light');
+    const setDarkBtn = document.getElementById('set-dark');
+    
+    if (window.themeManager) {
+      toggleBtn?.addEventListener('click', () => {
+        window.themeManager.toggleTheme();
+      });
+      
+      setLightBtn?.addEventListener('click', () => {
+        window.themeManager.setTheme('light');
+      });
+      
+      setDarkBtn?.addEventListener('click', () => {
+        window.themeManager.setTheme('dark');
+      });
+    } else {
+      console.warn('ThemeManager not available');
+      
+      // Fallback functionality if themeManager is not available
+      const fallbackToggle = () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+      };
+      
+      toggleBtn?.addEventListener('click', fallbackToggle);
+      
+      setLightBtn?.addEventListener('click', () => {
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+      });
+      
+      setDarkBtn?.addEventListener('click', () => {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+      });
+    }
+  });
+</script>
+
+<style>
+  code {
+    font-family: var(--font-mono);
+    background-color: var(--color-background-alt);
+    padding: 0.2em 0.4em;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+  }
+  
+  pre {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    line-height: 1.5;
+  }
+  
+  pre code {
+    background-color: transparent;
+    padding: 0;
+  }
+  
+  .theme-tech, .theme-culture, .theme-science, .theme-business {
+    background-color: var(--color-background-alt);
+    border-left: 4px solid;
+  }
+  
+  .theme-tech {
+    border-color: var(--color-tech);
+  }
+  
+  .theme-culture {
+    border-color: var(--color-culture);
+  }
+  
+  .theme-science {
+    border-color: var(--color-science);
+  }
+  
+  .theme-business {
+    border-color: var(--color-business);
+  }
+</style>

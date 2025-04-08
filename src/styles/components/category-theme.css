@@ -1,0 +1,198 @@
+/**
+ * Category Theme CSS
+ * 
+ * This file contains category-specific theme variables and utility classes
+ * that work with the CategoryTheme.astro component.
+ */
+
+/* Category Theme Classes */
+
+/* Tech Theme */
+.theme-tech {
+  --category-color: var(--color-tech);
+  --category-color-dark: var(--color-tech-dark);
+  --category-color-light: var(--color-tech-light);
+  --category-gradient: linear-gradient(to bottom right, var(--color-tech-dark), var(--color-tech));
+  --category-gradient-overlay: linear-gradient(to top, var(--color-tech-dark), var(--color-tech-light)/80%);
+}
+
+/* Culture Theme */
+.theme-culture {
+  --category-color: var(--color-culture);
+  --category-color-dark: var(--color-culture-dark);
+  --category-color-light: var(--color-culture-light);
+  --category-gradient: linear-gradient(to bottom right, var(--color-culture-dark), var(--color-culture));
+  --category-gradient-overlay: linear-gradient(to top, var(--color-culture-dark), var(--color-culture-light)/80%);
+}
+
+/* Science Theme */
+.theme-science {
+  --category-color: var(--color-science);
+  --category-color-dark: var(--color-science-dark);
+  --category-color-light: var(--color-science-light);
+  --category-gradient: linear-gradient(to bottom right, var(--color-science-dark), var(--color-science));
+  --category-gradient-overlay: linear-gradient(to top, var(--color-science-dark), var(--color-science-light)/80%);
+}
+
+/* Business Theme */
+.theme-business {
+  --category-color: var(--color-business);
+  --category-color-dark: var(--color-business-dark);
+  --category-color-light: var(--color-business-light);
+  --category-gradient: linear-gradient(to bottom right, var(--color-business-dark), var(--color-business));
+  --category-gradient-overlay: linear-gradient(to top, var(--color-business-dark), var(--color-business-light)/80%);
+}
+
+/* Politics Theme */
+.theme-politics {
+  --category-color: var(--color-politics);
+  --category-color-dark: var(--color-politics-dark);
+  --category-color-light: var(--color-politics-light);
+  --category-gradient: linear-gradient(to bottom right, var(--color-politics-dark), var(--color-politics));
+  --category-gradient-overlay: linear-gradient(to top, var(--color-politics-dark), var(--color-politics-light)/80%);
+}
+
+/* Category-themed Elements */
+
+/* Links */
+.theme-tech a:not(.btn) { color: var(--color-tech); }
+.theme-tech a:not(.btn):hover { color: var(--color-tech-dark); }
+
+.theme-culture a:not(.btn) { color: var(--color-culture); }
+.theme-culture a:not(.btn):hover { color: var(--color-culture-dark); }
+
+.theme-science a:not(.btn) { color: var(--color-science); }
+.theme-science a:not(.btn):hover { color: var(--color-science-dark); }
+
+.theme-business a:not(.btn) { color: var(--color-business); }
+.theme-business a:not(.btn):hover { color: var(--color-business-dark); }
+
+.theme-politics a:not(.btn) { color: var(--color-politics); }
+.theme-politics a:not(.btn):hover { color: var(--color-politics-dark); }
+
+/* Buttons */
+.theme-tech .category-btn {
+  background-color: var(--color-tech);
+  border-color: var(--color-tech);
+}
+
+.theme-culture .category-btn {
+  background-color: var(--color-culture);
+  border-color: var(--color-culture);
+}
+
+.theme-science .category-btn {
+  background-color: var(--color-science);
+  border-color: var(--color-science);
+}
+
+.theme-business .category-btn {
+  background-color: var(--color-business);
+  border-color: var(--color-business);
+}
+
+.theme-politics .category-btn {
+  background-color: var(--color-politics);
+  border-color: var(--color-politics);
+}
+
+/* Blockquotes */
+.theme-tech blockquote {
+  border-left-color: var(--color-tech);
+  background-color: var(--color-tech-light)/10%;
+}
+
+.theme-culture blockquote {
+  border-left-color: var(--color-culture);
+  background-color: var(--color-culture-light)/10%;
+}
+
+.theme-science blockquote {
+  border-left-color: var(--color-science);
+  background-color: var(--color-science-light)/10%;
+}
+
+.theme-business blockquote {
+  border-left-color: var(--color-business);
+  background-color: var(--color-business-light)/10%;
+}
+
+.theme-politics blockquote {
+  border-left-color: var(--color-politics);
+  background-color: var(--color-politics-light)/10%;
+}
+
+/* Utility Classes */
+.theme-tech .text-category { color: var(--color-tech); }
+.theme-tech .bg-category { background-color: var(--color-tech); }
+.theme-tech .border-category { border-color: var(--color-tech); }
+
+.theme-culture .text-category { color: var(--color-culture); }
+.theme-culture .bg-category { background-color: var(--color-culture); }
+.theme-culture .border-category { border-color: var(--color-culture); }
+
+.theme-science .text-category { color: var(--color-science); }
+.theme-science .bg-category { background-color: var(--color-science); }
+.theme-science .border-category { border-color: var(--color-science); }
+
+.theme-business .text-category { color: var(--color-business); }
+.theme-business .bg-category { background-color: var(--color-business); }
+.theme-business .border-category { border-color: var(--color-business); }
+
+.theme-politics .text-category { color: var(--color-politics); }
+.theme-politics .bg-category { background-color: var(--color-politics); }
+.theme-politics .border-category { border-color: var(--color-politics); }
+
+/* Dark Mode Adjustments */
+:root[data-theme="dark"] .theme-tech blockquote,
+html[data-theme="dark"] .theme-tech blockquote {
+  background-color: var(--color-tech-dark)/20%;
+}
+
+:root[data-theme="dark"] .theme-culture blockquote,
+html[data-theme="dark"] .theme-culture blockquote {
+  background-color: var(--color-culture-dark)/20%;
+}
+
+:root[data-theme="dark"] .theme-science blockquote,
+html[data-theme="dark"] .theme-science blockquote {
+  background-color: var(--color-science-dark)/20%;
+}
+
+:root[data-theme="dark"] .theme-business blockquote,
+html[data-theme="dark"] .theme-business blockquote {
+  background-color: var(--color-business-dark)/20%;
+}
+
+:root[data-theme="dark"] .theme-politics blockquote,
+html[data-theme="dark"] .theme-politics blockquote {
+  background-color: var(--color-politics-dark)/20%;
+}
+
+/* Support system preference when no theme is explicitly set */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .theme-tech blockquote,
+  html:not([data-theme]) .theme-tech blockquote {
+    background-color: var(--color-tech-dark)/20%;
+  }
+  
+  :root:not([data-theme]) .theme-culture blockquote,
+  html:not([data-theme]) .theme-culture blockquote {
+    background-color: var(--color-culture-dark)/20%;
+  }
+  
+  :root:not([data-theme]) .theme-science blockquote,
+  html:not([data-theme]) .theme-science blockquote {
+    background-color: var(--color-science-dark)/20%;
+  }
+  
+  :root:not([data-theme]) .theme-business blockquote,
+  html:not([data-theme]) .theme-business blockquote {
+    background-color: var(--color-business-dark)/20%;
+  }
+  
+  :root:not([data-theme]) .theme-politics blockquote,
+  html:not([data-theme]) .theme-politics blockquote {
+    background-color: var(--color-politics-dark)/20%;
+  }
+}

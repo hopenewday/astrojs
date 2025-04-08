@@ -1,0 +1,141 @@
+---
+/**
+ * ContentAnimation Component
+ * 
+ * A wrapper component that applies scroll-triggered animations to content sections.
+ * This component makes it easy to add animations to any content section without
+ * having to write custom JavaScript for each section.
+ */
+
+interface Props {
+  /** ID for the animation container */
+  id?: string;
+  /** Type of animation to apply */
+  type?: 'fade' | 'slide' | 'scale' | 'rotate';
+  /** When to start the animation relative to the viewport */
+  start?: string;
+  /** When to end the animation relative to the viewport */
+  end?: string;
+  /** Whether to scrub the animation to the scroll position */
+  scrub?: boolean;
+  /** Whether to show markers for debugging (development only) */
+  markers?: boolean;
+  /** CSS class to apply to the container */
+  class?: string;
+  /** Whether to stagger child animations */
+  stagger?: boolean;
+  /** Delay between staggered animations in seconds */
+  staggerDelay?: number;
+  /** Whether to animate once or every time the element enters the viewport */
+  once?: boolean;
+}
+
+const {
+  id = `content-animation-${Math.random().toString(36).substring(2, 11)}`,
+  type = 'fade',
+  start = 'top 80%',
+  end = 'bottom 20%',
+  scrub = false,
+  markers = false,
+  class: className = '',
+  stagger = false,
+  staggerDelay = 0.1,
+  once = true
+} = Astro.props;
+---
+
+<div 
+  id={id}
+  class={`content-animation ${type}-animation ${className}`}
+  data-animation-type={type}
+  data-animation-start={start}
+  data-animation-end={end}
+  data-animation-scrub={scrub.toString()}
+  data-animation-markers={markers.toString()}
+  data-animation-stagger={stagger.toString()}
+  data-animation-stagger-delay={staggerDelay.toString()}
+  data-animation-once={once.toString()}
+>
+  <slot />
+</div>
+
+<style>
+  .content-animation {
+    position: relative;
+    width: 100%;
+  }
+</style>
+
+<script>
+  import { initAnimations, createScrollAnimation } from '../../utils/animations';
+  
+  // Initialize animations when the DOM is ready
+  async function initContentAnimations() {
+    // Initialize GSAP and plugins
+    await initAnimations();
+    
+    // Find all content animation containers
+    const animationContainers = document.querySelectorAll('.content-animation');
+    
+    animationContainers.forEach(container => {
+      // Get animation settings from data attributes
+      const type = container.getAttribute('data-animation-type') || 'fade';
+      const start = container.getAttribute('data-animation-start') || 'top 80%';
+      const end = container.getAttribute('data-animation-end') || 'bottom 20%';
+      const scrub = container.getAttribute('data-animation-scrub') === 'true';
+      const markers = container.getAttribute('data-animation-markers') === 'true';
+      const stagger = container.getAttribute('data-animation-stagger') === 'true';
+      const staggerDelay = parseFloat(container.getAttribute('data-animation-stagger-delay') || '0.1');
+      const once = container.getAttribute('data-animation-once') === 'true';
+      
+      // Set up toggle actions based on once setting
+      const toggleActions = once ? 'play none none none' : 'play none none reverse';
+      
+      if (stagger) {
+        // Animate children with staggered delay
+        const children = container.children;
+        Array.from(children).forEach((child, index) => {
+          createScrollAnimation(child, {
+            animationType: type as 'fade' | 'slide' | 'scale' | 'rotate',
+            start,
+            end,
+            scrub,
+            markers,
+            toggleActions
+          });
+        });
+      } else {
+        // Animate the container itself
+        createScrollAnimation(container, {
+          animationType: type as 'fade' | 'slide' | 'scale' | 'rotate',
+          start,
+          end,
+          scrub,
+          markers,
+          toggleActions
+        });
+      }
+    });
+  }
+  
+  // Initialize animations when the DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initContentAnimations);
+  } else {
+    initContentAnimations();
+  }
+  
+  // Initialize animations when new content is added to the DOM
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      if (mutation.addedNodes.length) {
+        initContentAnimations();
+      }
+    });
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+</script>

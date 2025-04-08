@@ -1,0 +1,47 @@
+---
+/**
+ * LeaderboardAd.astro - 728×90 ad format component
+ * 
+ * This component provides a standardized implementation for leaderboard ads,
+ * which are typically displayed horizontally across the top or within content.
+ */
+
+import AdSlot from './AdSlot.astro';
+
+export interface Props {
+  /** Unique identifier for the ad slot */
+  id?: string;
+  /** Whether to lazy load the ad based on viewport proximity */
+  lazyLoad?: boolean;
+  /** Additional class names */
+  class?: string;
+  /** Whether to show a placeholder before the ad loads */
+  showPlaceholder?: boolean;
+  /** Whether to hide the ad if consent is not given */
+  requireConsent?: boolean;
+}
+
+const { 
+  id = `leaderboard-${Math.random().toString(36).substring(2, 9)}`,
+  lazyLoad = true, 
+  class: className = '',
+  showPlaceholder = true,
+  requireConsent = true
+} = Astro.props;
+---
+
+<AdSlot
+  id={id}
+  format="leaderboard"
+  lazyLoad={lazyLoad}
+  class={className}
+  showPlaceholder={showPlaceholder}
+  requireConsent={requireConsent}
+>
+  <slot />
+</AdSlot>
+
+<style>
+  /* Additional leaderboard-specific styles can be added here */
+  /* The base styles are inherited from AdSlot.astro */
+</style>

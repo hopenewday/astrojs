@@ -1,0 +1,54 @@
+{
+  "$ref": "#/definitions/categories",
+  "definitions": {
+    "categories": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "default": "#3b82f6"
+        },
+        "image": {
+          "type": "object",
+          "properties": {
+            "src": {
+              "type": "string"
+            },
+            "alt": {
+              "type": "string",
+              "default": "Category image"
+            }
+          },
+          "required": [
+            "src"
+          ],
+          "additionalProperties": false
+        },
+        "featured": {
+          "type": "boolean",
+          "default": false
+        },
+        "order": {
+          "type": "number",
+          "default": 999
+        },
+        "$schema": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "description"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

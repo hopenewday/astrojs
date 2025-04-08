@@ -1,0 +1,109 @@
+---
+/**
+ * UmamiAnalytics.astro
+ * Implements privacy-focused Umami analytics with custom event tracking
+ * and GDPR-compliant consent management.
+ */
+
+interface Props {
+  /**
+   * Whether to enable analytics tracking (can be disabled for development)
+   * @default true
+   */
+  enabled?: boolean;
+  
+  /**
+   * Whether to respect Do Not Track browser setting
+   * @default true
+   */
+  respectDNT?: boolean;
+  
+  /**
+   * Whether to require explicit consent before loading analytics
+   * @default true
+   */
+  requireConsent?: boolean;
+}
+
+const {
+  enabled = true,
+  respectDNT = true,
+  requireConsent = true,
+} = Astro.props;
+
+// Environment variables
+const websiteId = import.meta.env.UMAMI_WEBSITE_ID;
+const host = import.meta.env.UMAMI_HOST || 'https://analytics.umami.is';
+
+// Check if analytics should be disabled
+const isDevelopment = import.meta.env.DEV;
+const hasDNT = respectDNT && typeof navigator !== 'undefined' && 
+  (navigator.doNotTrack === '1' || navigator.doNotTrack === 'yes');
+
+// Only load analytics if all conditions are met
+const shouldLoad = enabled && !isDevelopment && !hasDNT && websiteId;
+---
+
+{shouldLoad && (
+  <>
+    <script 
+      is:inline 
+      data-website-id={websiteId}
+      src={`${host}/script.js`}
+      data-domains={import.meta.env.PUBLIC_SITE_URL?.replace(/^https?:\/\//, '')}
+      data-do-not-track={respectDNT ? "true" : "false"}
+      data-auto-track={requireConsent ? "false" : "true"}
+      data-cache="true"
+      defer
+    ></script>
+    
+    {requireConsent && (
+      <script is:inline>
+        // Check for consent in localStorage
+        const hasAnalyticsConsent = () => {
+          try {
+            return localStorage.getItem('analytics-consent') === 'true';
+          } catch (e) {
+            return false;
+          }
+        };
+
+        // Initialize analytics if consent is given
+        if (hasAnalyticsConsent()) {
+          window.umami?.track();
+        }
+
+        // Create a global function to enable analytics after consent
+        window.enableAnalytics = () => {
+          try {
+            localStorage.setItem('analytics-consent', 'true');
+            window.umami?.track();
+          } catch (e) {
+            console.error('Failed to enable analytics:', e);
+          }
+        };
+
+        // Create a global function to disable analytics
+        window.disableAnalytics = () => {
+          try {
+            localStorage.removeItem('analytics-consent');
+            // Note: Umami doesn't have a built-in disable function
+            // This just prevents future tracking until page reload
+          } catch (e) {
+            console.error('Failed to disable analytics:', e);
+          }
+        };
+
+        // Expose consent status check
+        window.hasAnalyticsConsent = hasAnalyticsConsent;
+
+        // Custom event tracking helper
+        window.trackEvent = (eventName, eventData) => {
+          if (hasAnalyticsConsent()) {
+            window.umami?.track(eventName, eventData);
+          }
+        };
+      </script>
+    )}
+  </>
+)}

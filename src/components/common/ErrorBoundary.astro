@@ -1,0 +1,143 @@
+---
+interface Props {
+  fallback?: string;
+  showRetry?: boolean;
+  errorId?: string;
+}
+
+const {
+  fallback = "Something went wrong. Please try again later.",
+  showRetry = true,
+  errorId = "error-boundary-" + Math.random().toString(36).substring(2, 9),
+} = Astro.props;
+---
+
+<div class="error-boundary-container">
+  <div id={errorId} class="error-boundary" hidden>
+    <div class="error-content">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="error-icon">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <p class="error-message">{fallback}</p>
+      {showRetry && (
+        <button class="retry-button" data-error-retry data-error-id={errorId}>
+          Try Again
+        </button>
+      )}
+    </div>
+  </div>
+  <div id={`${errorId}-content`}>
+    <slot />
+  </div>
+</div>
+
+<script define:vars={{ errorId }}>
+// Client-side error handling
+const errorBoundary = document.getElementById(errorId);
+const contentContainer = document.getElementById(`${errorId}-content`);
+
+if (errorBoundary && contentContainer) {
+  // Watch for errors in the content
+  const handleError = (event) => {
+    // Ignore certain errors like ResizeObserver errors
+    if (event.error?.message?.includes('ResizeObserver') || 
+        event.message?.includes('ResizeObserver')) {
+      return;
+    }
+    
+    // Show error boundary and hide content
+    errorBoundary.hidden = false;
+    contentContainer.style.display = 'none';
+    
+    // Log error for debugging (could be sent to a monitoring service)
+    console.error('Error caught by boundary:', event.error || event.message);
+    
+    // Prevent default browser error handling
+    event.preventDefault();
+  };
+  
+  // Handle retry button clicks
+  document.querySelector(`[data-error-retry][data-error-id="${errorId}"]`)?.addEventListener('click', () => {
+    errorBoundary.hidden = true;
+    contentContainer.style.display = '';
+    
+    // Attempt to re-render or reload the content
+    // This is a simple reload, but could be more sophisticated
+    // like re-fetching data or re-mounting components
+    try {
+      // Custom event that components can listen for to retry operations
+      contentContainer.dispatchEvent(new CustomEvent('error-boundary-retry'));
+    } catch (e) {
+      // If retry fails, show error again
+      handleError({ error: e });
+    }
+  });
+  
+  // Listen for errors in this component's children
+  contentContainer.addEventListener('error', handleError, true);
+  contentContainer.addEventListener('unhandledrejection', handleError, true);
+}
+</script>
+
+<style>
+  .error-boundary-container {
+    position: relative;
+  }
+  
+  .error-boundary {
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    background-color: #fee2e2; /* red-100 */
+    border: 1px solid #fecaca; /* red-200 */
+    margin: 1rem 0;
+  }
+  
+  .error-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+  }
+  
+  .error-icon {
+    color: #ef4444; /* red-500 */
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  .error-message {
+    margin: 0;
+    color: #b91c1c; /* red-700 */
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  .retry-button {
+    background-color: #ef4444; /* red-500 */
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .retry-button:hover {
+    background-color: #dc2626; /* red-600 */
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .error-boundary {
+      background-color: rgba(254, 226, 226, 0.1); /* red-100 at 10% opacity */
+      border-color: rgba(254, 202, 202, 0.2); /* red-200 at 20% opacity */
+    }
+    
+    .error-message {
+      color: #fca5a5; /* red-300 */
+    }
+  }
+</style>

@@ -1,0 +1,148 @@
+---
+/**
+ * LottieBackground Component
+ * 
+ * A component that provides animated backgrounds using Lottie animations.
+ * Can be used as a section background, hero background, or card background.
+ */
+
+import { initLottieAnimation } from '../../utils/animations';
+
+interface Props {
+  /** ID for the animation container */
+  id?: string;
+  /** URL to Lottie JSON file */
+  src: string;
+  /** Whether the animation should loop */
+  loop?: boolean;
+  /** Animation speed (1 is normal speed) */
+  speed?: number;
+  /** CSS class to apply to the container */
+  class?: string;
+  /** Whether to autoplay the animation */
+  autoplay?: boolean;
+  /** Whether to preserve aspect ratio */
+  preserveAspectRatio?: boolean;
+  /** Opacity of the animation (0-1) */
+  opacity?: number;
+  /** Whether to use the web worker for processing */
+  useWorker?: boolean;
+}
+
+const {
+  id = `lottie-bg-${Math.random().toString(36).substring(2, 11)}`,
+  src,
+  loop = true,
+  speed = 1,
+  class: className = '',
+  autoplay = true,
+  preserveAspectRatio = true,
+  opacity = 0.5,
+  useWorker = true
+} = Astro.props;
+---
+
+<div class={`lottie-background-container ${className}`}>
+  <div 
+    id={id} 
+    class="lottie-background"
+    data-animation-src={src}
+    data-animation-loop={loop.toString()}
+    data-animation-speed={speed.toString()}
+    data-animation-autoplay={autoplay.toString()}
+    data-preserve-aspect-ratio={preserveAspectRatio.toString()}
+    style={`opacity: ${opacity};`}
+  ></div>
+  <div class="content">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .lottie-background-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  .lottie-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+  
+  .content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+  }
+</style>
+
+<script>
+  import { initLottieAnimation } from '../../utils/animations';
+  
+  // Initialize all background animations on the page
+  function initBackgroundAnimations() {
+    const backgroundElements = document.querySelectorAll('.lottie-background');
+    
+    backgroundElements.forEach(async (element) => {
+      const id = element.id;
+      const src = element.getAttribute('data-animation-src');
+      const loop = element.getAttribute('data-animation-loop') !== 'false';
+      const speed = parseFloat(element.getAttribute('data-animation-speed') || '1');
+      const autoplay = element.getAttribute('data-animation-autoplay') !== 'false';
+      const preserveAspectRatio = element.getAttribute('data-preserve-aspect-ratio') !== 'false';
+      
+      if (id && src) {
+        try {
+          // Initialize the Lottie animation
+          const anim = await initLottieAnimation(id, src, {
+            loop,
+            autoplay,
+            speed,
+            renderer: 'svg'
+          });
+          
+          if (anim && !preserveAspectRatio) {
+            // If not preserving aspect ratio, set to fill the container
+            anim.resize();
+            
+            // Handle window resize events
+            window.addEventListener('resize', () => {
+              anim.resize();
+            });
+          }
+        } catch (error) {
+          console.error('Failed to initialize background animation:', error);
+        }
+      }
+    });
+  }
+  
+  // Initialize animations when the DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBackgroundAnimations);
+  } else {
+    initBackgroundAnimations();
+  }
+  
+  // Initialize animations when new content is added to the DOM
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      if (mutation.addedNodes.length) {
+        initBackgroundAnimations();
+      }
+    });
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+</script>

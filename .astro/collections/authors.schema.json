@@ -1,0 +1,79 @@
+{
+  "$ref": "#/definitions/authors",
+  "definitions": {
+    "authors": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "bio": {
+          "type": "string"
+        },
+        "avatar": {
+          "type": "object",
+          "properties": {
+            "src": {
+              "type": "string"
+            },
+            "alt": {
+              "type": "string",
+              "default": "Author avatar"
+            }
+          },
+          "required": [
+            "src"
+          ],
+          "additionalProperties": false
+        },
+        "social": {
+          "type": "object",
+          "properties": {
+            "twitter": {
+              "type": "string",
+              "format": "uri"
+            },
+            "facebook": {
+              "type": "string",
+              "format": "uri"
+            },
+            "instagram": {
+              "type": "string",
+              "format": "uri"
+            },
+            "linkedin": {
+              "type": "string",
+              "format": "uri"
+            },
+            "github": {
+              "type": "string",
+              "format": "uri"
+            },
+            "website": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "additionalProperties": false
+        },
+        "featured": {
+          "type": "boolean",
+          "default": false
+        },
+        "$schema": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "bio",
+        "avatar"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

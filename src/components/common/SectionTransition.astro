@@ -1,0 +1,164 @@
+---
+/**
+ * SectionTransition Component
+ * 
+ * A component that provides animated transitions between sections using Lottie animations.
+ * This can be used to create engaging transitions as users scroll through different sections of a page.
+ */
+
+import { initLottieAnimation } from '../../utils/animations';
+
+interface Props {
+  /** ID for the animation container */
+  id?: string;
+  /** Type of transition animation */
+  type?: 'fade' | 'slide' | 'zoom' | 'wipe' | 'custom';
+  /** URL to custom Lottie JSON file (required if type is 'custom') */
+  customAnimation?: string;
+  /** CSS class to apply to the container */
+  class?: string;
+  /** Whether to trigger on scroll */
+  scrollTrigger?: boolean;
+  /** Offset from the bottom of the viewport to trigger the animation (in pixels or percentage) */
+  offset?: string;
+  /** Whether to play once or loop */
+  loop?: boolean;
+}
+
+const {
+  id = `section-transition-${Math.random().toString(36).substring(2, 11)}`,
+  type = 'fade',
+  customAnimation,
+  class: className = '',
+  scrollTrigger = true,
+  offset = '200px',
+  loop = false
+} = Astro.props;
+
+// Map of default transition animations by type
+const defaultAnimations = {
+  fade: 'https://assets5.lottiefiles.com/packages/lf20_abqjugn0.json',
+  slide: 'https://assets7.lottiefiles.com/packages/lf20_xlkxtmul.json',
+  zoom: 'https://assets8.lottiefiles.com/packages/lf20_nxuowtsj.json',
+  wipe: 'https://assets1.lottiefiles.com/packages/lf20_yfsytcor.json'
+};
+
+// Determine the animation source
+const animationSrc = customAnimation || defaultAnimations[type] || defaultAnimations.fade;
+---
+
+<div 
+  id={id}
+  class={`section-transition ${type}-transition ${className}`}
+  data-animation-src={animationSrc}
+  data-scroll-trigger={scrollTrigger.toString()}
+  data-offset={offset}
+  data-loop={loop.toString()}
+></div>
+
+<style>
+  .section-transition {
+    position: relative;
+    width: 100%;
+    height: 120px;
+    margin: 2rem 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  
+  /* Specific transition styles */
+  .fade-transition {
+    opacity: 0.8;
+  }
+  
+  .slide-transition {
+    height: 150px;
+  }
+  
+  .zoom-transition {
+    height: 180px;
+  }
+  
+  .wipe-transition {
+    height: 100px;
+  }
+</style>
+
+<script>
+  import { initLottieAnimation } from '../../utils/animations';
+  
+  // Initialize section transition animations
+  function initSectionTransitions() {
+    const transitionElements = document.querySelectorAll('.section-transition');
+    
+    transitionElements.forEach(async (element) => {
+      const id = element.id;
+      const src = element.getAttribute('data-animation-src');
+      const scrollTrigger = element.getAttribute('data-scroll-trigger') === 'true';
+      const offset = element.getAttribute('data-offset') || '200px';
+      const loop = element.getAttribute('data-loop') === 'true';
+      
+      if (id && src) {
+        try {
+          // Initialize the animation but don't autoplay if using scroll trigger
+          const anim = await initLottieAnimation(id, src, {
+            loop,
+            autoplay: !scrollTrigger,
+            renderer: 'svg'
+          });
+          
+          if (anim && scrollTrigger) {
+            // Set up intersection observer for scroll triggering
+            const observer = new IntersectionObserver(
+              (entries) => {
+                entries.forEach((entry) => {
+                  if (entry.isIntersecting) {
+                    // Play the animation when the element enters the viewport
+                    anim.goToAndPlay(0, true);
+                    
+                    // If not looping, unobserve after playing once
+                    if (!loop) {
+                      observer.unobserve(entry.target);
+                    }
+                  } else if (loop) {
+                    // Stop the animation when it leaves the viewport if looping
+                    anim.stop();
+                  }
+                });
+              },
+              {
+                rootMargin: `0px 0px ${offset} 0px`,
+                threshold: 0.1
+              }
+            );
+            
+            observer.observe(element);
+          }
+        } catch (error) {
+          console.error('Failed to initialize section transition animation:', error);
+        }
+      }
+    });
+  }
+  
+  // Initialize animations when the DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSectionTransitions);
+  } else {
+    initSectionTransitions();
+  }
+  
+  // Initialize animations when new content is added to the DOM
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      if (mutation.addedNodes.length) {
+        initSectionTransitions();
+      }
+    });
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+</script>

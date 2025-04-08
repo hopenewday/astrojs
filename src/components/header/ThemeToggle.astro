@@ -1,0 +1,114 @@
+---
+// ThemeToggle.astro - Theme toggle component with dark mode support
+---
+
+<button
+  type="button"
+  id="theme-toggle"
+  class="theme-toggle"
+  aria-label="Toggle dark mode"
+  title="Toggle dark mode"
+>
+  <!-- Sun icon for dark mode -->
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="sun-icon"
+  >
+    <circle cx="12" cy="12" r="5"></circle>
+    <path d="M12 1v2"></path>
+    <path d="M12 21v2"></path>
+    <path d="M4.22 4.22l1.42 1.42"></path>
+    <path d="M18.36 18.36l1.42 1.42"></path>
+    <path d="M1 12h2"></path>
+    <path d="M21 12h2"></path>
+    <path d="M4.22 19.78l1.42-1.42"></path>
+    <path d="M18.36 5.64l1.42-1.42"></path>
+  </svg>
+
+  <!-- Moon icon for light mode -->
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="moon-icon"
+  >
+    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+  </svg>
+</button>
+
+<style>
+  .theme-toggle {
+    position: relative;
+    padding: var(--spacing-2);
+    background: none;
+    border: none;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: var(--transition-colors);
+  }
+
+  .theme-toggle:hover {
+    color: var(--color-primary);
+  }
+
+  .sun-icon,
+  .moon-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: var(--transition-all);
+  }
+
+  :global([data-theme="light"]) .sun-icon,
+  :global([data-theme="dark"]) .moon-icon {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(90deg) scale(0.5);
+  }
+
+  :global([data-theme="light"]) .moon-icon,
+  :global([data-theme="dark"]) .sun-icon {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0) scale(1);
+  }
+</style>
+
+<script>
+  // Theme toggle functionality
+  // This component now uses the global themeManager provided by ThemeProvider
+  // The click event is handled by ThemeProvider's event listeners
+  // This script is kept minimal as ThemeProvider handles the theme logic
+  
+  // The following is for backward compatibility in case ThemeProvider is not available
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!window.themeManager) {
+      console.warn('ThemeProvider not detected. ThemeToggle may not work as expected.');
+      
+      const themeToggle = document.getElementById('theme-toggle');
+      
+      if (themeToggle) {
+        // Simplified theme toggle for backward compatibility
+        themeToggle.addEventListener('click', () => {
+          const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+          const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', newTheme);
+          localStorage.setItem('theme', newTheme);
+        });
+      }
+    }
+  });
+</script>

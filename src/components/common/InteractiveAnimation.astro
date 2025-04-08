@@ -1,0 +1,362 @@
+---
+/**
+ * InteractiveAnimation Component
+ * 
+ * A component for interactive Lottie animations that respond to user actions.
+ * Supports hover, click, and scroll interactions.
+ */
+
+import { initLottieAnimation } from '../../utils/animations';
+
+interface Props {
+  /** ID for the animation container */
+  id?: string;
+  /** URL to Lottie JSON file */
+  src: string;
+  /** Width of the animation container */
+  width?: number | string;
+  /** Height of the animation container */
+  height?: number | string;
+  /** Type of interaction to enable */
+  interactionType?: 'hover' | 'click' | 'scroll' | 'none';
+  /** Whether the animation should loop */
+  loop?: boolean;
+  /** Animation speed (1 is normal speed) */
+  speed?: number;
+  /** CSS class to apply to the container */
+  class?: string;
+  /** Whether to autoplay the animation */
+  autoplay?: boolean;
+  /** Frame to start the animation at */
+  startFrame?: number;
+  /** Frame to end the animation at */
+  endFrame?: number;
+  /** Whether to show controls */
+  showControls?: boolean;
+}
+
+const {
+  id = `interactive-lottie-${Math.random().toString(36).substring(2, 11)}`,
+  src,
+  width = '100%',
+  height = '100%',
+  interactionType = 'hover',
+  loop = true,
+  speed = 1,
+  class: className = '',
+  autoplay = true,
+  startFrame,
+  endFrame,
+  showControls = false
+} = Astro.props;
+
+// Set dimensions with units if they're numbers
+const widthStyle = typeof width === 'number' ? `${width}px` : width;
+const heightStyle = typeof height === 'number' ? `${height}px` : height;
+
+// Generate a unique ID for the scrubber if controls are shown
+const scrubberId = showControls ? `${id}-scrubber` : '';
+---
+
+<div class={`interactive-animation-container ${className}`}>
+  <div 
+    id={id} 
+    class={`interactive-animation ${interactionType}-interaction`}
+    style={`width: ${widthStyle}; height: ${heightStyle};`}
+    data-animation-src={src}
+    data-animation-loop={loop.toString()}
+    data-animation-speed={speed.toString()}
+    data-animation-autoplay={autoplay.toString()}
+    data-interaction-type={interactionType}
+    data-start-frame={startFrame?.toString() || ''}
+    data-end-frame={endFrame?.toString() || ''}
+  ></div>
+  
+  {showControls && (
+    <div class="animation-controls">
+      <input 
+        type="range" 
+        id={scrubberId} 
+        class="animation-scrubber" 
+        min="0" 
+        max="100" 
+        value="0" 
+      />
+      <div class="animation-buttons">
+        <button class="animation-play" data-target={id}>Play</button>
+        <button class="animation-pause" data-target={id}>Pause</button>
+        <button class="animation-stop" data-target={id}>Stop</button>
+      </div>
+    </div>
+  )}
+</div>
+
+<style>
+  .interactive-animation-container {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .interactive-animation {
+    overflow: hidden;
+    background-color: transparent;
+  }
+  
+  .hover-interaction {
+    cursor: pointer;
+  }
+  
+  .click-interaction {
+    cursor: pointer;
+  }
+  
+  .animation-controls {
+    width: 100%;
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .animation-scrubber {
+    width: 100%;
+    height: 8px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #e0e0e0;
+    outline: none;
+    border-radius: 4px;
+  }
+  
+  .animation-scrubber::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #4a86e8;
+    cursor: pointer;
+  }
+  
+  .animation-scrubber::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #4a86e8;
+    cursor: pointer;
+    border: none;
+  }
+  
+  .animation-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+  
+  .animation-buttons button {
+    padding: 0.25rem 0.75rem;
+    border: none;
+    border-radius: 4px;
+    background: #f0f0f0;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: background-color 0.2s;
+  }
+  
+  .animation-buttons button:hover {
+    background: #e0e0e0;
+  }
+  
+  .animation-play {
+    background: #4a86e8 !important;
+    color: white;
+  }
+  
+  .animation-play:hover {
+    background: #3a76d8 !important;
+  }
+</style>
+
+<script>
+  import { initLottieAnimation } from '../../utils/animations';
+  
+  // Store animation instances
+  const animationInstances = new Map();
+  
+  // Initialize all interactive animations on the page
+  function initInteractiveAnimations() {
+    const animationElements = document.querySelectorAll('.interactive-animation');
+    
+    animationElements.forEach(async (element) => {
+      const id = element.id;
+      const src = element.getAttribute('data-animation-src');
+      const loop = element.getAttribute('data-animation-loop') !== 'false';
+      const speed = parseFloat(element.getAttribute('data-animation-speed') || '1');
+      const autoplay = element.getAttribute('data-animation-autoplay') !== 'false';
+      const interactionType = element.getAttribute('data-interaction-type') || 'hover';
+      const startFrame = element.getAttribute('data-start-frame') ? parseInt(element.getAttribute('data-start-frame') || '0') : undefined;
+      const endFrame = element.getAttribute('data-end-frame') ? parseInt(element.getAttribute('data-end-frame') || '0') : undefined;
+      
+      // Skip if already initialized
+      if (animationInstances.has(id)) return;
+      
+      if (id && src) {
+        try {
+          // Initialize the Lottie animation
+          const anim = await initLottieAnimation(id, src, {
+            loop,
+            autoplay,
+            speed,
+            renderer: 'svg'
+          });
+          
+          if (anim) {
+            // Store the animation instance
+            animationInstances.set(id, anim);
+            
+            // Set up interactions based on type
+            setupInteractions(element, anim, interactionType, startFrame, endFrame);
+            
+            // Set up controls if they exist
+            setupControls(id, anim);
+          }
+        } catch (error) {
+          console.error('Failed to initialize interactive animation:', error);
+        }
+      }
+    });
+  }
+  
+  // Set up interactions for the animation
+  function setupInteractions(element, anim, interactionType, startFrame, endFrame) {
+    const totalFrames = anim.totalFrames;
+    
+    // Use provided frames or default to full animation
+    const firstFrame = startFrame !== undefined ? startFrame : 0;
+    const lastFrame = endFrame !== undefined ? endFrame : totalFrames - 1;
+    
+    switch (interactionType) {
+      case 'hover':
+        element.addEventListener('mouseenter', () => {
+          anim.playSegments([firstFrame, lastFrame], true);
+        });
+        
+        element.addEventListener('mouseleave', () => {
+          anim.playSegments([lastFrame, firstFrame], true);
+        });
+        break;
+        
+      case 'click':
+        let isPlaying = false;
+        
+        element.addEventListener('click', () => {
+          if (isPlaying) {
+            anim.pause();
+          } else {
+            anim.play();
+          }
+          isPlaying = !isPlaying;
+        });
+        break;
+        
+      case 'scroll':
+        // Set up scroll-based animation
+        if ('IntersectionObserver' in window) {
+          const observer = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                  // Calculate animation progress based on scroll position
+                  const scrollHandler = () => {
+                    const rect = element.getBoundingClientRect();
+                    const scrollProgress = 1 - (rect.bottom / window.innerHeight);
+                    const clampedProgress = Math.max(0, Math.min(1, scrollProgress));
+                    const frame = firstFrame + (lastFrame - firstFrame) * clampedProgress;
+                    anim.goToAndStop(frame, true);
+                  };
+                  
+                  window.addEventListener('scroll', scrollHandler);
+                  scrollHandler(); // Initial calculation
+                  
+                  // Store the handler for cleanup
+                  element.scrollHandler = scrollHandler;
+                } else if (element.scrollHandler) {
+                  window.removeEventListener('scroll', element.scrollHandler);
+                }
+              });
+            },
+            { threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] }
+          );
+          
+          observer.observe(element);
+        }
+        break;
+    }
+  }
+  
+  // Set up animation controls
+  function setupControls(id, anim) {
+    const scrubberId = `${id}-scrubber`;
+    const scrubber = document.getElementById(scrubberId);
+    
+    // Set up play/pause/stop buttons
+    document.querySelectorAll(`.animation-play[data-target="${id}"]`).forEach(button => {
+      button.addEventListener('click', () => anim.play());
+    });
+    
+    document.querySelectorAll(`.animation-pause[data-target="${id}"]`).forEach(button => {
+      button.addEventListener('click', () => anim.pause());
+    });
+    
+    document.querySelectorAll(`.animation-stop[data-target="${id}"]`).forEach(button => {
+      button.addEventListener('click', () => {
+        anim.stop();
+        if (scrubber) scrubber.value = '0';
+      });
+    });
+    
+    // Set up scrubber if it exists
+    if (scrubber) {
+      // Update scrubber when animation plays
+      anim.addEventListener('enterFrame', () => {
+        if (anim.isLoaded) {
+          const currentFrame = anim.currentFrame;
+          const totalFrames = anim.totalFrames;
+          const percentage = (currentFrame / totalFrames) * 100;
+          scrubber.value = percentage.toString();
+        }
+      });
+      
+      // Control animation with scrubber
+      scrubber.addEventListener('input', (e) => {
+        const target = e.target;
+        const frame = (anim.totalFrames * parseInt(target.value)) / 100;
+        anim.goToAndStop(frame, true);
+      });
+    }
+  }
+  
+  // Initialize animations when the DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initInteractiveAnimations);
+  } else {
+    initInteractiveAnimations();
+  }
+  
+  // Initialize animations when new content is added to the DOM
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      if (mutation.addedNodes.length) {
+        initInteractiveAnimations();
+      }
+    });
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+</script>

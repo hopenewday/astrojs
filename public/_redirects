@@ -1,0 +1,27 @@
+# Redirects for Cloudflare CDN
+
+# Redirect www to non-www (or vice versa depending on preference)
+http://www.chakrirchain.com/* https://chakrirchain.com/:splat 301!
+https://www.chakrirchain.com/* https://chakrirchain.com/:splat 301!
+
+# Redirect HTTP to HTTPS
+http://chakrirchain.com/* https://chakrirchain.com/:splat 301!
+
+# Legacy article URLs
+/blog/* /article/:splat 301
+/news/* /article/:splat 301
+
+# Legacy category URLs
+/category/tech/* /categories/technology/:splat 301
+/category/science/* /categories/science/:splat 301
+/category/culture/* /categories/culture/:splat 301
+
+# Handle trailing slashes consistently
+/article/:slug/ /article/:slug 301
+/categories/:category/ /categories/:category 301
+
+# Redirect old author pages
+/author/* /authors/:splat 301
+
+# Handle 404s with custom page
+/* /404.html 404

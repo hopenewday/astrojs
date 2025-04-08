@@ -1,0 +1,29 @@
+# robots.txt for ChakrirChain
+User-agent: *
+Allow: /
+
+# Disallow admin and API routes
+Disallow: /admin/
+Disallow: /api/
+
+# Disallow draft content
+Disallow: /drafts/
+
+# Sitemap location
+Sitemap: https://chakrirchain.com/sitemap.xml
+Sitemap: https://chakrirchain.com/sitemap-news.xml
+
+# Crawl delay for specific bots
+User-agent: GPTBot
+Crawl-delay: 10
+
+User-agent: ChatGPT-User
+Crawl-delay: 10
+
+# Allow Google to index everything
+User-agent: Googlebot
+Allow: /
+
+# Allow Bingbot to index everything
+User-agent: Bingbot
+Allow: /

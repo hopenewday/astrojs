@@ -1,0 +1,342 @@
+---
+/**
+ * FeedbackIndicator Component
+ * 
+ * A component that provides animated feedback for user actions using Lottie animations.
+ * This can be used for success/error messages, confirmations, and other user feedback.
+ */
+
+import { initLottieAnimation } from '../../utils/animations';
+
+interface Props {
+  /** ID for the animation container */
+  id?: string;
+  /** Type of feedback animation to display */
+  type?: 'success' | 'error' | 'warning' | 'info' | 'custom';
+  /** URL to custom Lottie JSON file (required if type is 'custom') */
+  customAnimation?: string;
+  /** Width of the animation container */
+  width?: number | string;
+  /** Height of the animation container */
+  height?: number | string;
+  /** CSS class to apply to the container */
+  class?: string;
+  /** Message to display with the animation */
+  message?: string;
+  /** Whether the feedback is initially visible */
+  visible?: boolean;
+  /** Auto-hide duration in milliseconds (0 for no auto-hide) */
+  duration?: number;
+}
+
+const {
+  id = `feedback-indicator-${Math.random().toString(36).substring(2, 11)}`,
+  type = 'success',
+  customAnimation,
+  width = '80px',
+  height = '80px',
+  class: className = '',
+  message = '',
+  visible = true,
+  duration = 3000
+} = Astro.props;
+
+// Map of default feedback animations by type
+const defaultAnimations = {
+  success: 'https://assets9.lottiefiles.com/packages/lf20_lk80fpsm.json',
+  error: 'https://assets1.lottiefiles.com/packages/lf20_qpwbiyxf.json',
+  warning: 'https://assets3.lottiefiles.com/packages/lf20_qcwixfnf.json',
+  info: 'https://assets10.lottiefiles.com/packages/lf20_nxuowtsj.json'
+};
+
+// Determine the animation source
+const animationSrc = customAnimation || defaultAnimations[type] || defaultAnimations.success;
+
+// Set dimensions with units if they're numbers
+const widthStyle = typeof width === 'number' ? `${width}px` : width;
+const heightStyle = typeof height === 'number' ? `${height}px` : height;
+---
+
+<div 
+  id={`${id}-container`}
+  class={`feedback-indicator ${type}-indicator ${className}`}
+  style={`display: ${visible ? 'flex' : 'none'};`}
+  data-duration={duration.toString()}
+>
+  <div
+    id={id}
+    class="feedback-animation"
+    style={`width: ${widthStyle}; height: ${heightStyle};`}
+    data-animation-src={animationSrc}
+  ></div>
+  
+  {message && (
+    <div class="feedback-message">{message}</div>
+  )}
+  
+  <button class="feedback-close" aria-label="Close feedback">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  </button>
+</div>
+
+<style>
+  .feedback-indicator {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    padding: 1rem;
+    z-index: 50;
+    max-width: 300px;
+    animation: slide-in 0.3s ease-out;
+  }
+  
+  .feedback-animation {
+    margin-bottom: 0.5rem;
+  }
+  
+  .feedback-message {
+    text-align: center;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #4b5563;
+  }
+  
+  .feedback-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #9ca3af;
+    padding: 0.25rem;
+    border-radius: 9999px;
+    line-height: 0;
+    transition: background-color 0.2s;
+  }
+  
+  .feedback-close:hover {
+    background-color: #f3f4f6;
+    color: #4b5563;
+  }
+  
+  /* Type-specific styles */
+  .success-indicator {
+    border-left: 4px solid #10b981;
+  }
+  
+  .error-indicator {
+    border-left: 4px solid #ef4444;
+  }
+  
+  .warning-indicator {
+    border-left: 4px solid #f59e0b;
+  }
+  
+  .info-indicator {
+    border-left: 4px solid #3b82f6;
+  }
+  
+  /* Animation */
+  @keyframes slide-in {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  /* Dark mode styles */
+  :global(.dark) .feedback-indicator {
+    background-color: #1f2937;
+  }
+  
+  :global(.dark) .feedback-message {
+    color: #d1d5db;
+  }
+  
+  :global(.dark) .feedback-close {
+    color: #6b7280;
+  }
+  
+  :global(.dark) .feedback-close:hover {
+    background-color: #374151;
+    color: #d1d5db;
+  }
+</style>
+
+<script>
+  import { initLottieAnimation } from '../../utils/animations';
+  
+  // Initialize all feedback indicators on the page
+  function initFeedbackIndicators() {
+    const indicatorElements = document.querySelectorAll('.feedback-animation');
+    
+    indicatorElements.forEach(async (element) => {
+      const id = element.id;
+      const src = element.getAttribute('data-animation-src');
+      
+      if (id && src) {
+        try {
+          // Initialize the Lottie animation
+          await initLottieAnimation(id, src, {
+            loop: false,
+            autoplay: true,
+            renderer: 'svg'
+          });
+        } catch (error) {
+          console.error('Failed to initialize feedback animation:', error);
+        }
+      }
+    });
+    
+    // Set up close buttons
+    document.querySelectorAll('.feedback-close').forEach(button => {
+      button.addEventListener('click', () => {
+        const container = button.closest('.feedback-indicator');
+        if (container) {
+          container.style.display = 'none';
+        }
+      });
+    });
+    
+    // Set up auto-hide
+    document.querySelectorAll('.feedback-indicator').forEach(container => {
+      const duration = parseInt(container.getAttribute('data-duration') || '0');
+      if (duration > 0) {
+        setTimeout(() => {
+          container.style.display = 'none';
+        }, duration);
+      }
+    });
+  }
+  
+  // Initialize animations when the DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFeedbackIndicators);
+  } else {
+    initFeedbackIndicators();
+  }
+  
+  // Initialize animations when new content is added to the DOM
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      if (mutation.addedNodes.length) {
+        initFeedbackIndicators();
+      }
+    });
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+  
+  // Expose methods to show/hide feedback indicators
+  window.showFeedback = (options) => {
+    const { type = 'success', message = '', duration = 3000, customAnimation } = options;
+    
+    // Create a new feedback indicator
+    const id = `feedback-${Math.random().toString(36).substring(2, 11)}`;
+    const container = document.createElement('div');
+    container.id = `${id}-container`;
+    container.className = `feedback-indicator ${type}-indicator`;
+    container.setAttribute('data-duration', duration.toString());
+    
+    // Default animations
+    const defaultAnimations = {
+      success: 'https://assets9.lottiefiles.com/packages/lf20_lk80fpsm.json',
+      error: 'https://assets1.lottiefiles.com/packages/lf20_qpwbiyxf.json',
+      warning: 'https://assets3.lottiefiles.com/packages/lf20_qcwixfnf.json',
+      info: 'https://assets10.lottiefiles.com/packages/lf20_nxuowtsj.json'
+    };
+    
+    // Determine animation source
+    const animationSrc = customAnimation || defaultAnimations[type] || defaultAnimations.success;
+    
+    // Create animation container
+    const animationContainer = document.createElement('div');
+    animationContainer.id = id;
+    animationContainer.className = 'feedback-animation';
+    animationContainer.style.width = '80px';
+    animationContainer.style.height = '80px';
+    animationContainer.setAttribute('data-animation-src', animationSrc);
+    
+    // Create message element if provided
+    let messageElement;
+    if (message) {
+      messageElement = document.createElement('div');
+      messageElement.className = 'feedback-message';
+      messageElement.textContent = message;
+    }
+    
+    // Create close button
+    const closeButton = document.createElement('button');
+    closeButton.className = 'feedback-close';
+    closeButton.setAttribute('aria-label', 'Close feedback');
+    closeButton.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    `;
+    
+    // Assemble the indicator
+    container.appendChild(animationContainer);
+    if (messageElement) container.appendChild(messageElement);
+    container.appendChild(closeButton);
+    
+    // Add to the document
+    document.body.appendChild(container);
+    
+    // Initialize the animation
+    initLottieAnimation(id, animationSrc, {
+      loop: false,
+      autoplay: true,
+      renderer: 'svg'
+    });
+    
+    // Set up close button
+    closeButton.addEventListener('click', () => {
+      container.style.display = 'none';
+      setTimeout(() => {
+        container.remove();
+      }, 300);
+    });
+    
+    // Set up auto-hide
+    if (duration > 0) {
+      setTimeout(() => {
+        container.style.display = 'none';
+        setTimeout(() => {
+          container.remove();
+        }, 300);
+      }, duration);
+    }
+    
+    return id;
+  };
+  
+  window.hideFeedback = (id) => {
+    const container = document.getElementById(`${id}-container`);
+    if (container) {
+      container.style.display = 'none';
+      setTimeout(() => {
+        container.remove();
+      }, 300);
+    }
+  };
+</script>

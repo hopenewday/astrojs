@@ -1,0 +1,220 @@
+---
+import ThemeProvider from '../components/common/ThemeProvider.astro';
+import PwaInstallPrompt from '../components/pwa/PwaInstallPrompt.astro';
+import WebVitals from '../components/analytics/WebVitals.astro';
+import UmamiAnalytics from '../components/analytics/UmamiAnalytics.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  canonicalURL?: string;
+  pubDate?: Date;
+  modDate?: Date;
+  author?: string;
+  ogType?: 'website' | 'article';
+  structuredData?: object;
+}
+
+const {
+  title,
+  description = 'A modern magazine-style publication built with Astro.js',
+  image = '/images/default-og.jpg',
+  canonicalURL = Astro.url.href,
+  pubDate,
+  modDate,
+  author = 'ChakrirChain',
+  ogType = 'website',
+  structuredData,
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://ik.imagekit.io" crossorigin />
+    
+    <!-- Base meta tags -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // Initialize AVIF support detection
+      (function() {
+        try {
+          // Check if we already have a stored result
+          const storedSupport = localStorage.getItem('avif-support');
+          if (storedSupport) {
+            document.documentElement.dataset.avifSupport = storedSupport;
+            return;
+          }
+          
+          // Test AVIF support
+          const img = new Image();
+          img.onload = function() {
+            const supported = true;
+            document.documentElement.dataset.avifSupport = 'true';
+            localStorage.setItem('avif-support', 'true');
+          };
+          img.onerror = function() {
+            document.documentElement.dataset.avifSupport = 'false';
+            localStorage.setItem('avif-support', 'false');
+          };
+          img.src = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAAB0AAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAIAAAACAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQ0MAAAAABNjb2xybmNseAACAAIAAYAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAACVtZGF0EgAKCBgANogQEAwgMg8f8D///8WfhwB8+ErK42A=';
+        } catch (e) {
+          console.error('Error detecting AVIF support:', e);
+        }
+      })();
+    </script>
+    <meta name="generator" content={Astro.generator} />
+    
+    <!-- Primary meta tags -->
+    <title>{title}</title>
+    <meta name="title" content={title} />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(image, Astro.site)} />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={canonicalURL} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={new URL(image, Astro.site)} />
+    
+    <!-- Article specific meta tags -->
+    {pubDate && <meta property="article:published_time" content={pubDate.toISOString()} />}
+    {modDate && <meta property="article:modified_time" content={modDate.toISOString()} />}
+    {author && <meta property="article:author" content={author} />}
+    
+    <!-- Structured data -->
+    {structuredData && (
+      <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+    )}
+    
+    <!-- Critical CSS -->
+    <style is:inline>
+      /* Critical CSS for above-the-fold content */
+      :root {
+        --color-primary: #3b82f6; /* blue-500 */
+        --color-text: #1f2937;
+        --color-text-light: #6b7280;
+        --color-background: #ffffff;
+        --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      }
+      
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --color-text: #f3f4f6;
+          --color-text-light: #9ca3af;
+          --color-background: #111827;
+        }
+      }
+      
+      body {
+        font-family: var(--font-sans);
+        color: var(--color-text);
+        background-color: var(--color-background);
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      main {
+        flex: 1;
+      }
+      
+      .skip-to-content {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: var(--color-primary);
+        color: white;
+        padding: 8px;
+        z-index: 100;
+        transition: top 0.2s;
+      }
+      
+      .skip-to-content:focus {
+        top: 0;
+      }
+    </style>
+    
+    <!-- Slot for additional head elements -->
+    <slot name="head" />
+  </head>
+  <body>
+    <!-- Theme Provider wraps all content to provide theme context -->
+    <ThemeProvider>
+      <!-- Skip to content link for accessibility -->
+      <a href="#main-content" class="skip-to-content">Skip to content</a>
+      
+      <!-- Header slot -->
+      <slot name="header" />
+      
+      <!-- Main content -->
+      <main id="main-content">
+        <slot />
+      </main>
+      
+      <!-- Footer slot -->
+      <slot name="footer" />
+      
+      <!-- Error boundary for client-side errors -->
+      <div id="error-boundary" hidden>
+        <div class="error-container">
+          <h2>Something went wrong</h2>
+          <p>We're sorry, but we encountered an error. Please try refreshing the page.</p>
+          <button id="error-retry">Retry</button>
+        </div>
+      </div>
+    </ThemeProvider>
+    
+    <!-- Global error handling script -->
+    <script is:inline>
+      window.addEventListener('error', function(event) {
+        const errorBoundary = document.getElementById('error-boundary');
+        if (errorBoundary && !event.error?.message?.includes('ResizeObserver')) {
+          errorBoundary.hidden = false;
+        }
+      });
+      
+      document.getElementById('error-retry')?.addEventListener('click', function() {
+        document.getElementById('error-boundary').hidden = true;
+        window.location.reload();
+      });
+    </script>
+    <!-- PWA Install Prompt -->
+    <PwaInstallPrompt />
+    
+    <!-- Analytics Components -->
+    <UmamiAnalytics />
+    <WebVitals enabled={true} endpoint="/api/analytics/web-vitals" />
+    
+    <!-- Service Worker Registration -->
+    <script>
+      // Register service worker for PWA support
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(registration => {
+              console.log('Service Worker registered with scope:', registration.scope);
+            })
+            .catch(error => {
+              console.error('Service Worker registration failed:', error);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>

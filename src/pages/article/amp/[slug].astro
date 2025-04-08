@@ -1,0 +1,154 @@
+---
+import AmpArticleLayout from "../../../layouts/AmpArticleLayout.astro";
+
+// In a real application, this would fetch data from a CMS or API
+// For demo purposes, we'll use the same static data as the non-AMP version
+export async function getStaticPaths() {
+  // Sample articles data - same as in the non-AMP version
+  const articles = [
+    {
+      slug: "future-of-ai-2023",
+      title: "The Future of Artificial Intelligence in 2023",
+      description: "Exploring the latest advancements in AI and what they mean for society, business, and everyday life.",
+      image: "/images/tech/ai-future.jpg",
+      publishDate: new Date("2023-06-15"),
+      modifiedDate: new Date("2023-06-20"),
+      author: {
+        name: "Alex Johnson",
+        slug: "alex-johnson",
+        avatar: "/images/authors/alex-johnson.jpg",
+        bio: "Alex Johnson is a technology journalist with over 10 years of experience covering AI, machine learning, and emerging tech trends. Previously a senior editor at TechCrunch, Alex now writes for multiple publications and consults for tech startups.",
+        socialLinks: {
+          twitter: "https://twitter.com/alexjohnson",
+          linkedin: "https://linkedin.com/in/alexjohnson",
+          website: "https://alexjohnson.tech"
+        }
+      },
+      category: {
+        name: "Tech",
+        slug: "tech"
+      },
+      tags: ["Artificial Intelligence", "Machine Learning", "Technology Trends", "Future Tech"],
+      content: `
+        <h2 id="introduction">Introduction to AI in 2023</h2>
+        <p>Artificial Intelligence has evolved dramatically over the past decade, but 2023 marks a pivotal moment in its development. With the emergence of more sophisticated large language models and multimodal AI systems, we're witnessing capabilities that were once confined to science fiction.</p>
+        
+        <p>The integration of AI into everyday applications has accelerated, creating both unprecedented opportunities and complex challenges for society. From healthcare diagnostics to creative content generation, AI is reshaping industries and redefining human-computer interaction.</p>
+        
+        <h2 id="breakthroughs">Recent Breakthroughs</h2>
+        <p>Several key breakthroughs have defined AI's trajectory in 2023:</p>
+        
+        <h3 id="multimodal-models">Multimodal AI Models</h3>
+        <p>The latest generation of AI models can process and generate multiple types of data simultaneously—text, images, audio, and even video. This multimodal capability enables more natural and comprehensive interactions, as these systems can understand context across different mediums.</p>
+        
+        <figure>
+          <img src="/images/tech/multimodal-ai.jpg" alt="Visualization of multimodal AI processing different types of data" width="800" height="450" />
+          <figcaption>Multimodal AI systems can process text, images, audio, and video simultaneously</figcaption>
+        </figure>
+        
+        <h3 id="reinforcement-learning">Advances in Reinforcement Learning</h3>
+        <p>Reinforcement learning with human feedback (RLHF) has become the standard approach for aligning AI systems with human values and preferences. This technique has dramatically improved the helpfulness, harmlessness, and honesty of AI assistants.</p>
+        
+        <blockquote>
+          <p>"The combination of large language models with reinforcement learning represents one of the most significant advances in AI this decade. It's changing how we approach alignment problems." — Dr. Emily Zhao, AI Safety Researcher</p>
+        </blockquote>
+        
+        <h2 id="applications">Transformative Applications</h2>
+        <p>AI's impact is being felt across numerous domains:</p>
+        
+        <h3 id="healthcare">Healthcare Revolution</h3>
+        <p>In healthcare, AI systems are now capable of diagnosing certain conditions with accuracy surpassing that of experienced physicians. From analyzing medical images to predicting patient outcomes, AI is becoming an invaluable tool for healthcare professionals.</p>
+        
+        <h3 id="creative-industries">Creative Industries</h3>
+        <p>Perhaps most surprisingly, AI has made significant inroads into creative fields. Artists, writers, musicians, and filmmakers are incorporating AI tools into their workflows, creating new forms of collaborative creativity.</p>
+        
+        <pre><code>// Example of AI-assisted code generation
+function analyzeImage(imageData) {
+  // AI model identifies objects in the image
+  const detectedObjects = aiModel.detect(imageData);
+  
+  // Process and categorize results
+  return detectedObjects.map(obj => ({
+    label: obj.class,
+    confidence: obj.score,
+    position: obj.bbox
+  }));
+}</code></pre>
+        
+        <h2 id="challenges">Emerging Challenges</h2>
+        <p>Despite these advances, significant challenges remain:</p>
+        
+        <ul>
+          <li><strong>Bias and Fairness:</strong> AI systems continue to reflect and sometimes amplify societal biases present in their training data.</li>
+          <li><strong>Privacy Concerns:</strong> The data hunger of modern AI raises important questions about privacy and data ownership.</li>
+          <li><strong>Job Displacement:</strong> Automation of cognitive tasks threatens to disrupt labor markets in unprecedented ways.</li>
+          <li><strong>Alignment Problems:</strong> Ensuring AI systems act in accordance with human values becomes more crucial as their capabilities increase.</li>
+        </ul>
+        
+        <h2 id="future-directions">Future Directions</h2>
+        <p>Looking ahead, several trends are likely to shape AI's continued evolution:</p>
+        
+        <ol>
+          <li>Increased focus on interpretable and explainable AI systems</li>
+          <li>Development of more energy-efficient models to reduce environmental impact</li>
+          <li>Greater emphasis on privacy-preserving machine learning techniques</li>
+          <li>More sophisticated human-AI collaboration frameworks</li>
+        </ol>
+        
+        <h2 id="conclusion">Conclusion</h2>
+        <p>The AI landscape of 2023 represents both extraordinary progress and sobering responsibility. As these systems become more capable and ubiquitous, the conversation around their development and deployment must include diverse perspectives from across society.</p>
+        
+        <p>The decisions we make today about AI governance, access, and alignment will shape not just the technology itself, but the future of human-machine coexistence. The promise of AI remains as bright as ever—but realizing that promise requires thoughtful navigation of complex technical and ethical terrain.</p>
+      `,
+      relatedArticles: [
+        {
+          slug: "quantum-computing-explained",
+          title: "Quantum Computing Explained for Non-Scientists",
+          excerpt: "Breaking down the complex principles of quantum computing into understandable concepts for the general public.",
+          image: "/images/tech/quantum.jpg",
+          publishDate: new Date("2023-05-25"),
+          category: { name: "Tech", slug: "tech" }
+        },
+        {
+          slug: "web-frameworks-compared",
+          title: "Modern Web Development Frameworks Compared",
+          excerpt: "An in-depth analysis of the most popular web development frameworks in 2023, including React, Vue, and Svelte.",
+          image: "/images/tech/web-dev.jpg",
+          publishDate: new Date("2023-06-10"),
+          category: { name: "Tech", slug: "tech" }
+        },
+        {
+          slug: "climate-change-research",
+          title: "Climate Change: The Latest Research",
+          excerpt: "A summary of the most recent scientific findings on climate change and their implications for global policy.",
+          image: "/images/science/climate.jpg",
+          publishDate: new Date("2023-06-01"),
+          category: { name: "Science", slug: "science" }
+        }
+      ]
+    },
+    // Additional articles would be defined here
+  ];
+  
+  return articles.map(article => ({
+    params: { slug: article.slug },
+    props: { article }
+  }));
+}
+
+const { article } = Astro.props;
+---
+
+<AmpArticleLayout
+  title={article.title}
+  description={article.description}
+  image={article.image}
+  publishDate={article.publishDate}
+  modifiedDate={article.modifiedDate}
+  author={article.author}
+  category={article.category}
+  tags={article.tags}
+  content={article.content}
+  relatedArticles={article.relatedArticles}
+  estimatedReadingTime={Math.ceil(article.content.split(/\s+/).length / 225)}
+/>

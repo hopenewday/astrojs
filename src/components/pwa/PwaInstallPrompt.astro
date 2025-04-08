@@ -1,0 +1,190 @@
+---
+/**
+ * PwaInstallPrompt.astro - Component for PWA installation prompt
+ * 
+ * This component provides a user interface for prompting users to install
+ * the application as a Progressive Web App on supported devices.
+ */
+
+export interface Props {
+  /** Additional class names */
+  class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+---
+
+<div class:list={['pwa-install-container', className]} style="display: none;">
+  <div class="pwa-install-content">
+    <div class="pwa-install-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    <div class="pwa-install-text">
+      <h3>Install Astro News</h3>
+      <p>Install this application on your device for quick and easy access.</p>
+    </div>
+    <button class="pwa-install-button" aria-label="Install application">
+      Install
+    </button>
+    <button class="pwa-install-dismiss" aria-label="Dismiss installation prompt">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<style>
+  .pwa-install-container {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    max-width: 480px;
+    margin: 0 auto;
+    background-color: var(--color-background, #ffffff);
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    z-index: 9999;
+    animation: slide-up 0.3s ease-out;
+  }
+  
+  .pwa-install-content {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    position: relative;
+  }
+  
+  .pwa-install-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background-color: var(--color-primary, #4f46e5);
+    color: white;
+    border-radius: 12px;
+    margin-right: 16px;
+    flex-shrink: 0;
+  }
+  
+  .pwa-install-text {
+    flex: 1;
+  }
+  
+  .pwa-install-text h3 {
+    margin: 0 0 4px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text, #1f2937);
+  }
+  
+  .pwa-install-text p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--color-text-light, #6b7280);
+  }
+  
+  .pwa-install-button {
+    background-color: var(--color-primary, #4f46e5);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    margin-left: 16px;
+    transition: background-color 0.2s;
+  }
+  
+  .pwa-install-button:hover {
+    background-color: var(--color-primary-dark, #4338ca);
+  }
+  
+  .pwa-install-dismiss {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    color: var(--color-text-light, #6b7280);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+  }
+  
+  .pwa-install-dismiss:hover {
+    background-color: var(--color-background-alt, #f9fafb);
+  }
+  
+  @keyframes slide-up {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .pwa-install-container {
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-width: none;
+      border-radius: 12px 12px 0 0;
+    }
+  }
+</style>
+
+<script>
+  // Handle PWA installation
+  document.addEventListener('DOMContentLoaded', () => {
+    const installContainer = document.querySelector('.pwa-install-container');
+    const installButton = document.querySelector('.pwa-install-button');
+    const dismissButton = document.querySelector('.pwa-install-dismiss');
+    
+    // Check if we've already shown the prompt
+    const hasShownPrompt = localStorage.getItem('pwaPromptDismissed');
+    
+    // Only show if we haven't shown it before and the install prompt is available
+    if (!hasShownPrompt && window.deferredInstallPrompt) {
+      installContainer.style.display = 'block';
+    }
+    
+    // Listen for the install prompt event
+    window.addEventListener('appinstalled', () => {
+      // Hide the prompt when installed
+      installContainer.style.display = 'none';
+    });
+    
+    // Handle dismiss button
+    if (dismissButton) {
+      dismissButton.addEventListener('click', () => {
+        installContainer.style.display = 'none';
+        localStorage.setItem('pwaPromptDismissed', 'true');
+      });
+    }
+    
+    // Custom event for when the deferred prompt becomes available
+    window.addEventListener('pwaInstallAvailable', () => {
+      if (!hasShownPrompt) {
+        installContainer.style.display = 'block';
+      }
+    });
+  });
+</script>

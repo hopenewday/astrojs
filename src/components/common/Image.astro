@@ -1,0 +1,352 @@
+---
+/**
+ * Image component with CDN failover system
+ * 
+ * A unified image component that automatically switches between ImageKit and Tebi S3 storage
+ * based on service availability. This component combines the best features of SmartImage and
+ * ResponsiveImage with additional optimizations.
+ * 
+ * Features:
+ * - Responsive images with srcset and sizes
+ * - Automatic CDN failover between ImageKit and Tebi
+ * - Low-quality image placeholders (LQIP) with blur-up effect
+ * - Art direction support with different crops
+ * - Lazy loading with IntersectionObserver
+ * - Native lazy loading fallback
+ * - Optimized image loading with fetchpriority
+ * - Comprehensive error handling
+ * - Accessibility features
+ * - AVIF format support with automatic detection
+ */
+import { getImageWithFailover, getLqipUrl, getResponsiveImageAttributes } from '../../lib/media';
+import { detectAvifSupport } from '../../utils/imageOptimizer';
+
+interface Props {
+  src: string;
+  alt: string;
+  widths?: number[];
+  sizes?: string;
+  width?: number;
+  height?: number;
+  loading?: 'lazy' | 'eager';
+  decoding?: 'async' | 'sync' | 'auto';
+  quality?: number;
+  format?: 'auto' | 'webp' | 'avif' | 'jpg' | 'png';
+  aspectRatio?: string;
+  crop?: 'maintain_ratio' | 'force' | 'at_least' | 'at_max';
+  focus?: 'center' | 'top' | 'left' | 'bottom' | 'right' | 'top_left' | 'top_right' | 'bottom_left' | 'bottom_right';
+  lqip?: boolean;
+  className?: string;
+  style?: string;
+  fetchpriority?: 'high' | 'low' | 'auto';
+  artDirected?: {
+    media: string;
+    src: string;
+    widths?: number[];
+  }[];
+  fallbackStrategy?: 'silent' | 'placeholder' | 'error';
+  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
+  objectPosition?: string;
+  draggable?: boolean;
+}
+
+const {
+  src,
+  alt,
+  widths = [400, 800, 1200, 1600],
+  sizes = '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw',
+  width,
+  height,
+  loading = 'lazy',
+  decoding = 'async',
+  quality = 80,
+  format = 'auto',
+  aspectRatio,
+  crop = 'maintain_ratio',
+  focus = 'center',
+  lqip = true,
+  className = '',
+  style = '',
+  fetchpriority = 'auto',
+  artDirected = [],
+  fallbackStrategy = 'silent',
+  objectFit,
+  objectPosition,
+  draggable = false,
+} = Astro.props;
+
+// Validate required props
+if (!src) {
+  throw new Error('Image component requires a src property');
+}
+
+if (!alt && alt !== '') {
+  throw new Error('Image component requires an alt property (empty string is allowed for decorative images)');
+}
+
+// Get image URL with failover
+let imageUrl;
+let imageError = false;
+
+// Check for AVIF support if format is 'auto'
+let requestedFormat = format;
+if (format === 'auto' && typeof window !== 'undefined') {
+  try {
+    const avifSupported = await detectAvifSupport();
+    requestedFormat = avifSupported ? 'avif' : 'webp';
+    console.log(`AVIF support detected: ${avifSupported}, using format: ${requestedFormat}`);
+  } catch (error) {
+    console.error('Error detecting AVIF support:', error);
+    requestedFormat = 'webp'; // Fallback to WebP if detection fails
+  }
+}
+
+try {
+  imageUrl = await getImageWithFailover(src, {
+    width,
+    height,
+    quality,
+    format: requestedFormat,
+    aspectRatio,
+    crop,
+    focus,
+  });
+} catch (error) {
+  console.error(`Failed to load image from ${src}:`, error);
+  imageError = true;
+  
+  // Handle error based on fallback strategy
+  if (fallbackStrategy === 'placeholder') {
+    imageUrl = '/images/placeholder.svg'; // Fallback placeholder image
+  } else if (fallbackStrategy === 'error') {
+    throw error; // Re-throw to let error boundary handle it
+  } else {
+    // Silent fallback - use original src as last resort
+    imageUrl = src;
+  }
+}
+
+// Get responsive image attributes if widths are provided
+let srcset = '';
+let sizesAttr = '';
+let lqipUrl;
+let imageWidth = width;
+let imageHeight = height;
+
+if (!imageError && widths.length > 1) {
+  try {
+    const responsiveAttrs = await getResponsiveImageAttributes({
+      src,
+      alt,
+      widths,
+      sizes,
+      baseWidth: width,
+      baseHeight: height,
+      quality,
+      format,
+      aspectRatio,
+      focus,
+      lqip,
+    });
+    
+    srcset = responsiveAttrs.srcset;
+    sizesAttr = responsiveAttrs.sizes;
+    lqipUrl = responsiveAttrs.lqip;
+    imageWidth = responsiveAttrs.width || width;
+    imageHeight = responsiveAttrs.height || height;
+  } catch (error) {
+    console.error(`Failed to generate responsive attributes for ${src}:`, error);
+    // Continue with basic image without responsive attributes
+  }
+} else if (lqip && !imageError) {
+  // Just get LQIP URL if responsive images not needed
+  try {
+    lqipUrl = getLqipUrl(src);
+  } catch (error) {
+    console.error(`Failed to generate LQIP for ${src}:`, error);
+    // Continue without LQIP
+  }
+}
+
+// Generate unique ID for this image
+const id = `img-${Math.random().toString(36).substring(2, 11)}`;
+
+// Inline styles for blur-up effect
+const blurUpStyles = lqipUrl ? `
+  #${id} {
+    transition: filter 0.5s ease-out;
+    filter: blur(10px);
+    background-size: cover;
+    background-position: center;
+  }
+  #${id}.loaded {
+    filter: blur(0);
+  }
+` : '';
+
+// Additional inline styles
+let inlineStyles = style || '';
+if (objectFit) {
+  inlineStyles += `object-fit: ${objectFit};`;
+}
+if (objectPosition) {
+  inlineStyles += `object-position: ${objectPosition};`;
+}
+
+// Process art-directed images
+const artDirectedImages = artDirected.map(async (directive) => {
+  try {
+    const { media, src: artSrc, widths: artWidths = widths } = directive;
+    
+    // Get art-directed image URL with failover
+    const artImageUrl = await getImageWithFailover(artSrc, {
+      width,
+      height,
+      quality,
+      format,
+      aspectRatio,
+      crop,
+      focus,
+    });
+    
+    // Get responsive attributes for art-directed image
+    let artSrcset = '';
+    
+    if (artWidths.length > 1) {
+      const artResponsiveAttrs = await getResponsiveImageAttributes({
+        src: artSrc,
+        alt,
+        widths: artWidths,
+        sizes,
+        baseWidth: width,
+        baseHeight: height,
+        quality,
+        format,
+        aspectRatio,
+        focus,
+        lqip: false, // No LQIP for art-directed sources
+      });
+      
+      artSrcset = artResponsiveAttrs.srcset;
+    }
+    
+    return {
+      media,
+      src: artImageUrl,
+      srcset: artSrcset,
+    };
+  } catch (error) {
+    console.error(`Failed to process art-directed image:`, error);
+    return null;
+  }
+});
+
+// Resolve all art-directed images
+const resolvedArtDirectedImages = (await Promise.all(artDirectedImages)).filter(Boolean);
+---
+
+{lqipUrl && (
+  <style set:html={blurUpStyles}></style>
+)}
+
+<picture>
+  {/* Art-directed sources */}
+  {resolvedArtDirectedImages.map((source) => (
+    <source 
+      media={source.media} 
+      srcset={source.srcset || source.src} 
+    />
+  ))}
+  
+  {/* Default responsive source */}
+  {srcset && (
+    <source srcset={srcset} sizes={sizesAttr} />
+  )}
+  
+  {/* Fallback image */}
+  <img
+    id={id}
+    src={imageUrl}
+    alt={alt}
+    width={imageWidth}
+    height={imageHeight}
+    loading={loading}
+    decoding={decoding}
+    class={className}
+    style={inlineStyles}
+    fetchpriority={fetchpriority}
+    draggable={draggable}
+    onerror={fallbackStrategy === 'placeholder' ? `this.src='/images/placeholder.svg';` : undefined}
+  />
+</picture>
+
+{lqipUrl && (
+  <script define:vars={{ id, lqipUrl }}>
+    // Import the detectAvifSupport function
+    import { detectAvifSupport } from '../../utils/imageOptimizer';
+    
+    // Create new image to preload the full resolution version
+    const img = document.getElementById(id);
+    if (img) {
+      // Set initial background image to LQIP
+      img.style.backgroundImage = `url(${lqipUrl})`;
+      
+      // When the main image loads, remove blur
+      img.onload = () => {
+        img.classList.add('loaded');
+      };
+      
+      // If image already loaded (from cache), add loaded class immediately
+      if (img.complete) {
+        img.classList.add('loaded');
+      }
+      
+      // Use IntersectionObserver for enhanced lazy loading
+      if ('IntersectionObserver' in window && img.loading === 'lazy') {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              // Start loading the image when it enters viewport
+              const target = entry.target;
+              if (target.dataset.src) {
+                target.src = target.dataset.src;
+                delete target.dataset.src;
+              }
+              observer.unobserve(target);
+            }
+          });
+        }, {
+          rootMargin: '200px', // Start loading 200px before image enters viewport
+        });
+        
+        observer.observe(img);
+      }
+      
+      // Check for AVIF support and add a data attribute to the document
+      // This will be used by other components to determine if AVIF is supported
+      async function checkAvifSupport() {
+        try {
+          const avifSupported = await detectAvifSupport();
+          document.documentElement.dataset.avifSupport = avifSupported.toString();
+          
+          // If this is the first load, store the result in localStorage for future page loads
+          if (!localStorage.getItem('avif-support')) {
+            localStorage.setItem('avif-support', avifSupported.toString());
+          }
+        } catch (error) {
+          console.error('Error detecting AVIF support:', error);
+        }
+      }
+      
+      // Run the check if we don't already have a stored result
+      if (!document.documentElement.dataset.avifSupport) {
+        const storedSupport = localStorage.getItem('avif-support');
+        if (storedSupport) {
+          document.documentElement.dataset.avifSupport = storedSupport;
+        } else {
+          checkAvifSupport();
+        }
+      }
+    }
+  </script>
+)}

@@ -1,0 +1,52 @@
+---
+/**
+ * JsonLd.astro - Structured data component for SEO
+ * 
+ * This component renders JSON-LD structured data for various schema types
+ * including Article, WebPage, Organization, Person, and more.
+ */
+
+interface Props {
+  type: 'Article' | 'NewsArticle' | 'BlogPosting' | 'WebPage' | 'Organization' | 'Person' | 'BreadcrumbList' | 'WebSite' | 'FAQPage' | 'Product';
+  data: Record<string, any>;
+  space?: number;
+}
+
+const SCHEMA_REQUIREMENTS: Record<Props['type'], string[]> = {
+  Article: ['headline', 'datePublished', 'author'],
+  NewsArticle: ['headline', 'datePublished', 'author'],
+  BlogPosting: ['headline', 'datePublished', 'author'],
+  WebPage: ['name', 'description'],
+  Organization: ['name', 'url'],
+  Person: ['name'],
+  BreadcrumbList: ['itemListElement'],
+  WebSite: ['name', 'url'],
+  FAQPage: ['mainEntity'],
+  Product: ['name', 'description', 'brand']
+};
+
+const validateSchema = (type: Props['type'], data: Record<string, any>) => {
+  const requiredFields = SCHEMA_REQUIREMENTS[type];
+  const missingFields = requiredFields.filter(field => !(field in data));
+  
+  if (missingFields.length > 0) {
+    throw new Error(`Missing required fields for ${type} schema: ${missingFields.join(', ')}`);
+  }
+};
+
+const { type, data, space = 2 } = Astro.props;
+
+// Add @context and @type to the data
+validateSchema(type, data);
+
+const jsonLdData = {
+  '@context': 'https://schema.org',
+  '@type': type,
+  ...data
+};
+
+// Convert to JSON string with specified spacing
+const jsonString = JSON.stringify(jsonLdData, null, space);
+---
+
+<script type="application/ld+json" set:html={jsonString} />

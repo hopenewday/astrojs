@@ -1,0 +1,168 @@
+---
+/**
+ * ContentLoader Component
+ * 
+ * A component that provides animated loading states for content sections using Lottie animations.
+ * This can be used when loading content asynchronously or during page transitions.
+ */
+
+import { initLottieAnimation } from '../../utils/animations';
+
+interface Props {
+  /** ID for the animation container */
+  id?: string;
+  /** Type of loading animation to display */
+  type?: 'pulse' | 'dots' | 'progress' | 'skeleton' | 'custom';
+  /** URL to custom Lottie JSON file (required if type is 'custom') */
+  customAnimation?: string;
+  /** Width of the animation container */
+  width?: number | string;
+  /** Height of the animation container */
+  height?: number | string;
+  /** CSS class to apply to the container */
+  class?: string;
+  /** Whether to show text with the loader */
+  showText?: boolean;
+  /** Text to display with the loader */
+  text?: string;
+  /** Whether to overlay the loader on content */
+  overlay?: boolean;
+}
+
+const {
+  id = `content-loader-${Math.random().toString(36).substring(2, 11)}`,
+  type = 'pulse',
+  customAnimation,
+  width = '100%',
+  height = '200px',
+  class: className = '',
+  showText = true,
+  text = 'Loading content...',
+  overlay = false
+} = Astro.props;
+
+// Map of default loading animations by type
+const defaultAnimations = {
+  pulse: 'https://assets4.lottiefiles.com/private_files/lf30_fup2uejx.json',
+  dots: 'https://assets2.lottiefiles.com/packages/lf20_usmfx6bp.json',
+  progress: 'https://assets5.lottiefiles.com/packages/lf20_ngzw3wdt.json',
+  skeleton: 'https://assets3.lottiefiles.com/packages/lf20_mz6ptucu.json'
+};
+
+// Determine the animation source
+const animationSrc = customAnimation || defaultAnimations[type] || defaultAnimations.pulse;
+
+// Set dimensions with units if they're numbers
+const widthStyle = typeof width === 'number' ? `${width}px` : width;
+const heightStyle = typeof height === 'number' ? `${height}px` : height;
+---
+
+<div 
+  class={`content-loader ${type}-loader ${overlay ? 'loader-overlay' : ''} ${className}`}
+  style={overlay ? '' : `width: ${widthStyle}; height: ${heightStyle};`}
+>
+  <div
+    id={id}
+    class="loader-animation"
+    style={`width: ${overlay ? '120px' : widthStyle}; height: ${overlay ? '120px' : heightStyle};`}
+    data-animation-src={animationSrc}
+  ></div>
+  
+  {showText && (
+    <div class="loader-text">{text}</div>
+  )}
+</div>
+
+<style>
+  .content-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+  }
+  
+  .loader-animation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .loader-text {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    text-align: center;
+  }
+  
+  .loader-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Dark mode styles */
+  :global(.dark) .loader-text {
+    color: #9ca3af;
+  }
+  
+  :global(.dark) .loader-overlay {
+    background-color: rgba(17, 24, 39, 0.8);
+  }
+</style>
+
+<script>
+  import { initLottieAnimation } from '../../utils/animations';
+  
+  // Initialize all content loaders on the page
+  function initContentLoaders() {
+    const loaderElements = document.querySelectorAll('.loader-animation');
+    
+    loaderElements.forEach(async (element) => {
+      const id = element.id;
+      const src = element.getAttribute('data-animation-src');
+      
+      if (id && src) {
+        try {
+          // Initialize the Lottie animation
+          await initLottieAnimation(id, src, {
+            loop: true,
+            autoplay: true,
+            renderer: 'svg'
+          });
+        } catch (error) {
+          console.error('Failed to initialize content loader animation:', error);
+        }
+      }
+    });
+  }
+  
+  // Initialize animations when the DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initContentLoaders);
+  } else {
+    initContentLoaders();
+  }
+  
+  // Initialize animations when new content is added to the DOM
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      if (mutation.addedNodes.length) {
+        initContentLoaders();
+      }
+    });
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+</script>

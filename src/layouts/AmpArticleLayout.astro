@@ -1,0 +1,385 @@
+---
+// AMP Article Layout
+// This layout implements AMP HTML specifications for article pages
+import AmpBaseLayout from "./AmpBaseLayout.astro";
+import { transformToAmpHtml, getCanonicalUrl } from '../utils/ampUtils';
+import { formatDate, formatRelativeTime, calculateReadingTime, formatReadingTime } from "@utils/dateFormatters";
+import { generateArticleSchema } from "@utils/schemaGenerators";
+
+interface Author {
+  name: string;
+  slug: string;
+  avatar?: string;
+  bio?: string;
+  socialLinks?: {
+    twitter?: string;
+    linkedin?: string;
+    website?: string;
+  };
+}
+
+interface Category {
+  name: string;
+  slug: string;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  image: string;
+  publishDate: Date;
+  modifiedDate?: Date;
+  author: Author;
+  category: Category;
+  tags?: string[];
+  content: string;
+  relatedArticles?: any[];
+  estimatedReadingTime?: number;
+}
+
+const {
+  title,
+  description,
+  image,
+  publishDate,
+  modifiedDate,
+  author,
+  category,
+  tags = [],
+  content,
+  relatedArticles = [],
+  estimatedReadingTime = calculateReadingTime(content),
+} = Astro.props;
+
+// Format dates
+const formattedPublishDate = formatDate(publishDate);
+const relativePublishDate = formatRelativeTime(publishDate);
+const formattedModifiedDate = modifiedDate ? formatDate(modifiedDate) : null;
+
+// Reading time
+const readingTime = formatReadingTime(estimatedReadingTime);
+
+// Generate category-specific theme class
+const getCategoryThemeClass = (categorySlug: string) => {
+  const themes = {
+    tech: 'theme-tech',
+    culture: 'theme-culture',
+    science: 'theme-science',
+    business: 'theme-business',
+    politics: 'theme-politics',
+  };
+  
+  return themes[categorySlug as keyof typeof themes] || '';
+};
+
+// Process content for AMP compatibility
+const ampContent = transformToAmpHtml(content);
+
+// Canonical URL (non-AMP version)
+const canonicalUrl = getCanonicalUrl(Astro.url.toString());
+
+// Schema.org structured data
+const articleSchema = generateArticleSchema({
+  headline: title,
+  description,
+  image: new URL(image, Astro.site).toString(),
+  datePublished: new Date(publishDate).toISOString(),
+  dateModified: modifiedDate ? new Date(modifiedDate).toISOString() : new Date(publishDate).toISOString(),
+  author: {
+    name: author.name,
+    url: new URL(`/author/${author.slug}`, Astro.site).toString(),
+    image: author.avatar ? new URL(author.avatar, Astro.site).toString() : undefined,
+  },
+  publisher: {
+    name: "ChakrirChain",
+    url: new URL("/", Astro.site).toString(),
+    logo: new URL("/images/logo.png", Astro.site).toString(),
+  },
+  url: Astro.url.toString(),
+  keywords: tags,
+  articleSection: category.name,
+  wordCount: content.split(/\s+/).length,
+});
+---
+
+<AmpBaseLayout
+  title={title}
+  description={description}
+  image={image}
+  canonicalURL={canonicalUrl}
+  pubDate={publishDate}
+  modDate={modifiedDate}
+  author={author.name}
+  structuredData={articleSchema}
+  ampContent={ampContent}
+>
+  <style slot="styles">
+    /* Article container */
+    .article-container {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    
+    /* Hero image */
+    .article-hero {
+      margin-bottom: 1.5rem;
+    }
+    
+    .image-caption {
+      font-size: 0.875rem;
+      color: var(--color-text-light);
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+    
+    /* Article header */
+    .article-header {
+      margin-bottom: 2rem;
+    }
+    
+    .category-link {
+      display: inline-block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--color-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      text-decoration: none;
+    }
+    
+    .article-title {
+      font-size: 2rem;
+      line-height: 1.2;
+      margin: 0 0 1rem 0;
+    }
+    
+    .article-description {
+      font-size: 1.125rem;
+      color: var(--color-text-light);
+      margin: 0 0 1.5rem 0;
+    }
+    
+    /* Article meta */
+    .article-meta {
+      display: flex;
+      align-items: center;
+      margin-bottom: 2rem;
+      font-size: 0.875rem;
+    }
+    
+    .author-avatar {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 9999px;
+      margin-right: 0.75rem;
+    }
+    
+    .author-name {
+      font-weight: 600;
+      color: var(--color-text);
+      text-decoration: none;
+      display: block;
+    }
+    
+    .publish-info {
+      color: var(--color-text-light);
+    }
+    
+    /* Article content */
+    .article-content {
+      margin-bottom: 2rem;
+    }
+    
+    .article-content h2 {
+      font-size: 1.5rem;
+      margin: 2rem 0 1rem 0;
+    }
+    
+    .article-content h3 {
+      font-size: 1.25rem;
+      margin: 1.5rem 0 0.75rem 0;
+    }
+    
+    .article-content p {
+      margin: 0 0 1.5rem 0;
+    }
+    
+    .article-content figure {
+      margin: 2rem 0;
+    }
+    
+    .article-content figcaption {
+      font-size: 0.875rem;
+      color: var(--color-text-light);
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+    
+    .article-content blockquote {
+      border-left: 4px solid var(--color-primary);
+      padding-left: 1rem;
+      font-style: italic;
+      margin: 1.5rem 0;
+    }
+    
+    .article-content ul,
+    .article-content ol {
+      margin: 1.5rem 0;
+      padding-left: 1.5rem;
+    }
+    
+    .article-content li {
+      margin-bottom: 0.5rem;
+    }
+    
+    /* Related articles */
+    .related-articles {
+      margin-top: 3rem;
+      border-top: 1px solid var(--color-border);
+      padding-top: 2rem;
+    }
+    
+    .related-articles h2 {
+      font-size: 1.5rem;
+      margin: 0 0 1.5rem 0;
+    }
+    
+    .related-article {
+      margin-bottom: 1.5rem;
+    }
+    
+    .related-article-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .related-article-meta {
+      font-size: 0.875rem;
+      color: var(--color-text-light);
+    }
+    
+    /* Social sharing */
+    .social-sharing {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 2rem;
+    }
+    
+    /* Category theme classes */
+    .theme-tech {
+      --category-color: #3b82f6; /* blue */
+    }
+    
+    .theme-culture {
+      --category-color: #8b5cf6; /* purple */
+    }
+    
+    .theme-science {
+      --category-color: #10b981; /* green */
+    }
+    
+    .theme-business {
+      --category-color: #f59e0b; /* amber */
+    }
+    
+    .theme-politics {
+      --category-color: #ef4444; /* red */
+    }
+    
+    .category-link {
+      color: var(--category-color, var(--color-primary));
+    }
+  </style>
+  
+  <div class="article-container">
+    <!-- Article Hero Image -->
+    <div class="article-hero">
+      <amp-img 
+        src={image}
+        width="1200"
+        height="675"
+        layout="responsive"
+        alt={title}
+      ></amp-img>
+      <figcaption class="image-caption">Photo credit: ChakrirChain Media</figcaption>
+    </div>
+    
+    <!-- Article Header -->
+    <header class="article-header">
+      <a href={`/category/${category.slug}`} class="category-link">
+        {category.name}
+      </a>
+      
+      <h1 class="article-title">{title}</h1>
+      
+      <p class="article-description">{description}</p>
+      
+      <!-- Article Metadata -->
+      <div class="article-meta">
+        {author.avatar && (
+          <amp-img 
+            src={author.avatar}
+            width="40"
+            height="40"
+            alt={author.name}
+            class="author-avatar"
+          ></amp-img>
+        )}
+        
+        <div>
+          <a href={`/author/${author.slug}`} class="author-name">
+            {author.name}
+          </a>
+          
+          <div class="publish-info">
+            <time datetime={new Date(publishDate).toISOString()}>
+              {formattedPublishDate}
+            </time>
+            
+            {formattedModifiedDate && (
+              <span> (Updated: {formattedModifiedDate})</span>
+            )}
+            
+            <span> · {readingTime}</span>
+          </div>
+        </div>
+      </div>
+    </header>
+    
+    <!-- Article Content -->
+    <div class="article-content">
+      <div set:html={ampContent} />
+    </div>
+    
+    <!-- Social Sharing -->
+    <div class="social-sharing">
+      <amp-social-share type="twitter" width="40" height="40"></amp-social-share>
+      <amp-social-share type="facebook" width="40" height="40"></amp-social-share>
+      <amp-social-share type="linkedin" width="40" height="40"></amp-social-share>
+      <amp-social-share type="email" width="40" height="40"></amp-social-share>
+    </div>
+    
+    <!-- Related Articles -->
+    {relatedArticles.length > 0 && (
+      <div class="related-articles">
+        <h2>Related Articles</h2>
+        
+        {relatedArticles.map((related: any) => (
+          <div class="related-article">
+            <h3 class="related-article-title">
+              <a href={`/article/${related.slug}`}>{related.title}</a>
+            </h3>
+            <p>{related.excerpt}</p>
+            <div class="related-article-meta">
+              <span>{new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(related.publishDate))}</span>
+              <span> · {related.category.name}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</AmpBaseLayout>

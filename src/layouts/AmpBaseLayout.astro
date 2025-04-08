@@ -1,0 +1,255 @@
+---
+/**
+ * AMP Base Layout
+ * 
+ * This layout implements the core AMP HTML structure and requirements.
+ * It serves as the foundation for all AMP pages in the site.
+ */
+
+import { getRequiredAmpScripts, getAmpBoilerplate } from '../utils/ampUtils';
+import WebVitals from '../components/analytics/WebVitals.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  canonicalURL?: string;
+  pubDate?: Date;
+  modDate?: Date;
+  author?: string;
+  structuredData?: object;
+  ampContent?: string; // Content that may contain AMP components requiring scripts
+}
+
+const {
+  title,
+  description = 'A modern magazine-style publication built with Astro.js',
+  image = '/images/default-og.jpg',
+  canonicalURL = Astro.url.href.replace('/amp/', '/'),
+  pubDate,
+  modDate,
+  author = 'ChakrirChain',
+  structuredData,
+  ampContent = '',
+} = Astro.props;
+
+// Determine required AMP component scripts based on content
+const requiredScripts = getRequiredAmpScripts(ampContent);
+
+// Always include these scripts for core functionality
+if (!requiredScripts.some(script => script.includes('amp-sidebar'))) {
+  requiredScripts.push('<script async custom-element="amp-sidebar" src="https://cdn.ampproject.org/v0/amp-sidebar-0.1.js"></script>');
+}
+
+if (!requiredScripts.some(script => script.includes('amp-img'))) {
+  requiredScripts.push('<script async custom-element="amp-img" src="https://cdn.ampproject.org/v0/amp-img-0.1.js"></script>');
+}
+---
+
+<!doctype html>
+<html ⚡ lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{title}</title>
+  <link rel="canonical" href={canonicalURL}>
+  <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
+  
+  <!-- AMP boilerplate code -->
+  <Fragment set:html={getAmpBoilerplate()} />
+  
+  <!-- AMP JS -->
+  {requiredScripts.map(script => <Fragment set:html={script} />)}
+  
+  <!-- Primary meta tags -->
+  <meta name="title" content={title}>
+  <meta name="description" content={description}>
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="article">
+  <meta property="og:url" content={Astro.url.toString()}>
+  <meta property="og:title" content={title}>
+  <meta property="og:description" content={description}>
+  <meta property="og:image" content={new URL(image, Astro.site).toString()}>
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content={Astro.url.toString()}>
+  <meta property="twitter:title" content={title}>
+  <meta property="twitter:description" content={description}>
+  <meta property="twitter:image" content={new URL(image, Astro.site).toString()}>
+  
+  <!-- Article specific meta tags -->
+  {pubDate && <meta property="article:published_time" content={pubDate.toISOString()}>}
+  {modDate && <meta property="article:modified_time" content={modDate.toISOString()}>}
+  {author && <meta property="article:author" content={author}>}
+  
+  <!-- Structured data -->
+  {structuredData && (
+    <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+  )}
+  
+  <!-- AMP custom styles -->
+  <style amp-custom>
+    /* Base styles */
+    :root {
+      --color-primary: #3b82f6;
+      --color-text: #1f2937;
+      --color-text-light: #6b7280;
+      --color-background: #ffffff;
+      --color-border: #e5e7eb;
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+    
+    body {
+      font-family: var(--font-sans);
+      color: var(--color-text);
+      background-color: var(--color-background);
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* Header styles */
+    .site-header {
+      padding: 1rem;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .site-logo {
+      font-weight: bold;
+      font-size: 1.25rem;
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+    
+    .menu-button {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--color-text);
+    }
+    
+    /* Main content container */
+    .main-content {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    
+    /* Footer */
+    .site-footer {
+      border-top: 1px solid var(--color-border);
+      padding: 2rem 1rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: var(--color-text-light);
+    }
+    
+    /* Sidebar menu */
+    amp-sidebar {
+      width: 250px;
+      background-color: var(--color-background);
+    }
+    
+    .sidebar-nav {
+      padding: 1rem;
+    }
+    
+    .sidebar-nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .sidebar-nav li {
+      margin-bottom: 0.75rem;
+    }
+    
+    .sidebar-nav a {
+      color: var(--color-text);
+      text-decoration: none;
+      font-size: 1.125rem;
+    }
+    
+    .sidebar-nav a:hover {
+      color: var(--color-primary);
+    }
+    
+    .close-sidebar {
+      display: block;
+      text-align: right;
+      padding: 0.5rem 1rem;
+      font-size: 1.5rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    
+    /* Utility classes */
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    /* Additional styles can be added here */
+    <slot name="styles" />
+  </style>
+  
+  <!-- Additional head elements -->
+  <slot name="head" />
+</head>
+<body>
+  <!-- Header with hamburger menu -->
+  <header class="site-header">
+    <a href="/" class="site-logo">ChakrirChain</a>
+    <button on="tap:sidebar.toggle" class="menu-button">☰</button>
+  </header>
+  
+  <!-- Sidebar menu -->
+  <amp-sidebar id="sidebar" layout="nodisplay" side="right">
+    <button on="tap:sidebar.close" class="close-sidebar">✕</button>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/category/tech">Tech</a></li>
+        <li><a href="/category/science">Science</a></li>
+        <li><a href="/category/business">Business</a></li>
+        <li><a href="/category/culture">Culture</a></li>
+        <li><a href="/about">About</a></li>
+      </ul>
+    </nav>
+  </amp-sidebar>
+  
+  <!-- Skip to content link for accessibility -->
+  <a href="#main-content" class="visually-hidden">Skip to content</a>
+  
+  <!-- Main content -->
+  <main id="main-content" class="main-content">
+    <slot />
+  </main>
+  
+  <!-- Footer -->
+  <footer class="site-footer">
+    <p>© {new Date().getFullYear()} ChakrirChain. All rights reserved.</p>
+    <p>
+      <a href={canonicalURL}>View non-AMP version</a> |
+      <a href="/about">About</a> |
+      <a href="/privacy">Privacy Policy</a> |
+      <a href="/terms">Terms of Service</a>
+    </p>
+  </footer>
+  <!-- Web Vitals tracking for AMP pages -->
+  <WebVitals enabled={true} endpoint="/api/analytics/web-vitals" />
+</body>
+</html>

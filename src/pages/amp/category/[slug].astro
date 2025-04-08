@@ -1,0 +1,316 @@
+---
+/**
+ * AMP version of the category page
+ * 
+ * This page provides an AMP-compatible version of category pages
+ * for faster mobile loading and better user experience.
+ */
+import AmpBaseLayout from "../../../layouts/AmpBaseLayout.astro";
+import { transformToAmpHtml } from '../../../utils/ampUtils';
+
+export async function getStaticPaths() {
+  // In a real application, this would fetch data from a CMS or API
+  // For demo purposes, we'll use static data
+  const categories = [
+    {
+      slug: "tech",
+      name: "Tech",
+      description: "Latest technology news, reviews, and insights",
+      image: "/images/categories/tech.jpg"
+    },
+    {
+      slug: "culture",
+      name: "Culture",
+      description: "Arts, entertainment, and cultural phenomena",
+      image: "/images/categories/culture.jpg"
+    },
+    {
+      slug: "science",
+      name: "Science",
+      description: "Scientific discoveries and research breakthroughs",
+      image: "/images/categories/science.jpg"
+    },
+    {
+      slug: "business",
+      name: "Business",
+      description: "Business news, market trends, and economic analysis",
+      image: "/images/categories/business.jpg"
+    },
+    {
+      slug: "politics",
+      name: "Politics",
+      description: "Political news, policy analysis, and government affairs",
+      image: "/images/categories/politics.jpg"
+    }
+  ];
+  
+  // Sample articles data - same as in other pages
+  const articles = [
+    {
+      id: "1",
+      title: "The Future of Artificial Intelligence in 2023",
+      slug: "future-of-ai-2023",
+      excerpt: "Exploring the latest advancements in AI and what they mean for society, business, and everyday life.",
+      image: "/images/tech/ai-future.jpg",
+      category: {
+        name: "Tech",
+        slug: "tech"
+      },
+      author: {
+        name: "Alex Johnson",
+        slug: "alex-johnson",
+        avatar: "/images/authors/alex-johnson.jpg"
+      },
+      publishDate: new Date("2023-06-15")
+    },
+    {
+      id: "2",
+      title: "Modern Web Development Frameworks Compared",
+      slug: "web-frameworks-compared",
+      excerpt: "An in-depth analysis of the most popular web development frameworks in 2023, including React, Vue, and Svelte.",
+      image: "/images/tech/web-dev.jpg",
+      category: {
+        name: "Tech",
+        slug: "tech"
+      },
+      author: {
+        name: "Sarah Chen",
+        slug: "sarah-chen",
+        avatar: "/images/authors/sarah-chen.jpg"
+      },
+      publishDate: new Date("2023-06-10")
+    },
+    {
+      id: "3",
+      title: "The Renaissance of Indie Filmmaking",
+      slug: "indie-film-renaissance",
+      excerpt: "How digital technology and streaming platforms are giving independent filmmakers unprecedented opportunities.",
+      image: "/images/culture/indie-film.jpg",
+      category: {
+        name: "Culture",
+        slug: "culture"
+      },
+      author: {
+        name: "Michael Rivera",
+        slug: "michael-rivera",
+        avatar: "/images/authors/michael-rivera.jpg"
+      },
+      publishDate: new Date("2023-06-05")
+    },
+    {
+      id: "4",
+      title: "Climate Change: The Latest Research",
+      slug: "climate-change-research",
+      excerpt: "A summary of the most recent scientific findings on climate change and their implications for global policy.",
+      image: "/images/science/climate.jpg",
+      category: {
+        name: "Science",
+        slug: "science"
+      },
+      author: {
+        name: "Dr. Emily Wong",
+        slug: "emily-wong",
+        avatar: "/images/authors/emily-wong.jpg"
+      },
+      publishDate: new Date("2023-06-01")
+    },
+    {
+      id: "5",
+      title: "The Global Economy in a Post-Pandemic World",
+      slug: "post-pandemic-economy",
+      excerpt: "Analyzing the long-term economic impacts of the pandemic and strategies for sustainable recovery.",
+      image: "/images/business/economy.jpg",
+      category: {
+        name: "Business",
+        slug: "business"
+      },
+      author: {
+        name: "Robert Kiyosaki",
+        slug: "robert-kiyosaki",
+        avatar: "/images/authors/robert-kiyosaki.jpg"
+      },
+      publishDate: new Date("2023-05-28")
+    },
+    {
+      id: "6",
+      title: "The Changing Landscape of Global Politics",
+      slug: "changing-global-politics",
+      excerpt: "How geopolitical shifts are reshaping international relations and domestic policies worldwide.",
+      image: "/images/politics/global-politics.jpg",
+      category: {
+        name: "Politics",
+        slug: "politics"
+      },
+      author: {
+        name: "James Wilson",
+        slug: "james-wilson",
+        avatar: "/images/authors/james-wilson.jpg"
+      },
+      publishDate: new Date("2023-05-20")
+    }
+  ];
+  
+  return categories.map(category => {
+    // Filter articles for this category
+    const categoryArticles = articles.filter(article => article.category.slug === category.slug);
+    
+    return {
+      params: { slug: category.slug },
+      props: { category, articles: categoryArticles }
+    };
+  });
+}
+
+const { category, articles } = Astro.props;
+
+// Generate canonical URL (non-AMP version)
+const canonicalUrl = new URL(`/category/${category.slug}`, Astro.site).toString();
+---
+
+<AmpBaseLayout
+  title={`${category.name} - ChakrirChain`}
+  description={category.description}
+  image={category.image}
+  canonicalURL={canonicalUrl}
+  ampContent={`
+  <amp-img></amp-img>
+  <amp-sidebar></amp-sidebar>
+  `}
+>
+  <div class="category-container">
+    <!-- Category Header -->
+    <header class="category-header">
+      <h1 class="category-title">{category.name}</h1>
+      <p class="category-description">{category.description}</p>
+    </header>
+    
+    <!-- Category Articles -->
+    <div class="articles-grid">
+      {articles.map((article) => (
+        <article class="article-card">
+          <a href={`/article/amp/${article.slug}`} class="article-link">
+            <amp-img
+              src={article.image}
+              width="400"
+              height="225"
+              layout="responsive"
+              alt={article.title}
+            ></amp-img>
+            
+            <div class="article-content">
+              <h2 class="article-title">{article.title}</h2>
+              <p class="article-excerpt">{article.excerpt}</p>
+              
+              <div class="article-meta">
+                <span class="article-author">{article.author.name}</span>
+                <span class="article-date">{new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(article.publishDate))}</span>
+              </div>
+            </div>
+          </a>
+        </article>
+      ))}
+    </div>
+    
+    <div class="navigation">
+      <a href="/amp/" class="home-link">Back to Home</a>
+    </div>
+  </div>
+</AmpBaseLayout>
+
+<style amp-custom>
+  /* Category container */
+  .category-container {
+    max-width: 64rem;
+    margin: 0 auto;
+    padding: 1rem;
+  }
+  
+  /* Category header */
+  .category-header {
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  
+  .category-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  
+  .category-description {
+    font-size: 1.125rem;
+    color: var(--color-text-light);
+  }
+  
+  /* Articles grid */
+  .articles-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+  
+  @media (min-width: 640px) {
+    .articles-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  /* Article card */
+  .article-card {
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  
+  .article-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+  
+  .article-content {
+    padding: 1rem;
+  }
+  
+  .article-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+  
+  .article-excerpt {
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+    margin-bottom: 1rem;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+  
+  .article-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--color-text-light);
+  }
+  
+  /* Navigation */
+  .navigation {
+    text-align: center;
+    margin-top: 2rem;
+  }
+  
+  .home-link {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: var(--color-primary);
+    color: white;
+    text-decoration: none;
+    border-radius: 0.25rem;
+    font-weight: 500;
+  }
+</style>
