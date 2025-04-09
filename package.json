@@ -4,12 +4,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "validate:amp": "node scripts/validate-amp-pages.js",
     "dev": "astro dev",
     "start": "astro dev",
     "build": "node scripts/build-cms-config.js && astro build",
-    "analyze": "node scripts/bundle-analyzer.js",
-    "build:analyze": "npm run build && npm run analyze",
     "preview": "astro preview",
     "lint": "eslint . --ext .js,.ts,.jsx,.tsx,.astro",
     "format": "prettier --write .",

@@ -14,7 +14,7 @@ let ScrollTrigger: any;
 let Observer: any;
 
 // Import worker integration for offloading calculations
-import { calculatePathWithWorker, calculatePhysicsWithWorker } from './animationWorkerIntegration';
+// Worker integration removed - animations will run on main thread
 
 // Flag to track initialization status
 let isInitialized = false;
