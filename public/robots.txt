@@ -2,8 +2,7 @@
 User-agent: *
 Allow: /
 
-# Disallow admin and API routes
-Disallow: /admin/
+# Disallow API routes
 Disallow: /api/
 
 # Disallow draft content

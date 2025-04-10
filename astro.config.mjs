@@ -11,7 +11,6 @@ export default defineConfig({
     tailwind(),
     react(),
     sitemap({
-      filter: (page) => !page.includes('/admin/'),
       changefreq: 'weekly',
       lastmod: new Date(),
       priority: 0.7,
@@ -38,6 +37,6 @@ export default defineConfig({
   vite: {
     // Vite configuration
     // Environment variable handling
-    envPrefix: ['PUBLIC_', 'IMAGEKIT_', 'TEBI_', 'SVELTIA_', 'CUSDIS_', 'CLOUDFLARE_', 'UMAMI_'],
+    envPrefix: ['PUBLIC_', 'IMAGEKIT_', 'TEBI_', 'CUSDIS_', 'CLOUDFLARE_', 'UMAMI_'],
   },
 });

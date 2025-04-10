@@ -21,8 +21,7 @@
 /images/*
   Cache-Control: public, max-age=604800
 
-# Don't cache admin area
-/admin/*
+# Admin area removed
   Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate
   Pragma: no-cache
   Expires: 0

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "node scripts/build-cms-config.js && astro build",
+    "build": "astro build",
     "preview": "astro preview",
     "lint": "eslint . --ext .js,.ts,.jsx,.tsx,.astro",
     "format": "prettier --write .",

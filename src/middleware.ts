@@ -31,7 +31,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.nonce = nonce;
   
   // Apply rate limiting for sensitive endpoints
-  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/admin/')) {
+  if (url.pathname.startsWith('/api/')) {
     const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
     const key = `${ip}:${url.pathname}`;
     
