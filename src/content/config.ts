@@ -49,6 +49,28 @@ const authorsCollection = defineCollection({
   }),
 });
 
+// Export collections for CMS integration
+export const collections = {
+  articles: articlesCollection,
+  authors: authorsCollection,
+  categories: defineCollection({
+    type: 'data',
+    schema: z.object({
+      name: z.string(),
+      description: z.string(),
+      slug: z.string(),
+    }),
+  }),
+  pages: defineCollection({
+    type: 'content',
+    schema: z.object({
+      title: z.string(),
+      metaDescription: z.string(),
+      template: z.enum(['default', 'home', 'contact']),
+    }),
+  })
+};
+
 // Define schema for categories collection
 const categoriesCollection = defineCollection({
   type: 'content',

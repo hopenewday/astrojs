@@ -20,6 +20,42 @@ interface CSPConfig {
   reportOnly: boolean;
 }
 
+const cspDirectives: Record<string, string[]> = {
+  'default-src': ["'none'"],
+  'script-src': [
+    "'self'",
+    "'unsafe-inline'", // Required for Astro/Svelte hydration
+    `https://${process.env.AUTH0_DOMAIN}/`,
+    'https://cdn.sveltia.com'
+  ],
+  'style-src': [
+    "'self'",
+    "'unsafe-inline'",
+    'https://fonts.googleapis.com'
+  ],
+  'img-src': [
+    "'self'",
+    'data:',
+    'https://images.unsplash.com',
+    'https://cdn.sveltia.com'
+  ],
+  'connect-src': [
+    "'self'",
+    `https://${process.env.AUTH0_DOMAIN}/`,
+    'https://sveltia-cms.api/'
+  ],
+  'form-action': ["'self'"],
+  'frame-ancestors': ["'none'"],
+  'report-uri': [process.env.CSP_REPORT_ENDPOINT]
+};
+
+export const securityConfig: SecurityConfig = {
+  contentSecurityPolicy: {
+    directives: cspDirectives,
+    reportUri: '/csp-violation-report',
+    reportOnly: process.env.NODE_ENV === 'development'
+  },
+
 interface PermissionsPolicyConfig {
   features: Record<string, string>;
 }

@@ -76,7 +76,7 @@ const featuredReadingTime = featuredArticle?.content
 ---
 
 <section class="main-grid-container">
-  {/* Hero Section with Featured Article */}
+  <!-- Hero Section with Featured Article -->
   {featuredArticle && (
     <div class="hero-section">
       <a href={`/article/${featuredArticle.slug}`} class="hero-article">
@@ -138,9 +138,9 @@ const featuredReadingTime = featuredArticle?.content
     </div>
   )}
   
-  {/* Articles Grid */}
+  <!-- Articles Grid -->
   <div class="articles-grid">
-    {/* Mobile Interstitial Ad - Only shown on mobile devices */}
+    <!-- Mobile Interstitial Ad - Only shown on mobile devices -->
     {showAds && (
       <div class="mobile-interstitial-ad" data-ad-format="mobile">
         <div class="ad-container">

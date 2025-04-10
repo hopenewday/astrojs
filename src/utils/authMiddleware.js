@@ -45,8 +45,26 @@ export function withAuth(handler, options = {}) {
         });
       }
       
-      // Validate the token
-      const validation = await validateToken(token);
+      // Configure JWKS client
+      const jwksClient = new JwksClient({
+        jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`
+      });
+
+      // Get signing key from JWKS endpoint
+      const getKey = (header, callback) => {
+        jwksClient.getSigningKey(header.kid, (err, key) => {
+          if(err) return callback(err);
+          callback(null, key.getPublicKey());
+        });
+      };
+
+      // Validate token with JWKS
+      const validation = await validateToken(token, {
+        audience: process.env.AUTH0_AUDIENCE,
+        issuer: `https://${process.env.AUTH0_DOMAIN}/`,
+        algorithms: ['RS256'],
+        secret: getKey
+      });
       if (!validation.valid) {
         return new Response(JSON.stringify({ error: validation.error || 'Invalid token' }), {
           status: 401,
