@@ -1,0 +1,287 @@
+---
+/**
+ * EnhancedPageTransition Component
+ * 
+ * An advanced component that provides smooth transitions between pages.
+ * This component enhances the user experience by creating seamless transitions
+ * when navigating between different pages of the site.
+ */
+
+import { initLottieAnimation, createPageTransition } from '../../utils/animations';
+
+interface Props {
+  /** Type of transition animation */
+  type?: 'fade' | 'slide' | 'zoom' | 'wipe' | 'lottie' | 'custom';
+  /** Direction for slide transitions */
+  direction?: 'left' | 'right' | 'up' | 'down';
+  /** URL to custom Lottie JSON file (required if type is 'lottie' or 'custom') */
+  customAnimation?: string;
+  /** Duration of the transition in milliseconds */
+  duration?: number;
+  /** CSS class to apply to the container */
+  class?: string;
+  /** Easing function for the transition */
+  easing?: string;
+  /** Whether to preload the animation */
+  preload?: boolean;
+  /** Whether to use the web worker for processing */
+  useWorker?: boolean;
+}
+
+const {
+  type = 'fade',
+  direction = 'left',
+  customAnimation,
+  duration = 800,
+  class: className = '',
+  easing = 'power2.inOut',
+  preload = true,
+  useWorker = true
+} = Astro.props;
+
+// Map of default transition animations by type
+const defaultAnimations = {
+  fade: 'https://assets5.lottiefiles.com/packages/lf20_abqjugn0.json',
+  slide: 'https://assets7.lottiefiles.com/packages/lf20_xlkxtmul.json',
+  zoom: 'https://assets8.lottiefiles.com/packages/lf20_nxuowtsj.json',
+  wipe: 'https://assets1.lottiefiles.com/packages/lf20_yfsytcor.json'
+};
+
+// Determine the animation source for Lottie transitions
+const animationSrc = customAnimation || 
+                     (type === 'lottie' && customAnimation) || 
+                     (type === 'custom' && customAnimation) || 
+                     defaultAnimations[type] || 
+                     defaultAnimations.fade;
+
+// Generate a unique ID for the transition container
+const transitionId = `page-transition-${Math.random().toString(36).substring(2, 11)}`;
+---
+
+<div 
+  id={transitionId}
+  class={`enhanced-page-transition ${type}-transition ${direction}-direction ${className}`}
+  data-transition-type={type}
+  data-transition-direction={direction}
+  data-transition-duration={duration.toString()}
+  data-transition-easing={easing}
+  data-animation-src={type === 'lottie' || type === 'custom' ? animationSrc : null}
+  style="display: none;"
+></div>
+
+<style>
+  .enhanced-page-transition {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .enhanced-page-transition.active {
+    pointer-events: all;
+  }
+</style>
+
+<script>
+  import { initAnimations, createPageTransition, initLottieAnimation } from '../../utils/animations';
+  
+  // Store transition data
+  let transitionData = {
+    active: false,
+    animation: null,
+    duration: 800,
+    type: 'fade',
+    direction: 'left',
+    easing: 'power2.inOut',
+    element: null
+  };
+  
+  // Initialize page transition when the DOM is ready
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize the animation system
+    await initAnimations();
+    
+    // Initialize the page transition
+    initPageTransition();
+  });
+  
+  // Initialize the page transition
+  async function initPageTransition() {
+    // Get all page transition elements
+    const transitionElements = document.querySelectorAll('.enhanced-page-transition');
+    
+    for (const element of transitionElements) {
+      try {
+        const id = element.id;
+        const type = element.getAttribute('data-transition-type') || 'fade';
+        const direction = element.getAttribute('data-transition-direction') || 'left';
+        const duration = parseInt(element.getAttribute('data-transition-duration') || '800');
+        const easing = element.getAttribute('data-transition-easing') || 'power2.inOut';
+        const animationSrc = element.getAttribute('data-animation-src');
+        
+        // Store transition data
+        transitionData = {
+          active: false,
+          animation: null,
+          duration,
+          type,
+          direction,
+          easing,
+          element
+        };
+        
+        // Initialize Lottie animation if needed
+        if (type === 'lottie' || type === 'custom') {
+          if (animationSrc) {
+            // Pre-initialize the animation but don't autoplay
+            const anim = await initLottieAnimation(id, animationSrc, {
+              autoplay: false,
+              loop: false
+            });
+            
+            // Store the animation instance
+            if (anim) {
+              transitionData.animation = anim;
+            }
+          }
+        }
+        
+        // Set up click event listeners for all internal links
+        setupLinkInterception();
+      } catch (error) {
+        console.error('Failed to initialize page transition:', error);
+      }
+    }
+  }
+  
+  // Set up link interception for smooth transitions
+  function setupLinkInterception() {
+    // Get all internal links
+    const internalLinks = document.querySelectorAll('a[href^="/"], a[href^="./"], a[href^="../"], a[href^="#"]');
+    
+    // Add click event listeners
+    internalLinks.forEach(link => {
+      // Skip links that should be ignored
+      if (link.hasAttribute('data-no-transition') || 
+          link.getAttribute('target') === '_blank' ||
+          link.getAttribute('href').startsWith('#')) {
+        return;
+      }
+      
+      // Add click event listener
+      link.addEventListener('click', handleLinkClick);
+    });
+  }
+  
+  // Handle link clicks
+  function handleLinkClick(event) {
+    // Skip if transition is already active
+    if (transitionData.active) return;
+    
+    // Get the link target
+    const href = this.getAttribute('href');
+    
+    // Skip external links, anchor links, or links with modifiers
+    if (!href || 
+        href.startsWith('http') || 
+        href.startsWith('#') || 
+        event.ctrlKey || 
+        event.metaKey || 
+        event.shiftKey) {
+      return;
+    }
+    
+    // Prevent default navigation
+    event.preventDefault();
+    
+    // Play transition animation and then navigate
+    playTransitionAnimation().then(() => {
+      window.location.href = href;
+    });
+  }
+  
+  // Handle browser back/forward navigation
+  window.addEventListener('popstate', () => {
+    // Play transition animation for back navigation
+    playTransitionAnimation(true);
+  });
+  
+  // Play the transition animation
+  async function playTransitionAnimation(isBackNavigation = false) {
+    // Skip if transition is already active
+    if (transitionData.active) return;
+    
+    // Mark transition as active
+    transitionData.active = true;
+    
+    // Get transition parameters
+    const { type, direction, duration, easing, animation, element } = transitionData;
+    
+    // Show the transition element
+    if (element) {
+      element.style.display = 'block';
+      element.classList.add('active');
+    }
+    
+    // Handle different transition types
+    if (type === 'lottie' || type === 'custom') {
+      // Use Lottie animation
+      if (animation) {
+        // Reset and play the animation
+        animation.goToAndStop(0, true);
+        animation.play();
+        
+        // Wait for the animation to complete
+        return new Promise(resolve => {
+          setTimeout(() => {
+            // Clean up
+            element.style.display = 'none';
+            element.classList.remove('active');
+            transitionData.active = false;
+            resolve();
+          }, duration);
+        });
+      }
+    } else {
+      // Use GSAP animation
+      return new Promise(resolve => {
+        // Create the page transition
+        const pageTransition = createPageTransition({
+          duration: duration / 1000, // Convert to seconds for GSAP
+          type: type as 'fade' | 'slide' | 'zoom',
+          direction: isBackNavigation ? 'out' : 'in',
+          easing
+        });
+        
+        // Wait for the transition to complete
+        setTimeout(() => {
+          // Clean up
+          if (element) {
+            element.style.display = 'none';
+            element.classList.remove('active');
+          }
+          transitionData.active = false;
+          resolve();
+        }, duration);
+      });
+    }
+  }
+  
+  // Update link interception when new content is added to the DOM
+  document.addEventListener('astro:after-swap', () => {
+    setupLinkInterception();
+  });
+  
+  // Initialize page transition immediately if the DOM is already loaded
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    initAnimations().then(() => {
+      initPageTransition();
+    });
+  }
+</script>

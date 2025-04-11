@@ -1,0 +1,405 @@
+---
+/**
+ * LottieAnimation Component
+ * 
+ * A versatile component for displaying Lottie animations throughout the site.
+ * This component makes it easy to add rich, interactive animations to any part of the interface
+ * without having to write custom JavaScript for each instance.
+ */
+
+import { initLottieAnimation } from '../../utils/animations';
+
+interface Props {
+  /** ID for the animation container */
+  id?: string;
+  /** URL to Lottie JSON file */
+  src: string;
+  /** Width of the animation container */
+  width?: number | string;
+  /** Height of the animation container */
+  height?: number | string;
+  /** Type of interaction to enable */
+  interactionType?: 'hover' | 'click' | 'scroll' | 'loop' | 'none';
+  /** Whether the animation should loop */
+  loop?: boolean;
+  /** Animation speed (1 is normal speed) */
+  speed?: number;
+  /** CSS class to apply to the container */
+  class?: string;
+  /** Whether to autoplay the animation */
+  autoplay?: boolean;
+  /** Frame to start the animation at */
+  startFrame?: number;
+  /** Frame to end the animation at */
+  endFrame?: number;
+  /** Whether to show controls */
+  showControls?: boolean;
+  /** Whether to play animation in reverse */
+  reverse?: boolean;
+  /** Delay before starting the animation in seconds */
+  delay?: number;
+  /** Whether to preload the animation */
+  preload?: boolean;
+  /** Whether to use the web worker for processing */
+  useWorker?: boolean;
+  /** Callback function name to execute when animation completes */
+  onComplete?: string;
+}
+
+const {
+  id = `lottie-animation-${Math.random().toString(36).substring(2, 11)}`,
+  src,
+  width = '100%',
+  height = '100%',
+  interactionType = 'loop',
+  loop = true,
+  speed = 1,
+  class: className = '',
+  autoplay = true,
+  startFrame,
+  endFrame,
+  showControls = false,
+  reverse = false,
+  delay = 0,
+  preload = true,
+  useWorker = true,
+  onComplete
+} = Astro.props;
+---
+
+<div class={`lottie-animation-container ${className}`}>
+  <div
+    id={id}
+    class={`lottie-animation ${interactionType}-interaction`}
+    style={`width: ${typeof width === 'number' ? `${width}px` : width}; height: ${typeof height === 'number' ? `${height}px` : height};`}
+    data-animation-src={src}
+    data-animation-loop={loop.toString()}
+    data-animation-speed={speed.toString()}
+    data-animation-autoplay={autoplay.toString()}
+    data-animation-reverse={reverse.toString()}
+    data-animation-delay={delay.toString()}
+    data-animation-preload={preload.toString()}
+    data-animation-use-worker={useWorker.toString()}
+    data-animation-on-complete={onComplete}
+    data-animation-start-frame={startFrame?.toString()}
+    data-animation-end-frame={endFrame?.toString()}
+  ></div>
+  
+  {showControls && (
+    <div class="animation-controls">
+      <input 
+        type="range" 
+        class="animation-scrubber" 
+        min="0" 
+        max="100" 
+        value="0" 
+        data-target={id}
+      />
+      <div class="animation-buttons">
+        <button class="animation-play" data-target={id}>Play</button>
+        <button class="animation-pause" data-target={id}>Pause</button>
+        <button class="animation-stop" data-target={id}>Stop</button>
+        <button class="animation-reverse" data-target={id}>Reverse</button>
+      </div>
+    </div>
+  )}
+</div>
+
+<style>
+  .lottie-animation-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .lottie-animation {
+    display: block;
+    overflow: hidden;
+    transform: translate3d(0, 0, 0);
+    margin: 0 auto;
+  }
+  
+  .lottie-animation.hover-interaction {
+    cursor: pointer;
+  }
+  
+  .animation-controls {
+    width: 100%;
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .animation-scrubber {
+    width: 100%;
+    height: 8px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #e2e8f0;
+    border-radius: 4px;
+    outline: none;
+  }
+  
+  .animation-scrubber::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #3b82f6;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  
+  .animation-scrubber::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #3b82f6;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+  
+  .animation-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+  
+  .animation-buttons button {
+    padding: 0.25rem 0.5rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: background-color 0.2s;
+  }
+  
+  .animation-buttons button:hover {
+    background: #2563eb;
+  }
+</style>
+
+<script>
+  import { initLottieAnimation } from '../../utils/animations';
+  
+  // Store animation instances
+  const animationInstances = new Map();
+  
+  // Initialize all Lottie animations on the page
+  function initLottieAnimations() {
+    const animationElements = document.querySelectorAll('.lottie-animation');
+    
+    animationElements.forEach(async (element) => {
+      try {
+        const id = element.id;
+        const src = element.getAttribute('data-animation-src');
+        const loop = element.getAttribute('data-animation-loop') !== 'false';
+        const speed = parseFloat(element.getAttribute('data-animation-speed') || '1');
+        const autoplay = element.getAttribute('data-animation-autoplay') !== 'false';
+        const reverse = element.getAttribute('data-animation-reverse') === 'true';
+        const delay = parseFloat(element.getAttribute('data-animation-delay') || '0');
+        const preload = element.getAttribute('data-animation-preload') !== 'false';
+        const useWorker = element.getAttribute('data-animation-use-worker') === 'true';
+        const onComplete = element.getAttribute('data-animation-on-complete');
+        const startFrame = element.getAttribute('data-animation-start-frame');
+        const endFrame = element.getAttribute('data-animation-end-frame');
+        const interactionType = element.className.includes('hover-interaction') ? 'hover' :
+                               element.className.includes('click-interaction') ? 'click' :
+                               element.className.includes('scroll-interaction') ? 'scroll' : 'loop';
+        
+        if (!src) return;
+        if (animationInstances.has(id)) return;
+        
+        // Set up animation options
+        const options = {
+          loop,
+          autoplay: preload ? false : autoplay, // Don't autoplay if preloading
+          speed,
+          renderer: 'svg'
+        };
+        
+        // Initialize the Lottie animation
+        const anim = await initLottieAnimation(id, src, options);
+        
+        if (!anim) return;
+        
+        // Store the animation instance
+        animationInstances.set(id, anim);
+        
+        // Set up animation behavior
+        if (reverse) {
+          anim.setDirection(-1);
+        }
+        
+        // Use provided frames or default to full animation
+        if (startFrame !== null && endFrame !== null) {
+          anim.playSegments([parseInt(startFrame), parseInt(endFrame)], true);
+        }
+        
+        // Add delay if specified
+        if (delay > 0 && autoplay) {
+          setTimeout(() => {
+            anim.play();
+          }, delay * 1000);
+        } else if (autoplay && preload) {
+          // Play after preloading
+          anim.play();
+        }
+        
+        // Set up interaction behavior
+        setupInteraction(element, anim, interactionType);
+        
+        // Set up completion callback
+        if (onComplete) {
+          anim.addEventListener('complete', () => {
+            if (typeof window[onComplete] === 'function') {
+              window[onComplete](id);
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Failed to initialize Lottie animation:', error);
+      }
+    });
+    
+    // Set up animation controls
+    setupAnimationControls();
+  }
+  
+  // Set up interaction for the animation
+  function setupInteraction(element, anim, interactionType) {
+    switch (interactionType) {
+      case 'hover':
+        element.addEventListener('mouseenter', () => {
+          anim.play();
+        });
+        element.addEventListener('mouseleave', () => {
+          anim.stop();
+        });
+        break;
+      case 'click':
+        element.addEventListener('click', () => {
+          if (anim.isPaused) {
+            anim.play();
+          } else {
+            anim.pause();
+          }
+        });
+        break;
+      case 'scroll':
+        // Set up scroll-based animation
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              // Calculate animation progress based on scroll position
+              const scrollHandler = () => {
+                const rect = element.getBoundingClientRect();
+                const scrollProgress = 1 - (rect.bottom / window.innerHeight);
+                const boundedProgress = Math.max(0, Math.min(1, scrollProgress));
+                
+                // Set animation progress
+                const totalFrames = anim.totalFrames;
+                const currentFrame = boundedProgress * totalFrames;
+                anim.goToAndStop(currentFrame, true);
+              };
+              
+              // Add scroll event listener
+              window.addEventListener('scroll', scrollHandler);
+              scrollHandler(); // Initial calculation
+              
+              // Clean up when element leaves viewport
+              observer.disconnect();
+            }
+          });
+        }, { threshold: 0.1 });
+        
+        observer.observe(element);
+        break;
+    }
+  }
+  
+  // Set up animation controls
+  function setupAnimationControls() {
+    // Play button
+    document.querySelectorAll('.animation-play').forEach(button => {
+      button.addEventListener('click', () => {
+        const targetId = button.getAttribute('data-target');
+        const anim = animationInstances.get(targetId);
+        if (anim) anim.play();
+      });
+    });
+    
+    // Pause button
+    document.querySelectorAll('.animation-pause').forEach(button => {
+      button.addEventListener('click', () => {
+        const targetId = button.getAttribute('data-target');
+        const anim = animationInstances.get(targetId);
+        if (anim) anim.pause();
+      });
+    });
+    
+    // Stop button
+    document.querySelectorAll('.animation-stop').forEach(button => {
+      button.addEventListener('click', () => {
+        const targetId = button.getAttribute('data-target');
+        const anim = animationInstances.get(targetId);
+        if (anim) anim.stop();
+      });
+    });
+    
+    // Reverse button
+    document.querySelectorAll('.animation-reverse').forEach(button => {
+      button.addEventListener('click', () => {
+        const targetId = button.getAttribute('data-target');
+        const anim = animationInstances.get(targetId);
+        if (anim) {
+          const currentDirection = anim.playDirection;
+          anim.setDirection(currentDirection * -1);
+          if (anim.isPaused) anim.play();
+        }
+      });
+    });
+    
+    // Update scrubber when animation plays
+    document.querySelectorAll('.animation-scrubber').forEach(scrubber => {
+      const targetId = scrubber.getAttribute('data-target');
+      const anim = animationInstances.get(targetId);
+      
+      if (anim) {
+        anim.addEventListener('enterFrame', () => {
+          const progress = (anim.currentFrame / anim.totalFrames) * 100;
+          scrubber.value = progress.toString();
+        });
+      }
+    });
+    
+    // Control animation with scrubber
+    document.querySelectorAll('.animation-scrubber').forEach(scrubber => {
+      scrubber.addEventListener('input', () => {
+        const targetId = scrubber.getAttribute('data-target');
+        const anim = animationInstances.get(targetId);
+        
+        if (anim) {
+          const progress = parseFloat(scrubber.value) / 100;
+          const frame = progress * anim.totalFrames;
+          anim.goToAndStop(frame, true);
+        }
+      });
+    });
+  }
+  
+  // Initialize animations when the DOM is ready
+  document.addEventListener('DOMContentLoaded', initLottieAnimations);
+  
+  // Initialize animations immediately if the DOM is already loaded
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    initLottieAnimations();
+  }
+  
+  // Initialize animations when new content is added to the DOM
+  document.addEventListener('astro:after-swap', initLottieAnimations);
+</script>

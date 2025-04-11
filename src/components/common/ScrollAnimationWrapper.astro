@@ -1,0 +1,157 @@
+---
+/**
+ * ScrollAnimationWrapper Component
+ * 
+ * A wrapper component that applies scroll-triggered animations to content sections.
+ * This component makes it easy to add engaging animations to any content section
+ * as users scroll through the page, enhancing user engagement.
+ */
+
+import { createScrollAnimation } from '../../utils/animations';
+
+interface Props {
+  /** ID for the animation container */
+  id?: string;
+  /** Type of animation to apply */
+  type?: 'fade' | 'slide' | 'scale' | 'rotate' | 'parallax';
+  /** Direction for the animation */
+  direction?: 'up' | 'down' | 'left' | 'right';
+  /** When to start the animation relative to the viewport */
+  start?: string;
+  /** When to end the animation relative to the viewport */
+  end?: string;
+  /** Whether to scrub the animation to the scroll position */
+  scrub?: boolean | number;
+  /** Whether to show markers for debugging (development only) */
+  markers?: boolean;
+  /** CSS class to apply to the container */
+  class?: string;
+  /** Whether to stagger child animations */
+  stagger?: boolean;
+  /** Delay between staggered animations in seconds */
+  staggerDelay?: number;
+  /** Whether to animate once or every time the element enters the viewport */
+  once?: boolean;
+  /** Whether to pin the section during scroll */
+  pin?: boolean;
+  /** Duration of the pin in seconds (if pin is true) */
+  pinDuration?: number;
+  /** Whether to animate children individually */
+  animateChildren?: boolean;
+  /** Selector for children to animate (if animateChildren is true) */
+  childSelector?: string;
+}
+
+const {
+  id = `scroll-animation-${Math.random().toString(36).substring(2, 11)}`,
+  type = 'fade',
+  direction = 'up',
+  start = 'top 80%',
+  end = 'bottom 20%',
+  scrub = false,
+  markers = false,
+  class: className = '',
+  stagger = false,
+  staggerDelay = 0.1,
+  once = true,
+  pin = false,
+  pinDuration = 1,
+  animateChildren = false,
+  childSelector = '> *'
+} = Astro.props;
+---
+
+<div 
+  id={id}
+  class={`scroll-animation-wrapper ${type}-animation ${direction}-direction ${className}`}
+  data-animation-type={type}
+  data-animation-direction={direction}
+  data-animation-start={start}
+  data-animation-end={end}
+  data-animation-scrub={typeof scrub === 'boolean' ? scrub.toString() : scrub.toString()}
+  data-animation-markers={markers.toString()}
+  data-animation-stagger={stagger.toString()}
+  data-animation-stagger-delay={staggerDelay.toString()}
+  data-animation-once={once.toString()}
+  data-animation-pin={pin.toString()}
+  data-animation-pin-duration={pinDuration.toString()}
+  data-animation-animate-children={animateChildren.toString()}
+  data-animation-child-selector={childSelector}
+>
+  <slot />
+</div>
+
+<style>
+  .scroll-animation-wrapper {
+    position: relative;
+    width: 100%;
+  }
+</style>
+
+<script>
+  import { initAnimations, createScrollAnimation, animateChildrenOnScroll } from '../../utils/animations';
+  
+  // Initialize animations when the DOM is ready
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize the animation system
+    await initAnimations();
+    
+    // Initialize all scroll animation wrappers
+    initScrollAnimations();
+  });
+  
+  // Initialize scroll animations
+  function initScrollAnimations() {
+    const wrappers = document.querySelectorAll('.scroll-animation-wrapper');
+    
+    wrappers.forEach(wrapper => {
+      // Get animation parameters from data attributes
+      const type = wrapper.getAttribute('data-animation-type') || 'fade';
+      const direction = wrapper.getAttribute('data-animation-direction') || 'up';
+      const start = wrapper.getAttribute('data-animation-start') || 'top 80%';
+      const end = wrapper.getAttribute('data-animation-end') || 'bottom 20%';
+      const scrub = wrapper.getAttribute('data-animation-scrub') === 'true' ? true : 
+                   wrapper.getAttribute('data-animation-scrub') === 'false' ? false :
+                   parseFloat(wrapper.getAttribute('data-animation-scrub') || '0');
+      const markers = wrapper.getAttribute('data-animation-markers') === 'true';
+      const stagger = wrapper.getAttribute('data-animation-stagger') === 'true';
+      const staggerDelay = parseFloat(wrapper.getAttribute('data-animation-stagger-delay') || '0.1');
+      const once = wrapper.getAttribute('data-animation-once') === 'true';
+      const pin = wrapper.getAttribute('data-animation-pin') === 'true';
+      const pinDuration = parseFloat(wrapper.getAttribute('data-animation-pin-duration') || '1');
+      const animateChildren = wrapper.getAttribute('data-animation-animate-children') === 'true';
+      const childSelector = wrapper.getAttribute('data-animation-child-selector') || '> *';
+      
+      if (animateChildren) {
+        // Animate children with staggered effect
+        animateChildrenOnScroll(wrapper, {
+          childSelector,
+          animationType: type as 'fade' | 'slide' | 'scale' | 'rotate',
+          staggerDelay,
+          start,
+          end,
+          scrub,
+          markers,
+          once,
+          direction: direction as 'up' | 'down' | 'left' | 'right'
+        });
+      } else {
+        // Create the scroll animation for the wrapper itself
+        createScrollAnimation(wrapper, {
+          animationType: type as 'fade' | 'slide' | 'scale' | 'rotate',
+          start,
+          end,
+          markers,
+          toggleActions: once ? 'play none none none' : 'play none none reverse',
+          pin,
+          scrub,
+          pinSpacing: pin,
+          anticipatePin: 1
+        });
+      }
+    });
+  }
+  
+  // Initialize animations when new content is added to the DOM
+  document.addEventListener('astro:after-swap', initScrollAnimations);
+</script>

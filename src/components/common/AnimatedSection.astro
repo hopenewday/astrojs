@@ -1,0 +1,218 @@
+---
+/**
+ * AnimatedSection Component
+ * 
+ * A versatile component that applies GSAP animations to content sections.
+ * This component makes it easy to add engaging animations to any part of the site
+ * without having to write custom JavaScript for each section.
+ */
+
+import { createScrollAnimation } from '../../utils/animations';
+
+interface Props {
+  /** ID for the animation container */
+  id?: string;
+  /** Type of animation to apply */
+  type?: 'fade' | 'slide' | 'scale' | 'rotate' | 'parallax' | 'stagger';
+  /** Direction for the animation */
+  direction?: 'up' | 'down' | 'left' | 'right';
+  /** When to start the animation relative to the viewport */
+  start?: string;
+  /** When to end the animation relative to the viewport */
+  end?: string;
+  /** Whether to scrub the animation to the scroll position */
+  scrub?: boolean | number;
+  /** Whether to show markers for debugging (development only) */
+  markers?: boolean;
+  /** CSS class to apply to the container */
+  class?: string;
+  /** Duration of the animation in seconds */
+  duration?: number;
+  /** Delay before starting the animation in seconds */
+  delay?: number;
+  /** Easing function for the animation */
+  ease?: string;
+  /** Whether to animate once or every time the element enters the viewport */
+  once?: boolean;
+  /** Distance to animate from (in pixels) */
+  distance?: number;
+  /** Whether to pin the section during scroll */
+  pin?: boolean;
+}
+
+const {
+  id = `animated-section-${Math.random().toString(36).substring(2, 11)}`,
+  type = 'fade',
+  direction = 'up',
+  start = 'top 80%',
+  end = 'bottom 20%',
+  scrub = false,
+  markers = false,
+  class: className = '',
+  duration = 1,
+  delay = 0,
+  ease = 'power2.out',
+  once = true,
+  distance = 50,
+  pin = false
+} = Astro.props;
+---
+
+<section 
+  id={id}
+  class={`animated-section ${type}-animation ${direction}-direction ${className}`}
+  data-animation-type={type}
+  data-animation-direction={direction}
+  data-animation-start={start}
+  data-animation-end={end}
+  data-animation-scrub={scrub.toString()}
+  data-animation-markers={markers.toString()}
+  data-animation-duration={duration.toString()}
+  data-animation-delay={delay.toString()}
+  data-animation-ease={ease}
+  data-animation-once={once.toString()}
+  data-animation-distance={distance.toString()}
+  data-animation-pin={pin.toString()}
+>
+  <slot />
+</section>
+
+<style>
+  .animated-section {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
+</style>
+
+<script>
+  import { initAnimations, createScrollAnimation } from '../../utils/animations';
+  
+  // Initialize animations when the DOM is ready
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize the animation system
+    await initAnimations();
+    
+    // Initialize all animated sections
+    initAnimatedSections();
+  });
+  
+  // Initialize animated sections
+  function initAnimatedSections() {
+    const sections = document.querySelectorAll('.animated-section');
+    
+    sections.forEach(section => {
+      // Get animation parameters from data attributes
+      const type = section.getAttribute('data-animation-type') || 'fade';
+      const direction = section.getAttribute('data-animation-direction') || 'up';
+      const start = section.getAttribute('data-animation-start') || 'top 80%';
+      const end = section.getAttribute('data-animation-end') || 'bottom 20%';
+      const scrub = section.getAttribute('data-animation-scrub') === 'true' ? true : 
+                   section.getAttribute('data-animation-scrub') === 'false' ? false :
+                   parseFloat(section.getAttribute('data-animation-scrub') || '0');
+      const markers = section.getAttribute('data-animation-markers') === 'true';
+      const duration = parseFloat(section.getAttribute('data-animation-duration') || '1');
+      const delay = parseFloat(section.getAttribute('data-animation-delay') || '0');
+      const ease = section.getAttribute('data-animation-ease') || 'power2.out';
+      const once = section.getAttribute('data-animation-once') === 'true';
+      const distance = parseFloat(section.getAttribute('data-animation-distance') || '50');
+      const pin = section.getAttribute('data-animation-pin') === 'true';
+      
+      // Create the scroll animation
+      createScrollAnimation(section, {
+        animationType: type as 'fade' | 'slide' | 'scale' | 'rotate',
+        start,
+        end,
+        markers,
+        toggleActions: once ? 'play none none none' : 'play none none reverse',
+        pin,
+        scrub
+      });
+      
+      // Apply additional animation properties based on type and direction
+      const children = section.children;
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        let animProps = {};
+        
+        // Set animation properties based on type
+        switch (type) {
+          case 'fade':
+            animProps = { opacity: 0, y: direction === 'up' ? distance : direction === 'down' ? -distance : 0, x: direction === 'left' ? distance : direction === 'right' ? -distance : 0 };
+            break;
+          case 'slide':
+            animProps = { x: direction === 'left' ? -distance : direction === 'right' ? distance : 0, y: direction === 'up' ? distance : direction === 'down' ? -distance : 0 };
+            break;
+          case 'scale':
+            animProps = { scale: 0.8, opacity: 0 };
+            break;
+          case 'rotate':
+            animProps = { rotation: direction === 'left' ? -15 : 15, opacity: 0 };
+            break;
+          case 'parallax':
+            // Parallax effect is handled differently
+            const speed = distance / 100;
+            const axis = direction === 'up' || direction === 'down' ? 'y' : 'x';
+            const gsapInstance = window.gsap;
+            if (gsapInstance) {
+              gsapInstance.to(child, {
+                [axis]: direction === 'up' || direction === 'left' ? -distance : distance,
+                ease: 'none',
+                scrollTrigger: {
+                  trigger: section,
+                  start: 'top bottom',
+                  end: 'bottom top',
+                  scrub: true,
+                  invalidateOnRefresh: true
+                }
+              });
+            }
+            continue; // Skip the rest for parallax
+          case 'stagger':
+            // Stagger animations are applied to all children with a delay
+            const staggerDelay = delay / 10;
+            const gsap = window.gsap;
+            if (gsap && gsap.from) {
+              gsap.from(section.children, {
+                opacity: 0,
+                y: direction === 'up' ? distance : direction === 'down' ? -distance : 0,
+                x: direction === 'left' ? distance : direction === 'right' ? -distance : 0,
+                duration,
+                stagger: staggerDelay,
+                ease,
+                scrollTrigger: {
+                  trigger: section,
+                  start,
+                  toggleActions: once ? 'play none none none' : 'play none none reverse'
+                }
+              });
+            }
+            return; // Exit early for stagger animations
+        }
+        
+        // Apply the animation to each child
+        if (type !== 'parallax' && type !== 'stagger') {
+          const gsapInstance = window.gsap;
+          if (gsapInstance && gsapInstance.from) {
+            gsapInstance.from(child, {
+              ...animProps,
+              duration,
+              delay: delay + (i * 0.1), // Add slight stagger between children
+              ease,
+              scrollTrigger: {
+                trigger: section,
+                start,
+                end,
+                toggleActions: once ? 'play none none none' : 'play none none reverse',
+                scrub: typeof scrub === 'boolean' ? scrub : parseFloat(scrub.toString())
+              }
+            });
+          }
+        }
+      }
+    });
+  }
+  
+  // Initialize animations when new content is added to the DOM
+  document.addEventListener('astro:after-swap', initAnimatedSections);
+</script>

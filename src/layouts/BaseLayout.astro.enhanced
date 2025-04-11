@@ -103,56 +103,6 @@ const {
       <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
     )}
     
-    <!-- Critical CSS -->
-    <style is:inline>
-      /* Critical CSS for above-the-fold content */
-      :root {
-        --color-primary: #3b82f6; /* blue-500 */
-        --color-text: #1f2937;
-        --color-text-light: #6b7280;
-        --color-background: #ffffff;
-        --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      }
-      
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --color-text: #f3f4f6;
-          --color-text-light: #9ca3af;
-          --color-background: #111827;
-        }
-      }
-      
-      body {
-        font-family: var(--font-sans);
-        color: var(--color-text);
-        background-color: var(--color-background);
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-      }
-      
-      main {
-        flex: 1;
-      }
-      
-      .skip-to-content {
-        position: absolute;
-        top: -40px;
-        left: 0;
-        background: var(--color-primary);
-        color: white;
-        padding: 8px;
-        z-index: 100;
-        transition: top 0.2s;
-      }
-      
-      .skip-to-content:focus {
-        top: 0;
-      }
-    </style>
-    
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/icons/icon-512x512.svg" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -161,73 +111,42 @@ const {
     <!-- PWA manifest -->
     <link rel="manifest" href="/manifest.json" />
     
+    <!-- Styles -->
+    <link rel="stylesheet" href="/styles/global.css" />
+    
     <!-- GSAP for animations (loaded dynamically by the animation system) -->
     
-    <!-- Slot for additional head elements -->
+    <!-- Slot for additional head content -->
     <slot name="head" />
   </head>
   <body>
-    <!-- Theme Provider wraps all content to provide theme context -->
-    <ThemeProvider>
-      <!-- Skip to content link for accessibility -->
-      <a href="#main-content" class="skip-to-content">Skip to content</a>
-      
-      <!-- Page transition effect -->
-      {animationsEnabled && <EnhancedPageTransition type="fade" duration={600} />}
-      
-      <!-- Header slot -->
-      <slot name="header" />
-      
-      <!-- Main content -->
-      <main id="main-content">
-        <slot />
-      </main>
-      
-      <!-- Footer slot -->
-      <slot name="footer" />
-      
-      <!-- Error boundary for client-side errors -->
-      <div id="error-boundary" hidden>
-        <div class="error-container">
-          <h2>Something went wrong</h2>
-          <p>We're sorry, but we encountered an error. Please try refreshing the page.</p>
-          <button id="error-retry">Retry</button>
-        </div>
-      </div>
-    </ThemeProvider>
+    <!-- Theme provider for dark mode support -->
+    <ThemeProvider />
     
-    <!-- Global error handling script -->
-    <script is:inline>
-      window.addEventListener('error', function(event) {
-        const errorBoundary = document.getElementById('error-boundary');
-        if (errorBoundary && !event.error?.message?.includes('ResizeObserver')) {
-          errorBoundary.hidden = false;
-        }
-      });
-      
-      document.getElementById('error-retry')?.addEventListener('click', function() {
-        document.getElementById('error-boundary').hidden = true;
-        window.location.reload();
-      });
-    </script>
-    <!-- PWA Install Prompt -->
+    <!-- Enhanced page transition -->
+    {animationsEnabled && <EnhancedPageTransition type="fade" duration={600} />}
+    
+    <!-- Main content -->
+    <slot />
+    
+    <!-- PWA install prompt -->
     <PwaInstallPrompt />
     
-    <!-- Analytics Components -->
+    <!-- Analytics -->
+    <WebVitals />
     <UmamiAnalytics />
-    <WebVitals enabled={true} endpoint="/api/analytics/web-vitals" />
     
-    <!-- Service Worker Registration -->
+    <!-- Service worker registration -->
     <script>
-      // Register service worker for PWA support
+      // Register service worker for offline support
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/service-worker.js')
             .then(registration => {
-              console.log('Service Worker registered with scope:', registration.scope);
+              console.log('Service worker registered:', registration);
             })
             .catch(error => {
-              console.error('Service Worker registration failed:', error);
+              console.error('Service worker registration failed:', error);
             });
         });
       }
@@ -240,31 +159,12 @@ const {
         
         // Initialize animations when the DOM is ready
         document.addEventListener('DOMContentLoaded', async () => {
-          try {
-            // Initialize site-wide animations
-            await initSiteAnimations();
-            
-            // Import and initialize scroll animations
-            const { 
-              initContentSectionAnimations, 
-              initDataAttributeAnimations 
-            } = await import('../utils/scrollAnimations');
-            
-            // Initialize content section animations
-            await initContentSectionAnimations();
-            
-            // Initialize animations based on data attributes
-            initDataAttributeAnimations();
-            
-            console.log('Site-wide animations initialized successfully');
-          } catch (error) {
-            console.error('Failed to initialize animations:', error);
-          }
+          await initSiteAnimations();
         });
       </script>
     )}
     
     <!-- Slot for additional body scripts -->
     <slot name="scripts" />
-</body>
+  </body>
 </html>

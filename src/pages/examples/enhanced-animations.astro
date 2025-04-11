@@ -1,0 +1,231 @@
+---
+/**
+ * Enhanced Animations Example Page
+ * 
+ * This page demonstrates the enhanced animation capabilities implemented to address
+ * the User Experience Enhancements section from the uncompleted features list.
+ * It showcases GSAP animations, Lottie animations, scroll-triggered animations,
+ * and page transition effects integrated across the site.
+ */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import AnimatedSection from "../../components/common/AnimatedSection.astro";
+import LottieAnimation from "../../components/common/LottieAnimation.astro";
+import ScrollAnimationWrapper from "../../components/common/ScrollAnimationWrapper.astro";
+import EnhancedPageTransition from "../../components/common/EnhancedPageTransition.astro";
+---
+
+<BaseLayout title="Enhanced Animations | AstroJS">
+  <EnhancedPageTransition type="fade" duration={600} />
+  
+  <main class="enhanced-animations-page">
+    <section class="hero-section">
+      <div class="container mx-auto px-4 py-16">
+        <h1 class="text-4xl md:text-5xl font-bold mb-6">Enhanced Animation System</h1>
+        <p class="text-xl mb-8">Explore the advanced animation capabilities that enhance user experience across the site.</p>
+      </div>
+    </section>
+    
+    <section class="container mx-auto px-4 py-8">
+      <h2 class="text-3xl font-bold mb-6">GSAP Animations</h2>
+      <p class="mb-8">Powerful animations powered by GSAP for complex UI interactions.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        <AnimatedSection type="fade" direction="up" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Fade Up Animation</h3>
+          <p>This card fades in from the bottom as it enters the viewport.</p>
+          <p class="mt-4">GSAP provides smooth, high-performance animations that enhance the user experience.</p>
+        </AnimatedSection>
+        
+        <AnimatedSection type="slide" direction="left" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Slide In Animation</h3>
+          <p>This card slides in from the left as it enters the viewport.</p>
+          <p class="mt-4">Slide animations create a sense of movement and direction in the interface.</p>
+        </AnimatedSection>
+        
+        <AnimatedSection type="scale" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Scale Animation</h3>
+          <p>This card scales up as it enters the viewport.</p>
+          <p class="mt-4">Scale animations draw attention to important elements on the page.</p>
+        </AnimatedSection>
+        
+        <AnimatedSection type="rotate" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Rotate Animation</h3>
+          <p>This card rotates into view as it enters the viewport.</p>
+          <p class="mt-4">Rotation adds a playful element to the user interface.</p>
+        </AnimatedSection>
+      </div>
+    </section>
+    
+    <section class="bg-gray-100 dark:bg-gray-900 py-16">
+      <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold mb-6">Lottie Animations</h2>
+        <p class="mb-8">Rich, interactive vector animations that enhance the visual experience.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 class="text-xl font-semibold mb-4">Loop Animation</h3>
+            <LottieAnimation 
+              src="https://assets2.lottiefiles.com/packages/lf20_UJNc2t.json"
+              width="200px"
+              height="200px"
+              interactionType="loop"
+              class="mx-auto"
+            />
+            <p class="text-center mt-4">Continuous animation that adds visual interest.</p>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 class="text-xl font-semibold mb-4">Hover Animation</h3>
+            <LottieAnimation 
+              src="https://assets9.lottiefiles.com/packages/lf20_rqcjx3zn.json"
+              width="200px"
+              height="200px"
+              interactionType="hover"
+              class="mx-auto"
+            />
+            <p class="text-center mt-4">Hover over the animation to play it.</p>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 class="text-xl font-semibold mb-4">Click Animation</h3>
+            <LottieAnimation 
+              src="https://assets2.lottiefiles.com/packages/lf20_ky24lmqh.json"
+              width="200px"
+              height="200px"
+              interactionType="click"
+              showControls={true}
+              class="mx-auto"
+            />
+            <p class="text-center mt-4">Click the animation to play it.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <section class="container mx-auto px-4 py-16">
+      <h2 class="text-3xl font-bold mb-6">Scroll-Triggered Animations</h2>
+      <p class="mb-8">Elements that animate as you scroll down the page, enhancing user engagement.</p>
+      
+      <ScrollAnimationWrapper type="fade" animateChildren={true} childSelector=".card" stagger={true} staggerDelay={0.2} class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div class="card bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Card One</h3>
+          <p>This card animates as part of a staggered sequence.</p>
+        </div>
+        
+        <div class="card bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Card Two</h3>
+          <p>This card animates after the first card.</p>
+        </div>
+        
+        <div class="card bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Card Three</h3>
+          <p>This card animates after the second card.</p>
+        </div>
+      </ScrollAnimationWrapper>
+      
+      <div class="mt-16">
+        <ScrollAnimationWrapper type="parallax" direction="up" distance={100} class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
+          <h3 class="text-2xl font-semibold mb-4">Parallax Effect</h3>
+          <p class="mb-4">This section moves at a different speed than the rest of the page as you scroll.</p>
+          <p>Parallax effects create depth and visual interest, making the page feel more dynamic and engaging.</p>
+        </ScrollAnimationWrapper>
+      </div>
+    </section>
+    
+    <section class="bg-gray-100 dark:bg-gray-900 py-16">
+      <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold mb-6">Page Transitions</h2>
+        <p class="mb-8">Smooth transitions between pages for a better user experience.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 class="text-xl font-semibold mb-4">Fade Transition</h3>
+            <p>A simple fade transition between pages.</p>
+            <a href="/examples/animations" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+              Try It
+            </a>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 class="text-xl font-semibold mb-4">Slide Transition</h3>
+            <p>A slide transition between pages.</p>
+            <a href="/examples/web-worker" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors" data-transition-type="slide">
+              Try It
+            </a>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 class="text-xl font-semibold mb-4">Lottie Transition</h3>
+            <p>A custom Lottie animation transition between pages.</p>
+            <a href="/" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors" data-transition-type="lottie">
+              Try It
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <section class="container mx-auto px-4 py-16 mb-8">
+      <h2 class="text-3xl font-bold mb-6">Implementation Details</h2>
+      
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+        <h3 class="text-xl font-semibold mb-4">Animation Components</h3>
+        <p class="mb-4">The enhanced animation system includes several new components:</p>
+        
+        <ul class="list-disc pl-6 mb-6">
+          <li><strong>AnimatedSection</strong> - For GSAP-powered content sections</li>
+          <li><strong>LottieAnimation</strong> - For rich, interactive vector animations</li>
+          <li><strong>ScrollAnimationWrapper</strong> - For scroll-triggered animations</li>
+          <li><strong>EnhancedPageTransition</strong> - For seamless page transitions</li>
+        </ul>
+        
+        <p class="mb-4">These components are built on top of the existing animation utilities and extend their functionality to provide a more engaging user experience.</p>
+        
+        <p>All animations are optimized for performance, with intensive calculations offloaded to web workers when possible to maintain smooth interactions even on less powerful devices.</p>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<script>
+  // Handle custom page transitions
+  document.addEventListener('DOMContentLoaded', () => {
+    const transitionLinks = document.querySelectorAll('a[data-transition-type]');
+    
+    transitionLinks.forEach(link => {
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        
+        const href = link.getAttribute('href');
+        const transitionType = link.getAttribute('data-transition-type');
+        
+        // Get the page transition element
+        const transitionElement = document.querySelector('.enhanced-page-transition');
+        if (transitionElement) {
+          // Update the transition type
+          transitionElement.setAttribute('data-transition-type', transitionType);
+          
+          // Trigger the transition
+          const event = new CustomEvent('page-transition', {
+            detail: { href }
+          });
+          transitionElement.dispatchEvent(event);
+        } else {
+          // Fallback if transition element not found
+          window.location.href = href;
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+  .enhanced-animations-page {
+    overflow-x: hidden; /* Prevent horizontal scrolling from animations */
+  }
+  
+  .hero-section {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+  }
+</style>
