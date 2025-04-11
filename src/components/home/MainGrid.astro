@@ -258,26 +258,50 @@ const featuredReadingTime = featuredArticle?.content
 </section>
 
 <script>
-  import { createScrollAnimation } from '../../utils/animations';
+  import { createScrollAnimation, createFadeInAnimation, animateChildrenOnScroll } from '../../utils/animations';
   
   // Initialize scroll animations when the DOM is ready
   document.addEventListener('DOMContentLoaded', () => {
-    // Apply scroll animations to article cards
-    createScrollAnimation('.article-card', {
-      animationType: 'fade',
-      start: 'top 80%',
-      end: 'bottom 20%',
-      markers: false,
-      scrub: false
+    // Apply enhanced scroll animations to article cards with staggered effect
+    const articleCards = document.querySelectorAll('.article-card');
+    articleCards.forEach((card, index) => {
+      createScrollAnimation(card, {
+        animationType: 'fade',
+        start: 'top 85%',
+        toggleActions: 'play none none none',
+        scrub: false
+      });
     });
     
-    // Apply scroll animation to hero section
-    createScrollAnimation('.hero-section', {
-      animationType: 'fade',
-      start: 'top bottom',
-      end: 'bottom 80%',
-      markers: false,
-      scrub: false
+    // Apply more advanced animation to hero section
+    const heroSection = document.querySelector('.hero-section');
+    if (heroSection) {
+      // Animate the hero content elements with staggered timing
+      animateChildrenOnScroll('.hero-content', {
+        childSelector: 'h2, p, .hero-meta, .hero-author',
+        animationType: 'fade',
+        staggerDelay: 0.15,
+        start: 'top 80%'
+      });
+      
+      // Add a subtle scale animation to the hero image
+      const heroImage = heroSection.querySelector('.hero-image');
+      if (heroImage) {
+        createScrollAnimation(heroImage, {
+          animationType: 'scale',
+          start: 'top 80%',
+          end: 'bottom 20%',
+          scrub: true
+        });
+      }
+    }
+    
+    // Animate the load more button with a bounce effect when it comes into view
+    createFadeInAnimation('.load-more-button', {
+      duration: 0.8,
+      delay: 0.2,
+      from: 'bottom',
+      distance: 20
     });
     
     // Save article functionality

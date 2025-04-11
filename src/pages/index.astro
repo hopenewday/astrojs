@@ -439,3 +439,36 @@ const articles = [
     color: #6b7280;
   }
 </style>
+
+<BaseLayout title="ChakrirChain - Modern Magazine">
+  <Header slot="header" />
+  
+  <PageTransition type="fade" />
+  
+  <MainGrid articles={articles} />
+  
+  <script>
+    import { initAnimations, createFadeInAnimation } from '../utils/animations';
+    import { initContentSectionAnimations, initDataAttributeAnimations } from '../utils/scrollAnimations';
+    
+    // Initialize animations when the DOM is ready
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Initialize the core animation system
+      await initAnimations();
+      
+      // Initialize content section animations
+      initContentSectionAnimations();
+      
+      // Initialize animations based on data attributes
+      initDataAttributeAnimations();
+      
+      // Apply fade-in animation to specific elements
+      createFadeInAnimation('h1, h2, .category-badge', {
+        duration: 0.7,
+        stagger: 0.1,
+        from: 'bottom',
+        distance: 20
+      });
+    });
+  </script>
+</BaseLayout>

@@ -221,13 +221,30 @@ const {
       }
     </script>
     <script>
-      import { initAnimations } from '../utils/animations';
-      
       // Initialize animations when the DOM is ready
       document.addEventListener('DOMContentLoaded', async () => {
-        await initAnimations();
-        console.log('Animations initialized');
+        try {
+          // Import and initialize animations
+          const { initAnimations } = await import('../utils/animations');
+          await initAnimations();
+          
+          // Import and initialize scroll animations
+          const { 
+            initContentSectionAnimations, 
+            initDataAttributeAnimations 
+          } = await import('../utils/scrollAnimations');
+          
+          // Initialize content section animations
+          await initContentSectionAnimations();
+          
+          // Initialize animations based on data attributes
+          initDataAttributeAnimations();
+          
+          console.log('Site-wide animations initialized successfully');
+        } catch (error) {
+          console.error('Failed to initialize animations:', error);
+        }
       });
     </script>
-  </body>
+</body>
 </html>
