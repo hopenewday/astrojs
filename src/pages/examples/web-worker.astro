@@ -1,0 +1,103 @@
+---
+/**
+ * Web Worker Example Page
+ * 
+ * This page demonstrates the use of web workers for intensive operations,
+ * showing how they can improve performance by offloading work from the main thread.
+ */
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import WorkerDemo from '../../components/common/WorkerDemo.astro';
+---
+
+<BaseLayout title="Web Worker Examples | Performance Optimization">
+  <main class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Web Worker Performance Optimization</h1>
+    
+    <div class="mb-8 prose max-w-none">
+      <p class="text-lg">
+        Web workers allow you to run JavaScript in background threads, keeping the main thread responsive
+        even during intensive operations. This is crucial for maintaining a smooth user experience.
+      </p>
+      
+      <h2 class="text-2xl font-semibold mt-6 mb-4">Benefits of Web Workers</h2>
+      
+      <ul class="list-disc pl-6 mb-6">
+        <li>Improved UI responsiveness during intensive operations</li>
+        <li>Better performance for CPU-intensive tasks</li>
+        <li>Parallel processing capabilities</li>
+        <li>Reduced main thread blocking</li>
+        <li>Better utilization of multi-core processors</li>
+      </ul>
+      
+      <h2 class="text-2xl font-semibold mt-6 mb-4">Use Cases in This Application</h2>
+      
+      <p>
+        In this application, web workers are used for several performance-critical tasks:
+      </p>
+      
+      <ul class="list-disc pl-6 mb-6">
+        <li><strong>Image Processing:</strong> Generating blurhash placeholders, resizing, and format conversion</li>
+        <li><strong>Data Transformation:</strong> Filtering, sorting, and mapping large datasets</li>
+        <li><strong>Animation Calculations:</strong> Computing physics-based animations and complex paths</li>
+      </ul>
+      
+      <p>
+        The demos below showcase these capabilities and compare the performance between
+        web worker processing and main thread processing.
+      </p>
+    </div>
+    
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
+      <h2 class="text-2xl font-semibold mb-4">Interactive Demonstrations</h2>
+      <WorkerDemo />
+    </div>
+    
+    <div class="mb-8 prose max-w-none">
+      <h2 class="text-2xl font-semibold mt-6 mb-4">Implementation Details</h2>
+      
+      <p>
+        The web worker implementation in this application consists of three main parts:
+      </p>
+      
+      <ol class="list-decimal pl-6 mb-6">
+        <li>
+          <strong>Main Worker Script:</strong> Located at <code>/public/workers/main-worker.js</code>, this script
+          handles various types of intensive operations and communicates results back to the main thread.
+        </li>
+        <li>
+          <strong>Integration Utility:</strong> Located at <code>/src/utils/imageWorkerIntegration.ts</code>, this
+          utility provides a clean API for components to interact with the web worker.
+        </li>
+        <li>
+          <strong>Component Integration:</strong> Components like <code>OptimizedImage.astro</code> use the
+          integration utility to offload intensive operations to the web worker.
+        </li>
+      </ol>
+      
+      <h3 class="text-xl font-semibold mt-4 mb-2">Code Example: Using Web Workers for Image Processing</h3>
+      
+      <pre class="bg-gray-100 dark:bg-gray-900 p-4 rounded overflow-x-auto"><code>// Import the worker integration utility
+import { processImageWithWorker } from '../utils/imageWorkerIntegration';
+
+// Process an image with the web worker
+async function processImage(src) {
+  try {
+    // Offload the processing to the web worker
+    const result = await processImageWithWorker(src, 'resize', {
+      width: 800,
+      height: 600,
+      quality: 0.8
+    });
+    
+    // Use the processed image
+    if (result.processed) {
+      imageElement.src = result.result;
+    }
+  } catch (error) {
+    console.error('Failed to process image:', error);
+  }
+}</code></pre>
+    </div>
+  </main>
+</BaseLayout>

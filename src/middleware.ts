@@ -8,11 +8,13 @@
  * - Cross-Origin Policies
  * - Input Sanitization
  * - Security Monitoring
+ * - AMP Detection and Routing
  */
 
 import { defineMiddleware } from 'astro:middleware';
 import { sanitizeHtml } from './utils/sanitizer';
 import { generateCSP, generatePermissionsPolicy } from './config/security.config';
+import { ampMiddleware } from './middleware/ampMiddleware';
 
 // Generate a unique nonce for each request
 function generateNonce() {
@@ -22,7 +24,8 @@ function generateNonce() {
 // Rate limiting for sensitive endpoints
 const rateLimits = new Map();
 
-export const onRequest = defineMiddleware(async (context, next) => {
+// Compose middleware functions
+const securityMiddleware = async (context, next) => {
   const { request } = context;
   const url = new URL(request.url);
   const nonce = generateNonce();
@@ -93,6 +96,20 @@ export const onRequest = defineMiddleware(async (context, next) => {
     statusText: response.statusText,
     headers
   });
+};
+
+// Compose middleware chain
+export const onRequest = defineMiddleware(async (context, next) => {
+  // First apply AMP middleware
+  const ampResult = await ampMiddleware(context, next);
+  
+  // If AMP middleware returned a response (e.g., a redirect), return it
+  if (ampResult instanceof Response) {
+    return ampResult;
+  }
+  
+  // Otherwise, continue with security middleware
+  return securityMiddleware(context, next);
 });
 
 // Utility function to sanitize user input

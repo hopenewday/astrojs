@@ -1,0 +1,200 @@
+---
+/**
+ * Animation Examples Page
+ * 
+ * This page demonstrates the various animation capabilities provided by the animations.ts utility.
+ * It serves as both documentation and a visual showcase of available animations.
+ */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ContentAnimation from "../../components/common/ContentAnimation.astro";
+import InteractiveAnimation from "../../components/common/InteractiveAnimation.astro";
+import LoadingAnimation from "../../components/common/LoadingAnimation.astro";
+import SectionTransition from "../../components/common/SectionTransition.astro";
+import PageTransition from "../../components/common/PageTransition.astro";
+---
+
+<BaseLayout title="Animation Examples | AstroJS">
+  <PageTransition type="fade" />
+  
+  <main class="animation-examples-page">
+    <section class="hero-section">
+      <div class="container mx-auto px-4 py-16">
+        <h1 class="text-4xl md:text-5xl font-bold mb-6">Animation Examples</h1>
+        <p class="text-xl mb-8">Explore the various animation capabilities provided by our GSAP integration.</p>
+      </div>
+    </section>
+    
+    <section class="container mx-auto px-4 py-8">
+      <h2 class="text-3xl font-bold mb-6">Fade-In Animations</h2>
+      <p class="mb-8">Elements that fade in as they enter the viewport.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <ContentAnimation type="fade" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Fade from Bottom</h3>
+          <p>This card fades in from the bottom as it enters the viewport.</p>
+        </ContentAnimation>
+        
+        <ContentAnimation type="fade" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Fade In</h3>
+          <p>This card simply fades in as it enters the viewport.</p>
+        </ContentAnimation>
+        
+        <ContentAnimation type="fade" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Fade with Delay</h3>
+          <p>This card fades in with a slight delay.</p>
+        </ContentAnimation>
+      </div>
+    </section>
+    
+    <SectionTransition type="fade" />
+    
+    <section class="container mx-auto px-4 py-8">
+      <h2 class="text-3xl font-bold mb-6">Scroll Animations</h2>
+      <p class="mb-8">Elements that animate as you scroll down the page.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        <ContentAnimation type="slide" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Slide Up</h3>
+          <p>This card slides up as it enters the viewport.</p>
+        </ContentAnimation>
+        
+        <ContentAnimation type="scale" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Scale In</h3>
+          <p>This card scales in as it enters the viewport.</p>
+        </ContentAnimation>
+        
+        <ContentAnimation type="rotate" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Rotate In</h3>
+          <p>This card rotates in as it enters the viewport.</p>
+        </ContentAnimation>
+        
+        <ContentAnimation type="fade" stagger={true} class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Staggered Animation</h3>
+          <p class="mb-2">These items animate in sequence:</p>
+          <ul class="list-disc pl-5">
+            <li class="mb-1">First item</li>
+            <li class="mb-1">Second item</li>
+            <li class="mb-1">Third item</li>
+            <li>Fourth item</li>
+          </ul>
+        </ContentAnimation>
+      </div>
+    </section>
+    
+    <SectionTransition type="slide" />
+    
+    <section class="container mx-auto px-4 py-8">
+      <h2 class="text-3xl font-bold mb-6">Interactive Animations</h2>
+      <p class="mb-8">Animations that respond to user interactions.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Hover Animation</h3>
+          <InteractiveAnimation 
+            src="https://assets9.lottiefiles.com/packages/lf20_rqcjx3zn.json"
+            width="200px"
+            height="200px"
+            interactionType="hover"
+            class="mx-auto"
+          />
+          <p class="text-center mt-4">Hover over the animation to play it.</p>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Click Animation</h3>
+          <InteractiveAnimation 
+            src="https://assets2.lottiefiles.com/packages/lf20_ky24lmqh.json"
+            width="200px"
+            height="200px"
+            interactionType="click"
+            class="mx-auto"
+          />
+          <p class="text-center mt-4">Click the animation to play it.</p>
+        </div>
+      </div>
+    </section>
+    
+    <SectionTransition type="wipe" />
+    
+    <section class="container mx-auto px-4 py-8">
+      <h2 class="text-3xl font-bold mb-6">Loading Animations</h2>
+      <p class="mb-8">Animations for loading states and transitions.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex flex-col items-center">
+          <h3 class="text-xl font-semibold mb-4">Spinner</h3>
+          <LoadingAnimation type="spinner" width="100px" height="100px" />
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex flex-col items-center">
+          <h3 class="text-xl font-semibold mb-4">Dots</h3>
+          <LoadingAnimation type="dots" width="100px" height="100px" />
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex flex-col items-center">
+          <h3 class="text-xl font-semibold mb-4">Pulse</h3>
+          <LoadingAnimation type="pulse" width="100px" height="100px" />
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex flex-col items-center">
+          <h3 class="text-xl font-semibold mb-4">Progress</h3>
+          <LoadingAnimation type="progress" width="100px" height="100px" />
+        </div>
+      </div>
+    </section>
+    
+    <SectionTransition type="zoom" />
+    
+    <section class="container mx-auto px-4 py-8 mb-16">
+      <h2 class="text-3xl font-bold mb-6">Page Transitions</h2>
+      <p class="mb-8">Smooth transitions between pages for a better user experience.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Fade Transition</h3>
+          <p>A simple fade transition between pages.</p>
+          <a href="/" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+            Try It
+          </a>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Slide Transition</h3>
+          <p>A slide transition between pages.</p>
+          <a href="/" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+            Try It
+          </a>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold mb-4">Zoom Transition</h3>
+          <p>A zoom transition between pages.</p>
+          <a href="/" class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+            Try It
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<script>
+  import { initAnimations } from "../../utils/animations";
+  
+  // Initialize animations when the DOM is ready
+  document.addEventListener("DOMContentLoaded", async () => {
+    await initAnimations();
+    console.log("Animations initialized on examples page");
+  });
+</script>
+
+<style>
+  .animation-examples-page {
+    overflow-x: hidden; /* Prevent horizontal scrolling from animations */
+  }
+  
+  .hero-section {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+  }
+</style>

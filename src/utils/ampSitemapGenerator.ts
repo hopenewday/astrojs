@@ -35,6 +35,15 @@ ${entries.map(entry => generateSitemapEntry(entry)).join('')}
 
 /**
  * Generates a Google News sitemap with AMP references
+ * 
+ * This function creates a Google News sitemap that complies with Google News requirements:
+ * - Articles must be published within the last 2 weeks
+ * - Must include required tags: publication_name, publication_language, publication_date, title
+ * - Should include optional tags: keywords, access, genres, stock_tickers
+ * 
+ * The function validates all entries against Google News requirements and filters out invalid entries.
+ * Validation errors are logged to the console for debugging purposes.
+ * 
  * @param entries Array of sitemap entries with news-specific properties
  * @param publication The publication name
  * @returns XML string of the Google News sitemap
@@ -45,12 +54,37 @@ export function generateNewsSitemap(entries: (SitemapEntry & {
   publicationName?: string;
   keywords?: string[];
   genres?: string[];
+  access?: 'Subscription' | 'Registration' | '';
+  stockTickers?: string[];
 })[], publication: string): string {
+  // Validate all entries and filter out invalid ones
+  const validatedEntries = entries.map(entry => {
+    const validation = validateNewsSitemapEntry(entry);
+    return { entry, validation };
+  });
+  
+  // Log validation errors for debugging
+  validatedEntries.forEach(({ entry, validation }) => {
+    if (!validation.valid) {
+      console.warn(`Invalid Google News sitemap entry for URL ${entry.url}:`, validation.errors);
+    }
+  });
+  
+  // Filter out invalid entries
+  const validEntries = validatedEntries
+    .filter(({ validation }) => validation.valid)
+    .map(({ entry }) => entry);
+  
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
-${entries.map(entry => generateNewsSitemapEntry(entry, publication)).join('')}
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd
+        http://www.google.com/schemas/sitemap-news/0.9
+        http://www.google.com/schemas/sitemap-news/0.9/sitemap-news.xsd">
+${validEntries.map(entry => generateNewsSitemapEntry(entry, publication)).join('')}
 </urlset>`;
   
   return xml;
@@ -132,6 +166,8 @@ function generateNewsSitemapEntry(entry: SitemapEntry & {
   publicationName?: string;
   keywords?: string[];
   genres?: string[];
+  access?: 'Subscription' | 'Registration' | '';
+  stockTickers?: string[];
 }, defaultPublication: string): string {
   const { 
     url, 
@@ -139,7 +175,9 @@ function generateNewsSitemapEntry(entry: SitemapEntry & {
     publicationDate, 
     publicationName = defaultPublication,
     keywords = [],
-    genres = []
+    genres = [],
+    access = '',
+    stockTickers = []
   } = entry;
   
   // Determine if this is an AMP URL or a canonical URL
@@ -154,10 +192,12 @@ function generateNewsSitemapEntry(entry: SitemapEntry & {
         <news:name>${escapeXml(publicationName)}</news:name>
         <news:language>en</news:language>
       </news:publication>
-      <news:publication_date>${publicationDate}</news:publication_date>
+      <news:publication_date>${new Date(publicationDate).toISOString()}</news:publication_date>
       <news:title>${escapeXml(title)}</news:title>
       ${keywords.length > 0 ? `<news:keywords>${escapeXml(keywords.join(','))}</news:keywords>` : ''}
       ${genres.length > 0 ? `<news:genres>${escapeXml(genres.join(','))}</news:genres>` : ''}
+      ${access ? `<news:access>${access}</news:access>` : ''}
+      ${stockTickers.length > 0 ? `<news:stock_tickers>${escapeXml(stockTickers.join(','))}</news:stock_tickers>` : ''}
     </news:news>
     <xhtml:link rel="alternate" media="only screen and (max-width: 640px)" href="${escapeXml(ampUrl)}" />
   </url>
@@ -235,6 +275,67 @@ function generateFacebookInstantArticleItem(entry: {
       </content:encoded>
     </item>
 `;
+}
+
+/**
+ * Validates a Google News sitemap entry against Google News requirements
+ * @param entry News sitemap entry data
+ * @returns Object with validation result and any error messages
+ */
+function validateNewsSitemapEntry(entry: SitemapEntry & {
+  title: string;
+  publicationDate: string;
+  publicationName?: string;
+  keywords?: string[];
+  genres?: string[];
+  access?: 'Subscription' | 'Registration' | '';
+  stockTickers?: string[];
+}): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  // Check required fields
+  if (!entry.url) errors.push('URL is required');
+  if (!entry.title) errors.push('Title is required');
+  if (!entry.publicationDate) errors.push('Publication date is required');
+  
+  // Validate publication date format and recency
+  try {
+    const pubDate = new Date(entry.publicationDate);
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+    
+    if (pubDate < twoWeeksAgo) {
+      errors.push('Publication date must be within the last two weeks for Google News');
+    }
+  } catch (e) {
+    errors.push('Invalid publication date format');
+  }
+  
+  // Validate URL format
+  try {
+    new URL(entry.url);
+  } catch (e) {
+    errors.push('Invalid URL format');
+  }
+  
+  // Validate access value if provided
+  if (entry.access && !['Subscription', 'Registration', ''].includes(entry.access)) {
+    errors.push('Access must be "Subscription", "Registration", or empty string');
+  }
+  
+  // Validate keywords and stock tickers length
+  if (entry.keywords && entry.keywords.join(',').length > 800) {
+    errors.push('Keywords exceed maximum length of 800 characters');
+  }
+  
+  if (entry.stockTickers && entry.stockTickers.join(',').length > 300) {
+    errors.push('Stock tickers exceed maximum length of 300 characters');
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors
+  };
 }
 
 /**

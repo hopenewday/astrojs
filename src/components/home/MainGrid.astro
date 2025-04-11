@@ -258,8 +258,28 @@ const featuredReadingTime = featuredArticle?.content
 </section>
 
 <script>
-  // Client-side functionality
+  import { createScrollAnimation } from '../../utils/animations';
+  
+  // Initialize scroll animations when the DOM is ready
   document.addEventListener('DOMContentLoaded', () => {
+    // Apply scroll animations to article cards
+    createScrollAnimation('.article-card', {
+      animationType: 'fade',
+      start: 'top 80%',
+      end: 'bottom 20%',
+      markers: false,
+      scrub: false
+    });
+    
+    // Apply scroll animation to hero section
+    createScrollAnimation('.hero-section', {
+      animationType: 'fade',
+      start: 'top bottom',
+      end: 'bottom 80%',
+      markers: false,
+      scrub: false
+    });
+    
     // Save article functionality
     const saveButtons = document.querySelectorAll('.save-button');
     

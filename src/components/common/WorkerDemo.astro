@@ -1,0 +1,848 @@
+---
+/**
+ * WorkerDemo Component
+ * 
+ * This component demonstrates how to use web workers for intensive operations
+ * to keep the main thread responsive and improve user experience.
+ */
+
+// Define the props for the component
+interface Props {
+  /** The type of demo to show */
+  demoType?: 'image' | 'data' | 'animation' | 'all';
+  /** The class name for styling */
+  class?: string;
+}
+
+const {
+  demoType = 'all',
+  class: className = ''
+} = Astro.props;
+
+// Determine which demos to show
+const showImageDemo = demoType === 'image' || demoType === 'all';
+const showDataDemo = demoType === 'data' || demoType === 'all';
+const showAnimationDemo = demoType === 'animation' || demoType === 'all';
+---
+
+<div class={`worker-demo ${className}`}>
+  <h2>Web Worker Demonstrations</h2>
+  <p class="description">
+    These examples demonstrate how web workers can be used to offload intensive operations
+    from the main thread, keeping the UI responsive even during heavy processing.
+  </p>
+  
+  {showImageDemo && (
+    <section class="demo-section" id="image-processing-demo">
+      <h3>Image Processing</h3>
+      <div class="demo-content">
+        <div class="demo-controls">
+          <label>
+            <span>Select an image:</span>
+            <input type="file" id="image-input" accept="image/*" />
+          </label>
+          <div class="processing-options">
+            <button id="blur-image" disabled>Apply Blur (Web Worker)</button>
+            <button id="blur-image-main" disabled>Apply Blur (Main Thread)</button>
+            <button id="generate-blurhash" disabled>Generate Blurhash</button>
+          </div>
+        </div>
+        <div class="demo-results">
+          <div class="image-container">
+            <h4>Original Image</h4>
+            <div id="original-image-container"></div>
+          </div>
+          <div class="image-container">
+            <h4>Processed Image</h4>
+            <div id="processed-image-container"></div>
+          </div>
+        </div>
+        <div class="performance-metrics">
+          <h4>Performance Comparison</h4>
+          <div id="image-metrics"></div>
+        </div>
+      </div>
+    </section>
+  )}
+  
+  {showDataDemo && (
+    <section class="demo-section" id="data-processing-demo">
+      <h3>Data Transformation</h3>
+      <div class="demo-content">
+        <div class="demo-controls">
+          <label>
+            <span>Number of items:</span>
+            <input type="range" id="data-size" min="1000" max="100000" step="1000" value="10000" />
+            <span id="data-size-value">10,000</span>
+          </label>
+          <div class="processing-options">
+            <button id="filter-data">Filter Data (Web Worker)</button>
+            <button id="filter-data-main">Filter Data (Main Thread)</button>
+            <button id="sort-data">Sort Data (Web Worker)</button>
+            <button id="sort-data-main">Sort Data (Main Thread)</button>
+          </div>
+        </div>
+        <div class="demo-results">
+          <div id="data-result"></div>
+        </div>
+        <div class="performance-metrics">
+          <h4>Performance Comparison</h4>
+          <div id="data-metrics"></div>
+        </div>
+      </div>
+    </section>
+  )}
+  
+  {showAnimationDemo && (
+    <section class="demo-section" id="animation-demo">
+      <h3>Animation Calculations</h3>
+      <div class="demo-content">
+        <div class="demo-controls">
+          <label>
+            <span>Animation complexity:</span>
+            <input type="range" id="animation-complexity" min="10" max="1000" step="10" value="100" />
+            <span id="animation-complexity-value">100</span>
+          </label>
+          <div class="processing-options">
+            <button id="calculate-animation">Calculate Animation (Web Worker)</button>
+            <button id="calculate-animation-main">Calculate Animation (Main Thread)</button>
+            <button id="play-animation" disabled>Play Animation</button>
+          </div>
+        </div>
+        <div class="demo-results">
+          <div id="animation-container" class="animation-container"></div>
+        </div>
+        <div class="performance-metrics">
+          <h4>Performance Comparison</h4>
+          <div id="animation-metrics"></div>
+        </div>
+      </div>
+    </section>
+  )}
+</div>
+
+<style>
+  .worker-demo {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  
+  h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--color-heading, #333);
+  }
+  
+  .description {
+    font-size: 1.1rem;
+    line-height: 1.5;
+    margin-bottom: 2rem;
+    color: var(--color-text, #555);
+  }
+  
+  .demo-section {
+    margin-bottom: 3rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+    background-color: var(--color-card-bg, #f8f9fa);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--color-heading, #333);
+  }
+  
+  .demo-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .demo-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+  }
+  
+  input[type="file"] {
+    padding: 0.5rem;
+    border: 1px solid var(--color-border, #ddd);
+    border-radius: 4px;
+  }
+  
+  input[type="range"] {
+    flex: 1;
+    max-width: 300px;
+  }
+  
+  .processing-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  button {
+    padding: 0.5rem 1rem;
+    background-color: var(--color-primary, #4a6cf7);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+  
+  button:hover {
+    background-color: var(--color-primary-dark, #3a5ce5);
+  }
+  
+  button:disabled {
+    background-color: var(--color-disabled, #ccc);
+    cursor: not-allowed;
+  }
+  
+  .demo-results {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+  
+  .image-container {
+    flex: 1;
+    min-width: 300px;
+  }
+  
+  .image-container img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .performance-metrics {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: var(--color-metrics-bg, #f0f4f8);
+    border-radius: 4px;
+  }
+  
+  h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--color-heading, #333);
+  }
+  
+  .animation-container {
+    width: 100%;
+    height: 300px;
+    background-color: var(--color-animation-bg, #f0f0f0);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .worker-demo {
+      padding: 1rem;
+    }
+    
+    .demo-results {
+      flex-direction: column;
+    }
+    
+    .image-container {
+      min-width: 100%;
+    }
+  }
+</style>
+
+<script>
+  // Import the worker integration utilities
+  import {
+    processImageWithWorker,
+    generateBlurhashWithWorker,
+    transformDataWithWorker,
+    calculatePhysicsWithWorker,
+    calculatePathWithWorker
+  } from '../../utils/imageWorkerIntegration';
+  
+  // Initialize the image processing demo
+  function initImageProcessingDemo() {
+    const imageInput = document.getElementById('image-input');
+    const blurImageBtn = document.getElementById('blur-image');
+    const blurImageMainBtn = document.getElementById('blur-image-main');
+    const generateBlurhashBtn = document.getElementById('generate-blurhash');
+    const originalImageContainer = document.getElementById('original-image-container');
+    const processedImageContainer = document.getElementById('processed-image-container');
+    const imageMetrics = document.getElementById('image-metrics');
+    
+    let selectedImage = null;
+    
+    // Handle image selection
+    imageInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          // Display the original image
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          originalImageContainer.innerHTML = '';
+          originalImageContainer.appendChild(img);
+          
+          // Store the image data
+          selectedImage = e.target.result;
+          
+          // Enable the processing buttons
+          blurImageBtn.disabled = false;
+          blurImageMainBtn.disabled = false;
+          generateBlurhashBtn.disabled = false;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    
+    // Process image with web worker
+    blurImageBtn.addEventListener('click', async () => {
+      if (!selectedImage) return;
+      
+      // Clear previous results
+      processedImageContainer.innerHTML = 'Processing with Web Worker...';
+      imageMetrics.innerHTML = '';
+      
+      // Measure performance
+      const startTime = performance.now();
+      
+      try {
+        // Process the image with the web worker
+        const result = await processImageWithWorker(selectedImage, 'resize', {
+          width: 500,
+          height: 500,
+          quality: 0.8
+        });
+        
+        // Calculate processing time
+        const endTime = performance.now();
+        const processingTime = endTime - startTime;
+        
+        // Display the processed image
+        const img = document.createElement('img');
+        img.src = result.result;
+        processedImageContainer.innerHTML = '';
+        processedImageContainer.appendChild(img);
+        
+        // Display metrics
+        imageMetrics.innerHTML = `
+          <p>Web Worker Processing Time: <strong>${processingTime.toFixed(2)}ms</strong></p>
+        `;
+      } catch (error) {
+        processedImageContainer.innerHTML = `Error: ${error.message}`;
+      }
+    });
+    
+    // Process image on main thread
+    blurImageMainBtn.addEventListener('click', () => {
+      if (!selectedImage) return;
+      
+      // Clear previous results
+      processedImageContainer.innerHTML = 'Processing on Main Thread...';
+      
+      // Measure performance
+      const startTime = performance.now();
+      
+      // Create a new image element
+      const img = new Image();
+      img.onload = () => {
+        // Create a canvas to process the image
+        const canvas = document.createElement('canvas');
+        canvas.width = 500;
+        canvas.height = 500;
+        const ctx = canvas.getContext('2d');
+        
+        // Draw the image to the canvas with a blur effect
+        ctx.filter = 'blur(5px)';
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // Calculate processing time
+        const endTime = performance.now();
+        const processingTime = endTime - startTime;
+        
+        // Display the processed image
+        const processedImg = document.createElement('img');
+        processedImg.src = canvas.toDataURL('image/jpeg', 0.8);
+        processedImageContainer.innerHTML = '';
+        processedImageContainer.appendChild(processedImg);
+        
+        // Update metrics
+        const workerTime = imageMetrics.innerHTML.match(/Web Worker Processing Time: <strong>([\d.]+)ms<\/strong>/)?.[1];
+        if (workerTime) {
+          imageMetrics.innerHTML = `
+            <p>Web Worker Processing Time: <strong>${workerTime}ms</strong></p>
+            <p>Main Thread Processing Time: <strong>${processingTime.toFixed(2)}ms</strong></p>
+            <p>Difference: <strong>${(processingTime - parseFloat(workerTime)).toFixed(2)}ms</strong></p>
+          `;
+        } else {
+          imageMetrics.innerHTML = `
+            <p>Main Thread Processing Time: <strong>${processingTime.toFixed(2)}ms</strong></p>
+          `;
+        }
+      };
+      img.src = selectedImage;
+    });
+    
+    // Generate blurhash
+    generateBlurhashBtn.addEventListener('click', async () => {
+      if (!selectedImage) return;
+      
+      // Clear previous results
+      processedImageContainer.innerHTML = 'Generating Blurhash...';
+      imageMetrics.innerHTML = '';
+      
+      // Measure performance
+      const startTime = performance.now();
+      
+      try {
+        // Generate blurhash with the web worker
+        const blurhash = await generateBlurhashWithWorker(selectedImage, {
+          width: 32,
+          height: 32,
+          componentX: 4,
+          componentY: 3
+        });
+        
+        // Calculate processing time
+        const endTime = performance.now();
+        const processingTime = endTime - startTime;
+        
+        // Display the blurhash
+        processedImageContainer.innerHTML = `
+          <div style="padding: 1rem; background-color: #f5f5f5; border-radius: 4px;">
+            <p style="font-family: monospace; word-break: break-all;">${blurhash}</p>
+          </div>
+        `;
+        
+        // Display metrics
+        imageMetrics.innerHTML = `
+          <p>Blurhash Generation Time: <strong>${processingTime.toFixed(2)}ms</strong></p>
+        `;
+      } catch (error) {
+        processedImageContainer.innerHTML = `Error: ${error.message}`;
+      }
+    });
+  }
+  
+  // Initialize the data processing demo
+  function initDataProcessingDemo() {
+    const dataSizeInput = document.getElementById('data-size');
+    const dataSizeValue = document.getElementById('data-size-value');
+    const filterDataBtn = document.getElementById('filter-data');
+    const filterDataMainBtn = document.getElementById('filter-data-main');
+    const sortDataBtn = document.getElementById('sort-data');
+    const sortDataMainBtn = document.getElementById('sort-data-main');
+    const dataResult = document.getElementById('data-result');
+    const dataMetrics = document.getElementById('data-metrics');
+    
+    // Update the displayed data size value
+    dataSizeInput.addEventListener('input', () => {
+      dataSizeValue.textContent = parseInt(dataSizeInput.value).toLocaleString();
+    });
+    
+    // Generate random data
+    function generateRandomData(size) {
+      const data = [];
+      for (let i = 0; i < size; i++) {
+        data.push({
+          id: i,
+          value: Math.random() * 1000,
+          category: ['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)],
+          isActive: Math.random() > 0.5
+        });
+      }
+      return data;
+    }
+    
+    // Filter data with web worker
+    filterDataBtn.addEventListener('click', async () => {
+      const dataSize = parseInt(dataSizeInput.value);
+      
+      // Clear previous results
+      dataResult.innerHTML = `Generating and filtering ${dataSize.toLocaleString()} items with Web Worker...`;
+      dataMetrics.innerHTML = '';
+      
+      // Generate random data
+      const data = generateRandomData(dataSize);
+      
+      // Measure performance
+      const startTime = performance.now();
+      
+      try {
+        // Filter data with the web worker
+        const result = await transformDataWithWorker(data, 'filter', {
+          key: 'category',
+          value: 'A',
+          operator: '=='
+        });
+        
+        // Calculate processing time
+        const endTime = performance.now();
+        const processingTime = endTime - startTime;
+        
+        // Display the result
+        dataResult.innerHTML = `
+          <p>Filtered ${result.length.toLocaleString()} items from ${dataSize.toLocaleString()} total items</p>
+        `;
+        
+        // Display metrics
+        dataMetrics.innerHTML = `
+          <p>Web Worker Processing Time: <strong>${processingTime.toFixed(2)}ms</strong></p>
+        `;
+      } catch (error) {
+        dataResult.innerHTML = `Error: ${error.message}`;
+      }
+    });
+    
+    // Filter data on main thread
+    filterDataMainBtn.addEventListener('click', () => {
+      const dataSize = parseInt(dataSizeInput.value);
+      
+      // Clear previous results
+      dataResult.innerHTML = `Generating and filtering ${dataSize.toLocaleString()} items on Main Thread...`;
+      
+      // Generate random data
+      const data = generateRandomData(dataSize);
+      
+      // Measure performance
+      const startTime = performance.now();
+      
+      // Filter the data on the main thread
+      const result = data.filter(item => item.category === 'A');
+      
+      // Calculate processing time
+      const endTime = performance.now();
+      const processingTime = endTime - startTime;
+      
+      // Display the result
+      dataResult.innerHTML = `
+        <p>Filtered ${result.length.toLocaleString()} items from ${dataSize.toLocaleString()} total items</p>
+      `;
+      
+      // Update metrics
+      const workerTime = dataMetrics.innerHTML.match(/Web Worker Processing Time: <strong>([\d.]+)ms<\/strong>/)?.[1];
+      if (workerTime) {
+        dataMetrics.innerHTML = `
+          <p>Web Worker Processing Time: <strong>${workerTime}ms</strong></p>
+          <p>Main Thread Processing Time: <strong>${processingTime.toFixed(2)}ms</strong></p>
+          <p>Difference: <strong>${(processingTime - parseFloat(workerTime)).toFixed(2)}ms</strong></p>
+        `;
+      } else {
+        dataMetrics.innerHTML = `
+          <p>Main Thread Processing Time: <strong>${processingTime.toFixed(2)}ms</strong></p>
+        `;
+      }
+    });
+    
+    // Sort data with web worker
+    sortDataBtn.addEventListener('click', async () => {
+      const dataSize = parseInt(dataSizeInput.value);
+      
+      // Clear previous results
+      dataResult.innerHTML = `Generating and sorting ${dataSize.toLocaleString()} items with Web Worker...`;
+      dataMetrics.innerHTML = '';
+      
+      // Generate random data
+      const data = generateRandomData(dataSize);
+      
+      // Measure performance
+      const startTime = performance.now();
+      
+      try {
+        // Sort data with the web worker
+        const result = await transformDataWithWorker(data, 'sort', {
+          key: 'value',
+          direction: 'asc'
+        });
+        
+        // Calculate processing time
+        const endTime = performance.now();
+        const processingTime = endTime - startTime;
+        
+        // Display the result
+        dataResult.innerHTML = `
+          <p>Sorted ${dataSize.toLocaleString()} items by value</p>
+        `;
+        
+        // Display metrics
+        dataMetrics.innerHTML = `
+          <p>Web Worker Processing Time: <strong>${processingTime.toFixed(2)}ms</strong></p>
+        `;
+      } catch (error) {
+        dataResult.innerHTML = `Error: ${error.message}`;
+      }
+    });
+    
+    // Sort data on main thread
+    sortDataMainBtn.addEventListener('click', () => {
+      const dataSize = parseInt(dataSizeInput.value);
+      
+      // Clear previous results
+      dataResult.innerHTML = `Generating and sorting ${dataSize.toLocaleString()} items on Main Thread...`;
+      
+      // Generate random data
+      const data = generateRandomData(dataSize);
+      
+      // Measure performance
+      const startTime = performance.now();
+      
+      // Sort the data on the main thread
+      const result = [...data].sort((a, b) => a.value - b.value);
+      
+      // Calculate processing time
+      const endTime = performance.now();
+      const processingTime = endTime - startTime;
+      
+      // Display the result
+      dataResult.innerHTML = `
+        <p>Sorted ${dataSize.toLocaleString()} items by value</p>
+      `;
+      
+      // Update metrics
+      const workerTime = dataMetrics.innerHTML.match(/Web Worker Processing Time: <strong>([\d.]+)ms<\/strong>/)?.[1];
+      if (workerTime) {
+        dataMetrics.innerHTML = `
+          <p>Web Worker Processing Time: <strong>${workerTime}ms</strong></p>
+          <p>Main Thread Processing Time: <strong>${processingTime.toFixed(2)}ms</strong></p>
+          <p>Difference: <strong>${(processingTime - parseFloat(workerTime)).toFixed(2)}ms</strong></p>
+        `;
+      } else {
+        dataMetrics.innerHTML = `
+          <p>Main Thread Processing Time: <strong>${processingTime.toFixed(2)}ms</strong></p>
+        `;
+      }
+    });
+  }
+  
+  // Initialize the animation demo
+  function initAnimationDemo() {
+    const complexityInput = document.getElementById('animation-complexity');
+    const complexityValue = document.getElementById('animation-complexity-value');
+    const calculateAnimationBtn = document.getElementById('calculate-animation');
+    const calculateAnimationMainBtn = document.getElementById('calculate-animation-main');
+    const playAnimationBtn = document.getElementById('play-animation');
+    const animationContainer = document.getElementById('animation-container');
+    const animationMetrics = document.getElementById('animation-metrics');
+    
+    let animationData = null;
+    
+    // Update the displayed complexity value
+    complexityInput.addEventListener('input', () => {
+      complexityValue.textContent = complexityInput.value;
+    });
+    
+    // Calculate animation with web worker
+    calculateAnimationBtn.addEventListener('click', async () => {
+      const complexity = parseInt(complexityInput.value);
+      
+      // Clear previous results
+      animationContainer.innerHTML = '';
+      animationMetrics.innerHTML = 'Calculating animation with Web Worker...';
+      playAnimationBtn.disabled = true;
+      
+      // Measure performance
+      const startTime = performance.now();
+      
+      try {
+        // Calculate animation with the web worker
+        animationData = await calculatePhysicsWithWorker(
+          ['x', 'y', 'rotation', 'scale', 'opacity'],
+          {
+            x: { initialValue: 0, finalValue: 100, elasticity: 0.8, damping: 0.5 },
+            y: { initialValue: 0, finalValue: 50, elasticity: 0.7, damping: 0.6 },
+            rotation: { initialValue: 0, finalValue: 360, elasticity: 0.9, damping: 0.3 },
+            scale: { initialValue: 0.5, finalValue: 1.5, elasticity: 0.6, damping: 0.7 },
+            opacity: { initialValue: 0, finalValue: 1, elasticity: 0.5, damping: 0.8 }
+          },
+          2,
+          complexity
+        );
+        
+        // Calculate processing time
+        const endTime = performance.now();
+        const processingTime = endTime - startTime;
+        
+        // Enable play button
+        playAnimationBtn.disabled = false;
+        
+        // Display metrics
+        animationMetrics.innerHTML = `
+          <p>Web Worker Calculation Time: <strong>${processingTime.toFixed(2)}ms</strong></p>
+          <p>Calculated ${complexity} animation frames</p>
+        `;
+      } catch (error) {
+        animationMetrics.innerHTML = `Error: ${error.message}`;
+      }
+    });
+    
+    // Calculate animation on main thread
+    calculateAnimationMainBtn.addEventListener('click', () => {
+      const complexity = parseInt(complexityInput.value);
+      
+      // Clear previous results
+      animationContainer.innerHTML = '';
+      animationMetrics.innerHTML = 'Calculating animation on Main Thread...';
+      playAnimationBtn.disabled = true;
+      
+      // Measure performance
+      const startTime = performance.now();
+      
+      // Calculate animation on the main thread
+      animationData = {};
+      const properties = ['x', 'y', 'rotation', 'scale', 'opacity'];
+      const params = {
+        x: { initialValue: 0, finalValue: 100, elasticity: 0.8, damping: 0.5 },
+        y: { initialValue: 0, finalValue: 50, elasticity: 0.7, damping: 0.6 },
+        rotation: { initialValue: 0, finalValue: 360, elasticity: 0.9, damping: 0.3 },
+        scale: { initialValue: 0.5, finalValue: 1.5, elasticity: 0.6, damping: 0.7 },
+        opacity: { initialValue: 0, finalValue: 1, elasticity: 0.5, damping: 0.8 }
+      };
+      const duration = 2;
+      const steps = complexity;
+      
+      // Initialize results for each property
+      properties.forEach(prop => {
+        animationData[prop] = new Array(steps);
+      });
+      
+      // Calculate values for each step
+      for (let i = 0; i < steps; i++) {
+        const progress = i / (steps - 1);
+        const time = progress * duration;
+        
+        // Apply physics calculations for each property
+        properties.forEach(prop => {
+          // Get property-specific parameters
+          const propParams = params[prop] || {};
+          const {
+            initialValue = 0,
+            finalValue = 100,
+            elasticity = 0.8,
+            damping = 0.5,
+            gravity = 0
+          } = propParams;
+          
+          // Calculate value based on physics simulation
+          // This is a simplified spring physics model
+          const distance = finalValue - initialValue;
+          const spring = Math.sin(progress * Math.PI * (1 + elasticity)) * Math.exp(-progress * damping);
+          const gravityEffect = 0.5 * gravity * time * time;
+          
+          // Combine effects
+          const value = initialValue + distance * (progress - spring) + gravityEffect;
+          
+          // Store the calculated value
+          animationData[prop][i] = value;
+        });
+      }
+      
+      // Calculate processing time
+      const endTime = performance.now();
+      const processingTime = endTime - startTime;
+      
+      // Enable play button
+      playAnimationBtn.disabled = false;
+      
+      // Update metrics
+      const workerTime = animationMetrics.innerHTML.match(/Web Worker Calculation Time: <strong>([\d.]+)ms<\/strong>/)?.[1];
+      if (workerTime) {
+        animationMetrics.innerHTML = `
+          <p>Web Worker Calculation Time: <strong>${workerTime}ms</strong></p>
+          <p>Main Thread Calculation Time: <strong>${processingTime.toFixed(2)}ms</strong></p>
+          <p>Difference: <strong>${(processingTime - parseFloat(workerTime)).toFixed(2)}ms</strong></p>
+          <p>Calculated ${complexity} animation frames</p>
+        `;
+      } else {
+        animationMetrics.innerHTML = `
+          <p>Main Thread Calculation Time: <strong>${processingTime.toFixed(2)}ms</strong></p>
+          <p>Calculated ${complexity} animation frames</p>
+        `;
+      }
+    });
+    
+    // Play the animation
+    playAnimationBtn.addEventListener('click', () => {
+      if (!animationData) return;
+      
+      // Clear previous animation
+      animationContainer.innerHTML = '';
+      
+      // Create an element to animate
+      const element = document.createElement('div');
+      element.className = 'animated-element';
+      animationContainer.appendChild(element);
+      
+      // Get the animation frames
+      const frames = animationData.x.length;
+      let currentFrame = 0;
+      
+      // Start the animation
+      const animationInterval = setInterval(() => {
+        // Get the current frame data
+        const x = animationData.x[currentFrame];
+        const y = animationData.y[currentFrame];
+        const rotation = animationData.rotation[currentFrame];
+        const scale = animationData.scale[currentFrame];
+        const opacity = animationData.opacity[currentFrame];
+        
+        // Apply the animation
+        element.style.transform = `translate(${x}%, ${y}%) rotate(${rotation}deg) scale(${scale})`;
+        element.style.opacity = opacity;
+        
+        // Move to the next frame
+        currentFrame++;
+        
+        // Stop the animation when it's done
+        if (currentFrame >= frames) {
+          clearInterval(animationInterval);
+        }
+      }, 1000 / 60); // 60fps
+    });
+  }
+  
+  // Initialize all demos when the DOM is loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    // Initialize the image processing demo
+    initImageProcessingDemo();
+    
+    // Initialize the data processing demo
+    initDataProcessingDemo();
+    
+    // Initialize the animation demo
+    initAnimationDemo();
+  });
+</script>
+
+<style is:global>
+  .animated-element {
+    width: 50px;
+    height: 50px;
+    background-color: var(--color-primary, #4a6cf7);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform-origin: center center;
+  }
+</style>

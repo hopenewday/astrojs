@@ -3,6 +3,7 @@
 // This layout implements AMP HTML specifications for article pages
 import AmpBaseLayout from "./AmpBaseLayout.astro";
 import { transformToAmpHtml, getCanonicalUrl } from '../utils/ampUtils';
+import { generateAmpFallbackScript } from '../utils/ampDetection';
 import { formatDate, formatRelativeTime, calculateReadingTime, formatReadingTime } from "@utils/dateFormatters";
 import { generateArticleSchema } from "@utils/schemaGenerators";
 
@@ -111,6 +112,8 @@ const articleSchema = generateArticleSchema({
   modDate={modifiedDate}
   author={author.name}
   structuredData={articleSchema}
+>
+  <Fragment slot="head" set:html={generateAmpFallbackScript()} />
   ampContent={ampContent}
 >
   <style slot="styles">

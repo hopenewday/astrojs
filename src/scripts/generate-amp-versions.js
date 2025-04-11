@@ -54,6 +54,15 @@ async function generateAmpVersions() {
       }
     }
     
+    // Also check for articles in the CMS or API if available
+    try {
+      console.log('\nChecking for articles from CMS/API...');
+      await processApiArticles();
+      console.log('Successfully processed CMS/API articles');
+    } catch (err) {
+      console.error('Error processing CMS/API articles:', err);
+    }
+    
     console.log('\nAMP generation summary:');
     console.log(`- Total articles processed: ${articleFiles.length}`);
     console.log(`- Successfully generated: ${successCount}`);
@@ -300,6 +309,112 @@ const canonicalUrl = new URL(`/article/${slug}`, Astro.site).toString();
   content={article.content}
 />
 `;
+}
+
+/**
+ * Process articles from the API or CMS
+ */
+async function processApiArticles() {
+  try {
+    // In a real implementation, this would fetch articles from an API or CMS
+    // For demonstration, we'll use a mock API call
+    console.log('Fetching articles from API...');
+    
+    // This would be replaced with an actual API call
+    const apiArticles = await mockFetchArticles();
+    console.log(`Found ${apiArticles.length} articles from API`);
+    
+    // Process each article from the API
+    for (const article of apiArticles) {
+      try {
+        await processApiArticle(article);
+      } catch (err) {
+        console.error(`Error processing API article ${article.slug}:`, err);
+      }
+    }
+  } catch (error) {
+    console.error('Error in API article processing:', error);
+    throw error;
+  }
+}
+
+/**
+ * Process a single article from the API
+ * @param {Object} article - Article data from API
+ */
+async function processApiArticle(article) {
+  console.log(`Processing API article: ${article.slug}`);
+  
+  // Transform content to AMP-compatible HTML
+  console.log(`  - Transforming content to AMP format`);
+  const ampContent = ampUtils.transformToAmpHtml(article.content);
+  
+  // Generate AMP file
+  const ampFilePath = path.join(config.ampOutputDir, `${article.slug}.astro`);
+  console.log(`  - Creating AMP file: ${path.basename(ampFilePath)}`);
+  
+  // Check if template exists
+  if (!fs.existsSync(config.ampTemplate)) {
+    // If template doesn't exist, create a basic AMP article file
+    const ampFileContent = generateBasicAmpFile(article, ampContent, article.slug);
+    fs.writeFileSync(ampFilePath, ampFileContent);
+  } else {
+    // Use template if available
+    let templateContent = fs.readFileSync(config.ampTemplate, 'utf8');
+    
+    // Replace placeholders in template
+    templateContent = templateContent
+      .replace('{{title}}', article.title || 'Untitled Article')
+      .replace('{{description}}', article.description || '')
+      .replace('{{slug}}', article.slug)
+      .replace('{{content}}', ampContent)
+      .replace('{{publishDate}}', article.publishDate || new Date().toISOString())
+      .replace('{{modifiedDate}}', article.modifiedDate || article.publishDate || new Date().toISOString())
+      .replace('{{author}}', JSON.stringify(article.author || {}))
+      .replace('{{category}}', JSON.stringify(article.category || {}))
+      .replace('{{tags}}', JSON.stringify(article.tags || []))
+      .replace('{{image}}', article.image || '/images/default-og.jpg');
+    
+    fs.writeFileSync(ampFilePath, templateContent);
+  }
+  
+  console.log(`Created AMP version: ${ampFilePath}`);
+}
+
+/**
+ * Mock function to simulate fetching articles from an API
+ * In a real implementation, this would be replaced with actual API calls
+ * @returns {Array} Array of article objects
+ */
+async function mockFetchArticles() {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  // Return mock articles
+  return [
+    {
+      slug: 'api-article-1',
+      title: 'API Article 1',
+      description: 'This is an article from the API',
+      content: '<p>This is the content of API article 1.</p><img src="/images/sample.jpg" alt="Sample image" width="800" height="600">',
+      publishDate: new Date().toISOString(),
+      author: { name: 'API Author', slug: 'api-author' },
+      category: { name: 'API Category', slug: 'api-category' },
+      tags: ['api', 'article'],
+      image: '/images/api-article.jpg'
+    },
+    {
+      slug: 'api-article-2',
+      title: 'API Article 2',
+      description: 'This is another article from the API',
+      content: '<p>This is the content of API article 2.</p><iframe src="https://www.youtube.com/embed/12345" width="560" height="315"></iframe>',
+      publishDate: new Date().toISOString(),
+      author: { name: 'API Author', slug: 'api-author' },
+      category: { name: 'API Category', slug: 'api-category' },
+      tags: ['api', 'article'],
+      image: '/images/api-article-2.jpg'
+    }
+  ];
 }
 
 // Run the generator

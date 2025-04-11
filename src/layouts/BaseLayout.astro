@@ -3,6 +3,7 @@ import ThemeProvider from '../components/common/ThemeProvider.astro';
 import PwaInstallPrompt from '../components/pwa/PwaInstallPrompt.astro';
 import WebVitals from '../components/analytics/WebVitals.astro';
 import UmamiAnalytics from '../components/analytics/UmamiAnalytics.astro';
+import PageTransition from '../components/common/PageTransition.astro';
 
 interface Props {
   title: string;
@@ -159,6 +160,9 @@ const {
       <!-- Skip to content link for accessibility -->
       <a href="#main-content" class="skip-to-content">Skip to content</a>
       
+      <!-- Page transition effect -->
+      <PageTransition />
+      
       <!-- Header slot -->
       <slot name="header" />
       
@@ -215,6 +219,15 @@ const {
             });
         });
       }
+    </script>
+    <script>
+      import { initAnimations } from '../utils/animations';
+      
+      // Initialize animations when the DOM is ready
+      document.addEventListener('DOMContentLoaded', async () => {
+        await initAnimations();
+        console.log('Animations initialized');
+      });
     </script>
   </body>
 </html>
