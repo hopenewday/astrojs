@@ -1,0 +1,93 @@
+---
+import AmpArticleLayout from "../../../layouts/AmpArticleLayout.astro";
+
+// Article data from the markdown file
+const article = {
+  slug: "sample-article",
+  title: "Sample Article for Testing AMP Generation",
+  description: "This is a sample article to test the AMP generation functionality",
+  image: "/images/placeholder.svg",
+  publishDate: new Date("2023-07-15"),
+  modifiedDate: new Date("2023-07-20"),
+  author: {
+    name: "Test Author",
+    slug: "test-author",
+    avatar: "/images/placeholder.svg",
+    bio: "This is a test author bio for AMP generation testing.",
+    socialLinks: {
+      twitter: "https://twitter.com/testauthor",
+      linkedin: "https://linkedin.com/in/testauthor"
+    }
+  },
+  category: {
+    name: "Technology",
+    slug: "technology"
+  },
+  tags: ["Test", "AMP", "Web Development"],
+  content: `
+    <h2>Introduction</h2>
+    <p>This is a sample article created to test the AMP generation functionality. It includes various HTML elements that need to be transformed for AMP compatibility.</p>
+    
+    <h2>Images</h2>
+    <p>Here's an image that should be converted to amp-img:</p>
+    <img src="/images/placeholder.svg" alt="Placeholder image" width="800" height="400">
+    
+    <h2>Iframes</h2>
+    <p>Here's an iframe that should be converted to amp-iframe:</p>
+    <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" width="560" height="315" frameborder="0" allowfullscreen></iframe>
+    
+    <h2>Videos</h2>
+    <p>Here's a video that should be converted to amp-video:</p>
+    <video width="640" height="360" controls poster="/images/placeholder.svg">
+      <source src="/videos/sample.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+    
+    <h2>Code Blocks</h2>
+    <pre><code>function testFunction() {
+  console.log("This is a test function");
+  return "Hello, AMP!";
+}</code></pre>
+    
+    <h2>Lists</h2>
+    <p>Unordered list:</p>
+    <ul>
+      <li>Item 1</li>
+      <li>Item 2</li>
+      <li>Item 3</li>
+    </ul>
+    
+    <p>Ordered list:</p>
+    <ol>
+      <li>First item</li>
+      <li>Second item</li>
+      <li>Third item</li>
+    </ol>
+    
+    <h2>Blockquotes</h2>
+    <blockquote>
+      <p>This is a blockquote that should be preserved in the AMP version.
+      It spans multiple lines to test multi-line handling.</p>
+    </blockquote>
+    
+    <h2>Conclusion</h2>
+    <p>This sample article includes various HTML elements that need to be transformed for AMP compatibility. The generate-amp-versions.js script should process this file and create an AMP-compatible version in the src/pages/article/amp directory.</p>
+  `
+};
+
+// Generate canonical URL
+const canonicalUrl = new URL(`/article/${article.slug}`, Astro.site).toString();
+---
+
+<AmpArticleLayout
+  title={article.title}
+  description={article.description}
+  image={article.image}
+  publishDate={article.publishDate}
+  modifiedDate={article.modifiedDate}
+  author={article.author}
+  category={article.category}
+  tags={article.tags}
+  content={article.content}
+  estimatedReadingTime={Math.ceil(article.content.split(/\s+/).length / 225)}
+/>

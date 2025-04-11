@@ -10,7 +10,9 @@
     "preview": "astro preview",
     "lint": "eslint . --ext .js,.ts,.jsx,.tsx,.astro",
     "format": "prettier --write .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "generate-amp": "node src/scripts/generate-amp-versions.js",
+    "build:with-amp": "npm run generate-amp && npm run build"
   },
   "dependencies": {
     "@astrojs/react": "^3.0.10",

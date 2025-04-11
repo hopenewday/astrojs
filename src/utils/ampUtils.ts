@@ -10,6 +10,8 @@
  * - Replaces <img> with <amp-img>
  * - Replaces <iframe> with <amp-iframe>
  * - Replaces <video> with <amp-video>
+ * - Replaces <audio> with <amp-audio>
+ * - Handles YouTube and other video embeds
  * - Removes disallowed elements and attributes
  */
 export function transformToAmpHtml(htmlContent: string): string {
@@ -34,9 +36,24 @@ export function transformToAmpHtml(htmlContent: string): string {
     }
   );
   
-  // Replace <iframe> with <amp-iframe>
+  // Special handling for YouTube iframes
   ampContent = ampContent.replace(
-    /<iframe([^>]*)src="([^"]+)"([^>]*)><\/iframe>/gi,
+    /<iframe([^>]*)src="https:\/\/www\.youtube\.com\/embed\/([^"]+)"([^>]*)><\/iframe>/gi,
+    (match, before, videoId, after) => {
+      // Extract width and height if present
+      const widthMatch = match.match(/width="([^"]+)"/i);
+      const heightMatch = match.match(/height="([^"]+)"/i);
+      
+      const width = widthMatch ? widthMatch[1] : '600';
+      const height = heightMatch ? heightMatch[1] : '400';
+      
+      return `<amp-youtube data-videoid="${videoId}" layout="responsive" width="${width}" height="${height}"></amp-youtube>`;
+    }
+  );
+  
+  // Replace other <iframe> with <amp-iframe>
+  ampContent = ampContent.replace(
+    /<iframe([^>]*)src="(?!https:\/\/www\.youtube\.com\/embed\/)([^"]+)"([^>]*)><\/iframe>/gi,
     (match, before, src, after) => {
       // Extract width and height if present
       const widthMatch = match.match(/width="([^"]+)"/i);
@@ -45,7 +62,9 @@ export function transformToAmpHtml(htmlContent: string): string {
       const width = widthMatch ? widthMatch[1] : '600';
       const height = heightMatch ? heightMatch[1] : '400';
       
-      return `<amp-iframe src="${src}" width="${width}" height="${height}" layout="responsive" sandbox="allow-scripts allow-same-origin" frameborder="0"></amp-iframe>`;
+      return `<amp-iframe src="${src}" width="${width}" height="${height}" layout="responsive" sandbox="allow-scripts allow-same-origin" frameborder="0">
+        <amp-img layout="fill" src="/images/placeholder.svg" placeholder></amp-img>
+      </amp-iframe>`;
     }
   );
   
@@ -57,11 +76,17 @@ export function transformToAmpHtml(htmlContent: string): string {
       const posterMatch = attrs.match(/poster="([^"]+)"/i);
       const widthMatch = attrs.match(/width="([^"]+)"/i);
       const heightMatch = attrs.match(/height="([^"]+)"/i);
+      const autoplayMatch = attrs.match(/autoplay/i);
+      const loopMatch = attrs.match(/loop/i);
+      const mutedMatch = attrs.match(/muted/i);
       
       const src = srcMatch ? srcMatch[1] : '';
       const poster = posterMatch ? `poster="${posterMatch[1]}"` : '';
       const width = widthMatch ? widthMatch[1] : '640';
       const height = heightMatch ? heightMatch[1] : '360';
+      const autoplay = autoplayMatch ? 'autoplay' : '';
+      const loop = loopMatch ? 'loop' : '';
+      const muted = mutedMatch ? 'muted' : '';
       
       // Check for source tags inside video
       const sourceRegex = /<source([^>]*)>/gi;
@@ -72,12 +97,37 @@ export function transformToAmpHtml(htmlContent: string): string {
         sources += sourceMatch[0];
       }
       
-      return `<amp-video ${src ? `src="${src}"` : ''} ${poster} width="${width}" height="${height}" layout="responsive" controls>
+      return `<amp-video ${src ? `src="${src}"` : ''} ${poster} width="${width}" height="${height}" layout="responsive" controls ${autoplay} ${loop} ${muted}>
         ${sources}
         <div fallback>
           <p>Your browser doesn't support HTML5 video</p>
         </div>
       </amp-video>`;
+    }
+  );
+  
+  // Replace <audio> with <amp-audio>
+  ampContent = ampContent.replace(
+    /<audio([^>]*)>(.*?)<\/audio>/gis,
+    (match, attrs, content) => {
+      const srcMatch = attrs.match(/src="([^"]+)"/i);
+      const src = srcMatch ? srcMatch[1] : '';
+      
+      // Check for source tags inside audio
+      const sourceRegex = /<source([^>]*)>/gi;
+      let sourceMatch;
+      let sources = '';
+      
+      while ((sourceMatch = sourceRegex.exec(content)) !== null) {
+        sources += sourceMatch[0];
+      }
+      
+      return `<amp-audio ${src ? `src="${src}"` : ''} controls>
+        ${sources}
+        <div fallback>
+          <p>Your browser doesn't support HTML5 audio</p>
+        </div>
+      </amp-audio>`;
     }
   );
   
@@ -90,8 +140,76 @@ export function transformToAmpHtml(htmlContent: string): string {
   // Replace disallowed attributes
   ampContent = ampContent.replace(/onclick="[^"]*"/gi, '');
   ampContent = ampContent.replace(/onload="[^"]*"/gi, '');
+  ampContent = ampContent.replace(/onmouseover="[^"]*"/gi, '');
+  ampContent = ampContent.replace(/onmouseout="[^"]*"/gi, '');
   
   return ampContent;
+}
+
+/**
+ * Determines which AMP component scripts are required based on content
+ * @param content HTML content to analyze
+ * @returns Array of script tags for required AMP components
+ */
+export function getRequiredAmpScripts(content: string): string[] {
+  const requiredScripts = [];
+  
+  // Always include the AMP runtime script
+  requiredScripts.push('<script async src="https://cdn.ampproject.org/v0.js"></script>');
+  
+  // Check for specific components in the content
+  if (content.includes('<amp-img')) {
+    requiredScripts.push('<script async custom-element="amp-img" src="https://cdn.ampproject.org/v0/amp-img-0.1.js"></script>');
+  }
+  
+  if (content.includes('<amp-video')) {
+    requiredScripts.push('<script async custom-element="amp-video" src="https://cdn.ampproject.org/v0/amp-video-0.1.js"></script>');
+  }
+  
+  if (content.includes('<amp-iframe')) {
+    requiredScripts.push('<script async custom-element="amp-iframe" src="https://cdn.ampproject.org/v0/amp-iframe-0.1.js"></script>');
+  }
+  
+  if (content.includes('<amp-youtube')) {
+    requiredScripts.push('<script async custom-element="amp-youtube" src="https://cdn.ampproject.org/v0/amp-youtube-0.1.js"></script>');
+  }
+  
+  if (content.includes('<amp-audio')) {
+    requiredScripts.push('<script async custom-element="amp-audio" src="https://cdn.ampproject.org/v0/amp-audio-0.1.js"></script>');
+  }
+  
+  if (content.includes('<amp-carousel')) {
+    requiredScripts.push('<script async custom-element="amp-carousel" src="https://cdn.ampproject.org/v0/amp-carousel-0.1.js"></script>');
+  }
+  
+  if (content.includes('<amp-sidebar')) {
+    requiredScripts.push('<script async custom-element="amp-sidebar" src="https://cdn.ampproject.org/v0/amp-sidebar-0.1.js"></script>');
+  }
+  
+  if (content.includes('<amp-lightbox')) {
+    requiredScripts.push('<script async custom-element="amp-lightbox" src="https://cdn.ampproject.org/v0/amp-lightbox-0.1.js"></script>');
+  }
+  
+  if (content.includes('<amp-social-share')) {
+    requiredScripts.push('<script async custom-element="amp-social-share" src="https://cdn.ampproject.org/v0/amp-social-share-0.1.js"></script>');
+  }
+  
+  if (content.includes('<amp-analytics')) {
+    requiredScripts.push('<script async custom-element="amp-analytics" src="https://cdn.ampproject.org/v0/amp-analytics-0.1.js"></script>');
+  }
+  
+  return requiredScripts;
+}
+
+/**
+ * Gets the canonical URL for an AMP page
+ * @param ampUrl The AMP page URL
+ * @returns The canonical (non-AMP) URL
+ */
+export function getCanonicalUrl(ampUrl: string): string {
+  // Convert AMP URL to canonical URL
+  // Example: /article/amp/my-article -> /article/my-article
+  return ampUrl.replace(/\/amp\//, '/');
 }
 
 /**

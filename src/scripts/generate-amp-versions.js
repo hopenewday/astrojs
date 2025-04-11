@@ -31,18 +31,34 @@ async function generateAmpVersions() {
   try {
     // Create output directory if it doesn't exist
     if (!fs.existsSync(config.ampOutputDir)) {
+      console.log(`Creating output directory: ${config.ampOutputDir}`);
       fs.mkdirSync(config.ampOutputDir, { recursive: true });
     }
     
     // Get all article files
+    console.log(`Scanning for articles in: ${config.articlesDir}`);
     const articleFiles = getAllFiles(config.articlesDir);
+    console.log(`Found ${articleFiles.length} article(s) to process`);
     
     // Process each article
+    let successCount = 0;
+    let errorCount = 0;
+    
     for (const articleFile of articleFiles) {
-      await processArticle(articleFile);
+      try {
+        await processArticle(articleFile);
+        successCount++;
+      } catch (err) {
+        console.error(`Error processing article ${articleFile}:`, err);
+        errorCount++;
+      }
     }
     
-    console.log('AMP generation complete!');
+    console.log('\nAMP generation summary:');
+    console.log(`- Total articles processed: ${articleFiles.length}`);
+    console.log(`- Successfully generated: ${successCount}`);
+    console.log(`- Failed to generate: ${errorCount}`);
+    console.log('\nAMP generation complete!');
   } catch (error) {
     console.error('Error generating AMP versions:', error);
     process.exit(1);
@@ -89,14 +105,23 @@ async function processArticle(articleFile) {
   // Parse frontmatter and content
   const { frontmatter, body } = parseFrontmatter(content);
   
-  // Generate slug from filename if not in frontmatter
+  // Skip if no title (likely not a valid article)
+  if (!frontmatter.title) {
+    console.warn(`Skipping ${path.basename(articleFile)}: No title found in frontmatter`);
+    return;
+  }
+  
+  // Generate slug from frontmatter or filename
   const slug = frontmatter.slug || path.basename(articleFile, path.extname(articleFile));
+  console.log(`  - Slug: ${slug}`);
   
   // Transform content to AMP-compatible HTML
+  console.log(`  - Transforming content to AMP format`);
   const ampContent = ampUtils.transformToAmpHtml(body);
   
   // Generate AMP file
   const ampFilePath = path.join(config.ampOutputDir, `${slug}.astro`);
+  console.log(`  - Creating AMP file: ${path.basename(ampFilePath)}`);
   
   // Check if template exists
   if (!fs.existsSync(config.ampTemplate)) {
@@ -142,24 +167,83 @@ function parseFrontmatter(content) {
   }
   
   try {
-    // Simple YAML parsing (in a real implementation, use a proper YAML parser)
+    // More robust YAML parsing
     const frontmatterLines = match[1].split('\n');
     const frontmatter = {};
     
+    // Process each line of the frontmatter
+    let currentKey = null;
+    let currentValue = null;
+    let inArray = false;
+    let arrayItems = [];
+    
     frontmatterLines.forEach(line => {
+      // Skip empty lines
+      if (!line.trim()) return;
+      
+      // Check if we're in an array and this is an array item
+      if (inArray && line.trim().startsWith('- ')) {
+        arrayItems.push(line.trim().substring(2).trim());
+        return;
+      }
+      
+      // If we were in an array but this line is not an array item, save the array
+      if (inArray && !line.trim().startsWith('- ')) {
+        frontmatter[currentKey] = arrayItems;
+        inArray = false;
+        arrayItems = [];
+      }
+      
+      // Check if this is a new key
       const colonIndex = line.indexOf(':');
       if (colonIndex !== -1) {
-        const key = line.slice(0, colonIndex).trim();
-        let value = line.slice(colonIndex + 1).trim();
-        
-        // Handle quoted strings
-        if (value.startsWith('"') && value.endsWith('"')) {
-          value = value.slice(1, -1);
+        // Save previous key-value if exists
+        if (currentKey && !inArray) {
+          frontmatter[currentKey] = currentValue;
         }
         
-        frontmatter[key] = value;
+        currentKey = line.slice(0, colonIndex).trim();
+        currentValue = line.slice(colonIndex + 1).trim();
+        
+        // Handle empty value (might be start of an array or object)
+        if (!currentValue) {
+          // Check if next line might be an array
+          inArray = true;
+          arrayItems = [];
+          return;
+        }
+        
+        // Handle quoted strings
+        if (currentValue.startsWith('"') && currentValue.endsWith('"')) {
+          currentValue = currentValue.slice(1, -1);
+        }
+        
+        // Handle nested objects (basic support)
+        if (currentKey.includes('.')) {
+          const keyParts = currentKey.split('.');
+          let obj = frontmatter;
+          for (let i = 0; i < keyParts.length - 1; i++) {
+            if (!obj[keyParts[i]]) obj[keyParts[i]] = {};
+            obj = obj[keyParts[i]];
+          }
+          obj[keyParts[keyParts.length - 1]] = currentValue;
+          currentKey = null;
+          currentValue = null;
+        }
+      } else {
+        // This is a continuation of the previous value
+        if (currentValue) {
+          currentValue += ' ' + line.trim();
+        }
       }
     });
+    
+    // Save the last key-value pair if exists
+    if (currentKey && !inArray) {
+      frontmatter[currentKey] = currentValue;
+    } else if (currentKey && inArray) {
+      frontmatter[currentKey] = arrayItems;
+    }
     
     return {
       frontmatter,

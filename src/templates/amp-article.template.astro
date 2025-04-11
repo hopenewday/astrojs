@@ -1,0 +1,33 @@
+---
+import AmpArticleLayout from "../layouts/AmpArticleLayout.astro";
+
+// Article data
+const article = {
+  slug: "{{slug}}",
+  title: "{{title}}",
+  description: "{{description}}",
+  image: "{{image}}",
+  publishDate: new Date("{{publishDate}}"),
+  modifiedDate: new Date("{{modifiedDate}}"),
+  author: {{author}},
+  category: {{category}},
+  tags: {{tags}},
+  content: `{{content}}`
+};
+
+// Generate canonical URL
+const canonicalUrl = new URL(`/article/${article.slug}`, Astro.site).toString();
+---
+
+<AmpArticleLayout
+  title={article.title}
+  description={article.description}
+  image={article.image}
+  canonicalURL={canonicalUrl}
+  publishDate={article.publishDate}
+  modifiedDate={article.modifiedDate}
+  author={article.author}
+  category={article.category}
+  tags={article.tags}
+  content={article.content}
+/>
