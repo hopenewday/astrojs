@@ -19,7 +19,7 @@
     "build:analyze": "npm run build && npm run analyze"
   },
   "dependencies": {
-    "@astrojs/react": "^3.0.10",
+    "@astrojs/preact": "^3.5.4",
     "@astrojs/sitemap": "^3.3.0",
     "@astrojs/tailwind": "^6.0.2",
     "@aws-sdk/client-s3": "^3.400.0",

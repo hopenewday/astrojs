@@ -1,0 +1,241 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import MagazineLayout from "../../components/preact/MagazineLayout";
+import InteractiveArticleCard from "../../components/preact/InteractiveArticleCard";
+import ThemeToggle from "../../components/preact/ThemeToggle";
+import ScrollAnimation from "../../components/preact/ScrollAnimation";
+import OptimizedImage from "../../components/preact/OptimizedImage";
+
+// Sample data for demonstration
+const articles = [
+  {
+    id: "1",
+    title: "The Future of Artificial Intelligence in 2023",
+    slug: "future-of-ai-2023",
+    excerpt: "Exploring the latest advancements in AI and what they mean for society, business, and everyday life.",
+    image: "/images/tech/ai-future.jpg",
+    category: {
+      name: "Tech",
+      slug: "tech"
+    },
+    author: {
+      name: "Alex Johnson",
+      slug: "alex-johnson",
+      avatar: "/images/authors/alex-johnson.jpg"
+    },
+    publishDate: new Date("2023-06-15"),
+    trending: true,
+    featured: true
+  },
+  {
+    id: "2",
+    title: "Modern Web Development Frameworks Compared",
+    slug: "web-frameworks-compared",
+    excerpt: "An in-depth analysis of the most popular web development frameworks in 2023, including React, Vue, and Svelte.",
+    image: "/images/tech/web-dev.jpg",
+    category: {
+      name: "Tech",
+      slug: "tech"
+    },
+    author: {
+      name: "Sarah Chen",
+      slug: "sarah-chen",
+      avatar: "/images/authors/sarah-chen.jpg"
+    },
+    publishDate: new Date("2023-06-10")
+  },
+  {
+    id: "3",
+    title: "The Renaissance of Indie Filmmaking",
+    slug: "indie-film-renaissance",
+    excerpt: "How digital technology and streaming platforms are giving independent filmmakers unprecedented opportunities.",
+    image: "/images/culture/indie-film.jpg",
+    category: {
+      name: "Culture",
+      slug: "culture"
+    },
+    author: {
+      name: "Michael Rivera",
+      slug: "michael-rivera",
+      avatar: "/images/authors/michael-rivera.jpg"
+    },
+    publishDate: new Date("2023-06-05")
+  },
+  {
+    id: "4",
+    title: "Climate Change: The Latest Research",
+    slug: "climate-change-research",
+    excerpt: "A summary of the most recent scientific findings on climate change and their implications for global policy.",
+    image: "/images/science/climate.jpg",
+    category: {
+      name: "Science",
+      slug: "science"
+    },
+    author: {
+      name: "Dr. Emily Wong",
+      slug: "emily-wong",
+      avatar: "/images/authors/emily-wong.jpg"
+    },
+    publishDate: new Date("2023-06-01"),
+    trending: true
+  },
+  {
+    id: "5",
+    title: "The Global Economy in a Post-Pandemic World",
+    slug: "post-pandemic-economy",
+    excerpt: "Analyzing the long-term economic impacts of the pandemic and strategies for sustainable recovery.",
+    image: "/images/business/economy.jpg",
+    category: {
+      name: "Business",
+      slug: "business"
+    },
+    author: {
+      name: "Robert Kiyosaki",
+      slug: "robert-kiyosaki",
+      avatar: "/images/authors/robert-kiyosaki.jpg"
+    },
+    publishDate: new Date("2023-05-28")
+  },
+  {
+    id: "6",
+    title: "Quantum Computing Explained for Non-Scientists",
+    slug: "quantum-computing-explained",
+    excerpt: "Breaking down the complex principles of quantum computing into understandable concepts for the general public.",
+    image: "/images/science/quantum.jpg",
+    category: {
+      name: "Science",
+      slug: "science"
+    },
+    author: {
+      name: "Dr. Emily Wong",
+      slug: "emily-wong",
+      avatar: "/images/authors/emily-wong.jpg"
+    },
+    publishDate: new Date("2023-05-25")
+  }
+];
+
+// Get featured article
+const featuredArticle = articles.find(article => article.featured);
+---
+
+<BaseLayout title="Preact Magazine Layout Example">
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold mb-8 text-center">Preact Magazine Layout Example</h1>
+    
+    <div class="mb-8 flex justify-end">
+      <!-- Theme Toggle with client:load for immediate interactivity -->
+      <ThemeToggle client:load initialTheme="system" />
+    </div>
+    
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold mb-6">Hybrid Rendering with Astro</h2>
+      <p class="mb-4">This example demonstrates how to use Preact components with Astro's hybrid rendering approach. Each component uses the appropriate client directive for optimal performance.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+        <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg">
+          <h3 class="text-xl font-bold mb-4">Client Directives</h3>
+          <ul class="list-disc pl-6 space-y-2">
+            <li><code>client:load</code> - Hydrate immediately on page load</li>
+            <li><code>client:idle</code> - Hydrate when browser is idle</li>
+            <li><code>client:visible</code> - Hydrate when component becomes visible</li>
+            <li><code>client:media</code> - Hydrate based on media query</li>
+            <li><code>client:only</code> - Only render on the client</li>
+          </ul>
+        </div>
+        
+        <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg">
+          <h3 class="text-xl font-bold mb-4">Performance Benefits</h3>
+          <ul class="list-disc pl-6 space-y-2">
+            <li>Reduced JavaScript payload</li>
+            <li>Faster initial page load</li>
+            <li>Progressive enhancement</li>
+            <li>Improved Core Web Vitals</li>
+            <li>Better SEO performance</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+    
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold mb-6">Individual Component Examples</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <!-- Interactive Article Card with client:visible -->
+        <div>
+          <h3 class="text-xl font-bold mb-4">InteractiveArticleCard</h3>
+          <p class="mb-4 text-gray-600">Uses <code>client:visible</code> to hydrate only when visible in viewport.</p>
+          
+          <InteractiveArticleCard 
+            client:visible 
+            {...articles[0]}
+          />
+        </div>
+        
+        <!-- Optimized Image with client:idle -->
+        <div>
+          <h3 class="text-xl font-bold mb-4">OptimizedImage</h3>
+          <p class="mb-4 text-gray-600">Uses <code>client:idle</code> to hydrate when the browser is idle.</p>
+          
+          <OptimizedImage 
+            client:idle
+            src="/images/tech/ai-future.jpg"
+            alt="AI Future"
+            width={600}
+            height={400}
+            blurhash={true}
+            className="rounded-lg"
+          />
+        </div>
+      </div>
+      
+      <!-- Scroll Animation with client:load -->
+      <div class="mb-8">
+        <h3 class="text-xl font-bold mb-4">ScrollAnimation</h3>
+        <p class="mb-4 text-gray-600">Uses <code>client:load</code> for immediate animation capabilities.</p>
+        
+        <ScrollAnimation 
+          client:load 
+          animation="fade-up" 
+          duration={0.8} 
+          delay={0.2}
+          className="p-6 bg-gray-100 dark:bg-gray-800 rounded-lg"
+        >
+          <p class="text-lg">This content animates when it enters the viewport. Scroll down to see more animations.</p>
+        </ScrollAnimation>
+      </div>
+    </section>
+    
+    <!-- Full Magazine Layout with client:visible -->
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold mb-6">Complete Magazine Layout</h2>
+      <p class="mb-4">The full magazine layout uses <code>client:visible</code> to optimize performance by only hydrating when the user scrolls to this section.</p>
+      
+      <MagazineLayout 
+        client:visible 
+        articles={articles}
+        featuredArticle={featuredArticle}
+        showAds={true}
+        sectionTitle="Featured Articles"
+        sectionDescription="Discover our carefully curated selection of top stories and trending topics."
+      />
+    </section>
+    
+    <section class="mb-16">
+      <h2 class="text-2xl font-bold mb-6">Implementation Notes</h2>
+      
+      <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg">
+        <h3 class="text-xl font-bold mb-4">Best Practices</h3>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>Use <code>client:visible</code> for below-the-fold content</li>
+          <li>Use <code>client:load</code> only for critical UI elements</li>
+          <li>Implement progressive enhancement for all components</li>
+          <li>Minimize component dependencies to reduce bundle size</li>
+          <li>Use TypeScript for better type safety and developer experience</li>
+          <li>Optimize images with responsive sizes and formats</li>
+          <li>Implement proper loading strategies (eager for LCP, lazy for others)</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

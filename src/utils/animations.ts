@@ -316,6 +316,94 @@ export function createScrollAnimation(selector: string | Element, options: {
 }
 
 /**
+ * Animates all children of a container element when they enter the viewport
+ * @param container The container element or selector
+ * @param options Animation options for the children
+ */
+export function animateChildrenOnScroll(
+  container: string | Element,
+  options: {
+    childSelector?: string;
+    animationType?: 'fade' | 'slide' | 'scale' | 'rotate';
+    staggerDelay?: number;
+    start?: string;
+    scrub?: boolean;
+    animation?: string;
+    threshold?: number;
+    rootMargin?: string;
+    once?: boolean;
+  } = {}
+) {
+  if (typeof window === 'undefined') return;
+  
+  const {
+    childSelector = '*',
+    animationType = 'fade',
+    animation = 'fade-up',
+    threshold = 0.1,
+    rootMargin = '0px',
+    once = true,
+    staggerDelay = 0.1,
+    start = 'top 80%',
+    scrub = false
+  } = options;
+  
+  // Get the container element
+  const containerElement = typeof container === 'string' 
+    ? document.querySelector(container) 
+    : container;
+    
+  if (!containerElement) return;
+  
+  // Get all children matching the selector
+  const children = containerElement.querySelectorAll(childSelector);
+  
+  // Apply animations with staggered delay
+  children.forEach((child, index) => {
+    if (isInitialized && ScrollTrigger) {
+      // Use GSAP ScrollTrigger if available
+      createScrollAnimation(child, {
+        animationType,
+        start,
+        scrub,
+        toggleActions: 'play none none none'
+      });
+    } else {
+      // Fallback to Intersection Observer
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              // Apply staggered delay
+              const delay = index * staggerDelay;
+              (entry.target as HTMLElement).style.transitionDelay = `${delay}s`;
+              
+              // Add animation classes
+              entry.target.classList.add('animated', animation);
+              
+              if (once) observer.unobserve(entry.target);
+            } else if (!once) {
+              entry.target.classList.remove('animated', animation);
+              (entry.target as HTMLElement).style.transitionDelay = '0s';
+            }
+          });
+        },
+        {
+          threshold,
+          rootMargin
+        }
+      );
+      
+      observer.observe(child);
+    }
+  });
+  
+  return () => {
+    // Cleanup function if needed
+  };
+}
+
+/**
  * Create a smooth page transition effect
  * @param options Transition options
  */

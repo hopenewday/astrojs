@@ -49,8 +49,8 @@ const authorsCollection = defineCollection({
   }),
 });
 
-// Export collections for CMS integration
-export const collections = {
+// Collections for CMS integration
+const cmsCollections = {
   articles: articlesCollection,
   authors: authorsCollection,
   categories: defineCollection({

@@ -1,7 +1,7 @@
 import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 import sitemap from '@astrojs/sitemap';
-import react from '@astrojs/react';
+import preact from '@astrojs/preact';
 
 // https://astro.build/config
 export default defineConfig({
@@ -9,7 +9,7 @@ export default defineConfig({
   output: 'server', // Enable SSR for personalized content
   integrations: [
     tailwind(),
-    react(),
+    preact(),
     sitemap({
       changefreq: 'weekly',
       lastmod: new Date(),
