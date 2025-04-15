@@ -1,0 +1,66 @@
+---
+/**
+ * Main Layout Component
+ * 
+ * This layout extends BaseLayout with additional components and structure
+ * specifically designed for main content pages like the homepage and category pages.
+ * It provides consistent header, navigation, and footer across these pages.
+ */
+import BaseLayout from './BaseLayout.astro';
+import Header from '../components/header/Header.astro';
+import Footer from '../components/common/Footer.astro';
+import { ViewTransitions } from 'astro:transitions';
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  canonicalURL?: string;
+  pubDate?: Date;
+  modDate?: Date;
+  author?: string;
+  ogType?: 'website' | 'article';
+  structuredData?: object;
+  animationsEnabled?: boolean;
+  showHeader?: boolean;
+  showFooter?: boolean;
+}
+
+const {
+  title,
+  description,
+  image,
+  canonicalURL,
+  pubDate,
+  modDate,
+  author,
+  ogType = 'website',
+  structuredData,
+  animationsEnabled = true,
+  showHeader = true,
+  showFooter = true,
+} = Astro.props;
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  image={image}
+  canonicalURL={canonicalURL}
+  pubDate={pubDate}
+  modDate={modDate}
+  author={author}
+  ogType={ogType}
+  structuredData={structuredData}
+  animationsEnabled={animationsEnabled}
+>
+  <ViewTransitions />
+  
+  {showHeader && <Header />}
+  
+  <main id="main-content" class="min-h-screen">
+    <slot />
+  </main>
+  
+  {showFooter && <Footer />}
+</BaseLayout>

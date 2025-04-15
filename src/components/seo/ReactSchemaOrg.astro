@@ -1,0 +1,63 @@
+---
+/**
+ * ReactSchemaOrg.astro - Astro component for integrating React schema.org components
+ * 
+ * This component serves as a bridge between Astro templates and React-based schema.org components.
+ * It allows for easy integration of structured data in Astro layouts while leveraging the
+ * type safety and flexibility of React components.
+ */
+
+import * as React from 'react';
+import { Schema } from '../react/seo';
+import { 
+  ArticleSchema,
+  NewsArticleSchema,
+  BlogPostingSchema,
+  OrganizationSchema,
+  PersonSchema,
+  BreadcrumbSchema,
+  WebPageSchema,
+  FAQSchema,
+  ProductSchema,
+  EventSchema,
+  CombinedSchema
+} from '../react/seo';
+
+interface Props {
+  type: 'Article' | 'NewsArticle' | 'BlogPosting' | 'WebPage' | 'Organization' | 'Person' | 'BreadcrumbList' | 'WebSite' | 'FAQPage' | 'Product' | 'Event';
+  data: Record<string, any>;
+}
+
+const { type, data } = Astro.props;
+
+// Map the type to the appropriate React component
+const SchemaComponent = (() => {
+  switch (type) {
+    case 'Article':
+      return <ArticleSchema {...data} />;
+    case 'NewsArticle':
+      return <NewsArticleSchema {...data} />;
+    case 'BlogPosting':
+      return <BlogPostingSchema {...data} />;
+    case 'Organization':
+      return <OrganizationSchema {...data} />;
+    case 'Person':
+      return <PersonSchema {...data} />;
+    case 'BreadcrumbList':
+      return <BreadcrumbSchema items={data.items} />;
+    case 'WebPage':
+      return <WebPageSchema {...data} />;
+    case 'FAQPage':
+      return <FAQSchema questions={data.questions} />;
+    case 'Product':
+      return <ProductSchema {...data} />;
+    case 'Event':
+      return <EventSchema {...data} />;
+    default:
+      // For any other type, use the generic Schema component
+      return <Schema type={type} data={data} />;
+  }
+})();
+---
+
+{SchemaComponent}

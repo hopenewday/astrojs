@@ -1,0 +1,196 @@
+---
+/**
+ * I18nSEO.astro - Comprehensive internationalized SEO component
+ * 
+ * This component combines all SEO-related components with multilingual support,
+ * handling meta tags, structured data, canonical URLs, hreflang tags, and social media tags
+ * for internationalized websites.
+ */
+
+import { MetaTags } from './index';
+import { SocialMeta } from './index';
+import { CanonicalUrl } from './index';
+import { JsonLd } from './index';
+import { HrefLang } from './index';
+import * as SchemaGenerators from '../../utils/schemaGenerators';
+import * as AdditionalSchemaGenerators from '../../utils/additionalSchemaGenerators';
+import { getLocalizedSeoData, LocalizedSeoDataMap } from '../../utils/i18nSeoUtils';
+
+interface Props {
+  // Basic SEO properties
+  title: string;
+  description: string;
+  canonicalURL?: string;
+  image?: string;
+  noindex?: boolean;
+  nofollow?: boolean;
+  keywords?: string[];
+  
+  // Content type
+  type?: 'website' | 'article' | 'profile' | 'product' | 'event' | 'recipe' | 'video';
+  
+  // Internationalization properties
+  currentLang: string;
+  supportedLanguages: string[];
+  defaultLang?: string;
+  langRegionMap?: Record<string, string>;
+  localizedData?: LocalizedSeoDataMap;
+  
+  // Social media properties
+  siteName?: string;
+  locale?: string;
+  twitterUsername?: string;
+  twitterCard?: 'summary' | 'summary_large_image';
+  
+  // Article specific properties
+  publishDate?: Date;
+  modifiedDate?: Date;
+  author?: {
+    name: string;
+    url?: string;
+    image?: string;
+  };
+  articleSection?: string;
+  articleTags?: string[];
+  
+  // Additional schema data
+  additionalSchemas?: object[];
+}
+
+const {
+  title,
+  description,
+  canonicalURL = Astro.url.href,
+  image,
+  noindex = false,
+  nofollow = false,
+  keywords = [],
+  type = 'website',
+  currentLang,
+  supportedLanguages,
+  defaultLang = 'en',
+  langRegionMap = {},
+  localizedData = {},
+  siteName,
+  locale,
+  twitterUsername,
+  twitterCard,
+  publishDate,
+  modifiedDate,
+  author,
+  articleSection,
+  articleTags,
+  additionalSchemas = []
+} = Astro.props;
+
+// Validate required i18n fields
+if (!currentLang || !supportedLanguages || supportedLanguages.length === 0) {
+  throw new Error('I18nSEO component requires currentLang and supportedLanguages');
+}
+
+// Extract the base URL without language prefix for hreflang tags
+let baseUrl = Astro.url.pathname;
+
+// If the baseUrl starts with the current language, remove it
+if (baseUrl.startsWith(`/${currentLang}/`)) {
+  baseUrl = baseUrl.replace(`/${currentLang}/`, '/');
+} else {
+  // Check if it starts with any of the supported languages
+  for (const lang of supportedLanguages) {
+    if (baseUrl.startsWith(`/${lang}/`)) {
+      baseUrl = baseUrl.replace(`/${lang}/`, '/');
+      break;
+    }
+  }
+}
+
+// Ensure baseUrl starts with a slash
+if (!baseUrl.startsWith('/')) {
+  baseUrl = `/${baseUrl}`;
+}
+
+// If baseUrl is just '/', make sure it doesn't end with a slash (except for root)
+if (baseUrl !== '/' && baseUrl.endsWith('/')) {
+  baseUrl = baseUrl.slice(0, -1);
+}
+
+// Generate schema data based on content type
+const schemas = [];
+
+// Website schema (always included)
+const websiteSchema = SchemaGenerators.generateWebSiteSchema({
+  name: siteName || 'ChakrirChain',
+  url: new URL('/', Astro.url).toString(),
+  description: description
+});
+schemas.push(websiteSchema);
+
+// WebPage schema (always included)
+const webPageSchema = SchemaGenerators.generateWebPageSchema({
+  title,
+  description,
+  url: canonicalURL,
+  datePublished: publishDate,
+  dateModified: modifiedDate
+});
+schemas.push(webPageSchema);
+
+// Add additional schemas based on content type
+if (type === 'article' && author) {
+  const articleSchema = SchemaGenerators.generateArticleSchema({
+    title,
+    description,
+    url: canonicalURL,
+    image,
+    datePublished: publishDate,
+    dateModified: modifiedDate,
+    author: author.name,
+    authorUrl: author.url,
+    section: articleSection,
+    tags: articleTags
+  });
+  schemas.push(articleSchema);
+}
+
+// Add any additional schemas provided by the user
+schemas.push(...additionalSchemas);
+---
+
+<!-- Basic Meta Tags -->
+<MetaTags
+  title={title}
+  description={description}
+  canonicalURL={canonicalURL}
+  image={image}
+  type={type}
+  publishDate={publishDate}
+  modifiedDate={modifiedDate}
+  author={author?.name}
+  locale={locale || `${currentLang}_${langRegionMap[currentLang]?.split('-')[1] || 'US'}`}
+  siteName={siteName}
+  twitterUsername={twitterUsername}
+  twitterCard={twitterCard}
+  noindex={noindex}
+  nofollow={nofollow}
+  keywords={keywords}
+/>
+
+<!-- Canonical URL -->
+<CanonicalUrl
+  url={canonicalURL}
+  removeFallbackLocale={true}
+  fallbackLocale={defaultLang}
+/>
+
+<!-- HrefLang Tags for Language Alternates -->
+<HrefLang
+  baseUrl={baseUrl}
+  currentLang={currentLang}
+  supportedLanguages={supportedLanguages}
+  defaultLang={defaultLang}
+  langRegionMap={langRegionMap}
+  includeXDefault={true}
+/>
+
+<!-- JSON-LD Structured Data -->
+<JsonLd schema={schemas} />

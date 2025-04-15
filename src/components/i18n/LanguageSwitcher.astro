@@ -1,0 +1,127 @@
+---
+/**
+ * LanguageSwitcher.astro - Component for switching between language versions
+ * 
+ * This component provides UI for users to switch between different language versions
+ * of the current page, improving user experience for multilingual sites.
+ */
+
+interface Props {
+  /** Current language code (e.g., 'en', 'es', 'fr') */
+  currentLang: string;
+  /** List of all supported languages with their display names */
+  languages: {
+    code: string;
+    name: string;
+  }[];
+  /** Base URL for the current page without language prefix */
+  baseUrl?: string;
+  /** Default/fallback language code */
+  defaultLang?: string;
+  /** CSS class for the language switcher container */
+  className?: string;
+}
+
+const {
+  currentLang,
+  languages,
+  baseUrl = Astro.url.pathname,
+  defaultLang = 'en',
+  className = 'language-switcher',
+} = Astro.props;
+
+// Validate required fields
+if (!currentLang || !languages || languages.length === 0) {
+  throw new Error('LanguageSwitcher component requires currentLang and languages');
+}
+
+// Ensure baseUrl doesn't have language prefix
+let normalizedBaseUrl = baseUrl;
+
+// If the baseUrl starts with the current language, remove it
+if (normalizedBaseUrl.startsWith(`/${currentLang}/`)) {
+  normalizedBaseUrl = normalizedBaseUrl.replace(`/${currentLang}/`, '/');
+} else {
+  // Check if it starts with any of the supported language codes
+  for (const lang of languages) {
+    if (normalizedBaseUrl.startsWith(`/${lang.code}/`)) {
+      normalizedBaseUrl = normalizedBaseUrl.replace(`/${lang.code}/`, '/');
+      break;
+    }
+  }
+}
+
+// Ensure normalizedBaseUrl starts with a slash
+if (!normalizedBaseUrl.startsWith('/')) {
+  normalizedBaseUrl = `/${normalizedBaseUrl}`;
+}
+
+// If normalizedBaseUrl is just '/', make sure it doesn't end with a slash (except for root)
+if (normalizedBaseUrl !== '/' && normalizedBaseUrl.endsWith('/')) {
+  normalizedBaseUrl = normalizedBaseUrl.slice(0, -1);
+}
+
+// Generate URLs for each language
+const languageUrls = languages.map(lang => {
+  // For default language, we might not include the language code in the URL
+  const path = lang.code === defaultLang 
+    ? normalizedBaseUrl 
+    : `/${lang.code}${normalizedBaseUrl}`;
+  
+  return {
+    ...lang,
+    url: path,
+    isCurrent: lang.code === currentLang
+  };
+});
+---
+
+<div class={className}>
+  <ul>
+    {languageUrls.map((lang) => (
+      <li class={lang.isCurrent ? 'active' : ''}>
+        <a 
+          href={lang.url} 
+          lang={lang.code} 
+          hreflang={lang.code}
+          aria-current={lang.isCurrent ? 'page' : undefined}
+        >
+          {lang.name}
+        </a>
+      </li>
+    ))}
+  </ul>
+</div>
+
+<style>
+  .language-switcher {
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .language-switcher ul {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 1rem;
+  }
+  
+  .language-switcher li {
+    margin: 0;
+  }
+  
+  .language-switcher li.active a {
+    font-weight: bold;
+    text-decoration: underline;
+  }
+  
+  .language-switcher a {
+    color: inherit;
+    text-decoration: none;
+  }
+  
+  .language-switcher a:hover {
+    text-decoration: underline;
+  }
+</style>

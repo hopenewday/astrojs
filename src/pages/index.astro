@@ -1,474 +1,192 @@
 ---
-import BaseLayout from "../layouts/BaseLayout.astro";
+import MainLayout from "../layouts/MainLayout.astro";
 import Header from "../components/header/Header.astro";
 import MainGrid from "../components/home/MainGrid.astro";
+import FeaturedArticles from "../components/home/FeaturedArticles.astro";
+import CategoryHighlights from "../components/home/CategoryHighlights.astro";
 
-// Sample data for demonstration
-const articles = [
-  {
-    id: "1",
-    title: "The Future of Artificial Intelligence in 2023",
-    slug: "future-of-ai-2023",
-    excerpt: "Exploring the latest advancements in AI and what they mean for society, business, and everyday life.",
-    image: "/images/tech/ai-future.jpg",
-    category: {
-      name: "Tech",
-      slug: "tech"
-    },
-    author: {
-      name: "Alex Johnson",
-      slug: "alex-johnson",
-      avatar: "/images/authors/alex-johnson.jpg"
-    },
-    publishDate: new Date("2023-06-15"),
-    trending: true,
-    featured: true
-  },
-  {
-    id: "2",
-    title: "Modern Web Development Frameworks Compared",
-    slug: "web-frameworks-compared",
-    excerpt: "An in-depth analysis of the most popular web development frameworks in 2023, including React, Vue, and Svelte.",
-    image: "/images/tech/web-dev.jpg",
-    category: {
-      name: "Tech",
-      slug: "tech"
-    },
-    author: {
-      name: "Sarah Chen",
-      slug: "sarah-chen",
-      avatar: "/images/authors/sarah-chen.jpg"
-    },
-    publishDate: new Date("2023-06-10")
-  },
-  {
-    id: "3",
-    title: "The Renaissance of Indie Filmmaking",
-    slug: "indie-film-renaissance",
-    excerpt: "How digital technology and streaming platforms are giving independent filmmakers unprecedented opportunities.",
-    image: "/images/culture/indie-film.jpg",
-    category: {
-      name: "Culture",
-      slug: "culture"
-    },
-    author: {
-      name: "Michael Rivera",
-      slug: "michael-rivera",
-      avatar: "/images/authors/michael-rivera.jpg"
-    },
-    publishDate: new Date("2023-06-05")
-  },
-  {
-    id: "4",
-    title: "Climate Change: The Latest Research",
-    slug: "climate-change-research",
-    excerpt: "A summary of the most recent scientific findings on climate change and their implications for global policy.",
-    image: "/images/science/climate.jpg",
-    category: {
-      name: "Science",
-      slug: "science"
-    },
-    author: {
-      name: "Dr. Emily Wong",
-      slug: "emily-wong",
-      avatar: "/images/authors/emily-wong.jpg"
-    },
-    publishDate: new Date("2023-06-01"),
-    trending: true
-  },
-  {
-    id: "5",
-    title: "The Global Economy in a Post-Pandemic World",
-    slug: "post-pandemic-economy",
-    excerpt: "Analyzing the long-term economic impacts of the pandemic and strategies for sustainable recovery.",
-    image: "/images/business/economy.jpg",
-    category: {
-      name: "Business",
-      slug: "business"
-    },
-    author: {
-      name: "Robert Kiyosaki",
-      slug: "robert-kiyosaki",
-      avatar: "/images/authors/robert-kiyosaki.jpg"
-    },
-    publishDate: new Date("2023-05-28")
-  },
-  {
-    id: "6",
-    title: "Quantum Computing Explained for Non-Scientists",
-    slug: "quantum-computing-explained",
-    excerpt: "Breaking down the complex principles of quantum computing into understandable concepts for the general public.",
-    image: "/images/tech/quantum.jpg",
-    category: {
-      name: "Tech",
-      slug: "tech"
-    },
-    author: {
-      name: "Alex Johnson",
-      slug: "alex-johnson",
-      avatar: "/images/authors/alex-johnson.jpg"
-    },
-    publishDate: new Date("2023-05-25")
+// Import content collections
+import { getCollection } from 'astro:content';
+
+// State for loading and error handling
+let isLoading = true;
+let error = null;
+let articles = [];
+let categories = [];
+
+try {
+  // Fetch articles from content collection
+  const articlesCollection = await getCollection('articles', ({ data }) => {
+    // Only include published articles (not drafts)
+    return !data.draft;
+  });
+  
+  // Transform the data to match the expected format
+  articles = await Promise.all(articlesCollection.map(async (article) => {
+    // Get the author and category information
+    const authorEntry = await getCollection('authors', ({ id }) => id === article.data.author);
+    const categoryEntry = await getCollection('categories', ({ id }) => id === article.data.category);
+    
+    const author = authorEntry[0];
+    const category = categoryEntry[0];
+    
+    return {
+      id: article.id,
+      title: article.data.title,
+      slug: article.slug,
+      excerpt: article.data.description,
+      image: article.data.image.src,
+      category: {
+        name: category?.data.name || 'Uncategorized',
+        slug: category?.slug || 'uncategorized'
+      },
+      author: {
+        name: author?.data.name || 'Unknown Author',
+        slug: author?.slug || 'unknown',
+        avatar: author?.data.avatar?.src
+      },
+      publishDate: article.data.publishDate,
+      featured: article.data.featured,
+      videoUrl: article.data.videoUrl,
+      content: article.body
+    };
+  }));
+  
+  // Fetch categories from content collection
+  const categoriesCollection = await getCollection('categories');
+  
+  // Transform categories data
+  categories = categoriesCollection.map(category => ({
+    name: category.data.name,
+    slug: category.slug,
+    count: articles.filter(article => article.category.slug === category.slug).length,
+    color: category.data.color
+  }));
+  
+  isLoading = false;
+} catch (err) {
+  console.error('Error fetching content:', err);
+  error = err.message || 'Failed to load content';
+  isLoading = false;
+  
+  // Fallback data in case of error
+  if (articles.length === 0) {
+    articles = [
+      {
+        id: "fallback-1",
+        title: "Sample Article",
+        slug: "sample-article",
+        excerpt: "This is a sample article that appears when content cannot be loaded.",
+        image: "/images/placeholder.svg",
+        category: { name: "General", slug: "general" },
+        author: { name: "Site Admin", slug: "admin" },
+        publishDate: new Date(),
+        featured: true
+      }
+    ];
   }
-];
+}
+
+const featuredArticles = articles.filter(article => article.featured);
+const recentArticles = [...articles].sort((a, b) => 
+  b.publishDate.getTime() - a.publishDate.getTime()
+);
 ---
 
-<BaseLayout title="ChakrirChain - Modern Magazine" description="A modern magazine-style publication built with Astro.js">
-  <Header slot="header" />
-  
-  <main>
-    <MainGrid articles={articles} />
-    
-    <!-- Flash Button (Mobile Only) -->
-    <div class="flash-button-container">
-      <a href="/flash" class="flash-button">
-        <span>Flash</span>
-      </a>
-    </div>
-  </main>
-  
-  <footer slot="footer" class="site-footer">
-    <div class="footer-container">
-      <div class="footer-logo">
-        <span class="logo-text">chakrirchain</span>
-        <p class="footer-tagline">Modern insights for the digital age</p>
-      </div>
-      
-      <div class="footer-links">
-        <div class="footer-section">
-          <h3 class="footer-heading">Categories</h3>
-          <ul class="footer-nav">
-            <li><a href="/category/tech">Tech</a></li>
-            <li><a href="/category/culture">Culture</a></li>
-            <li><a href="/category/science">Science</a></li>
-            <li><a href="/category/business">Business</a></li>
-            <li><a href="/category/politics">Politics</a></li>
-          </ul>
-        </div>
-        
-        <div class="footer-section">
-          <h3 class="footer-heading">Company</h3>
-          <ul class="footer-nav">
-            <li><a href="/about">About Us</a></li>
-            <li><a href="/contact">Contact</a></li>
-            <li><a href="/careers">Careers</a></li>
-            <li><a href="/advertise">Advertise</a></li>
-          </ul>
-        </div>
-        
-        <div class="footer-section">
-          <h3 class="footer-heading">Legal</h3>
-          <ul class="footer-nav">
-            <li><a href="/privacy">Privacy Policy</a></li>
-            <li><a href="/terms">Terms of Service</a></li>
-            <li><a href="/cookies">Cookie Policy</a></li>
-          </ul>
-        </div>
-        
-        <div class="footer-section">
-          <h3 class="footer-heading">Follow Us</h3>
-          <div class="social-links">
-            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z" />
-              </svg>
-            </a>
-            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-              </svg>
-            </a>
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-              </svg>
-            </a>
-            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                <rect x="2" y="9" width="4" height="12"></rect>
-                <circle cx="4" cy="4" r="2"></circle>
-              </svg>
-            </a>
+<MainLayout 
+  title="ChakrirChain Magazine - Latest Articles and Insights"
+  description="Explore the latest articles on technology, business, lifestyle, and more from ChakrirChain Magazine."
+  ogType="website"
+>
+  <div class="container mx-auto px-4 py-8">
+    <section class="mb-12">
+      <h1 class="text-4xl font-bold mb-6">Featured Articles</h1>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {featuredArticles.map(article => (
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+            <img 
+              src={article.image} 
+              alt={article.title}
+              class="w-full h-64 object-cover"
+            />
+            <div class="p-6">
+              <span class="text-sm text-blue-600 dark:text-blue-400">{article.category.name}</span>
+              <h2 class="text-2xl font-bold mt-2 mb-3">
+                <a href={`/article/${article.slug}`} class="hover:text-blue-600 dark:hover:text-blue-400 transition">
+                  {article.title}
+                </a>
+              </h2>
+              <p class="text-gray-600 dark:text-gray-300 mb-4">{article.excerpt}</p>
+              <div class="flex items-center">
+                <img 
+                  src={article.author.avatar} 
+                  alt={article.author.name}
+                  class="w-10 h-10 rounded-full mr-4"
+                />
+                <div>
+                  <p class="font-medium">{article.author.name}</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {article.publishDate.toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        ))}
       </div>
-      
-      <div class="footer-bottom">
-        <p class="copyright">&copy; {new Date().getFullYear()} ChakrirChain. All rights reserved.</p>
+    </section>
+
+    <section class="mb-12">
+      <h2 class="text-3xl font-bold mb-6">Recent Articles</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {recentArticles.map(article => (
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+            <img 
+              src={article.image} 
+              alt={article.title}
+              class="w-full h-48 object-cover"
+            />
+            <div class="p-4">
+              <span class="text-xs text-blue-600 dark:text-blue-400">{article.category.name}</span>
+              <h3 class="text-xl font-bold mt-1 mb-2">
+                <a href={`/article/${article.slug}`} class="hover:text-blue-600 dark:hover:text-blue-400 transition">
+                  {article.title}
+                </a>
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">{article.excerpt}</p>
+              <div class="flex items-center text-sm">
+                <span class="font-medium mr-2">{article.author.name}</span>
+                <span class="text-gray-500 dark:text-gray-400">
+                  {article.publishDate.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
-    </div>
-  </footer>
-</BaseLayout>
+    </section>
 
-<script>
-  // Ensure Flash button is only shown on mobile devices
-  document.addEventListener('DOMContentLoaded', () => {
-    const flashButtonContainer = document.querySelector('.flash-button-container');
-    const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    if (flashButtonContainer) {
-      if (isMobile) {
-        flashButtonContainer.style.display = 'block';
-      } else {
-        flashButtonContainer.style.display = 'none';
-      }
-    }
-    
-    // Update on resize
-    window.addEventListener('resize', () => {
-      if (flashButtonContainer) {
-        if (window.innerWidth <= 768) {
-          flashButtonContainer.style.display = 'block';
-        } else {
-          flashButtonContainer.style.display = 'none';
-        }
-      }
-    });
-  });
-</script>
-
-<style>
-  /* Main Content Styles */
-  
-  /* Flash Button Styles */
-  .flash-button-container {
-    display: none; /* Hidden by default */
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    z-index: 100;
-  }
-  
-  .flash-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 4rem;
-    height: 4rem;
-    border-radius: 50%;
-    background: linear-gradient(45deg, #ff5733, #ff8c33);
-    color: white;
-    font-weight: bold;
-    text-decoration: none;
-    box-shadow: 0 0 15px rgba(255, 87, 51, 0.7);
-    transition: all 0.3s ease;
-    animation: bounce 2s infinite;
-  }
-  
-  .flash-button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 20px rgba(255, 87, 51, 0.9);
-  }
-  
-  @keyframes bounce {
-    0%, 20%, 50%, 80%, 100% {
-      transform: translateY(0);
-    }
-    40% {
-      transform: translateY(-10px);
-    }
-    60% {
-      transform: translateY(-5px);
-    }
-  }
-  
-  /* Show Flash button only on mobile */
-  @media (max-width: 768px) {
-    .flash-button-container {
-      display: block;
-    }
-  }
-  main {
-    min-height: 100vh;
-  }
-  
-  /* Footer Styles */
-  .site-footer {
-    background-color: #1f2937;
-    color: #f9fafb;
-    padding: 4rem 1rem 2rem;
-  }
-  
-  .footer-container {
-    max-width: 1280px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 3rem;
-  }
-  
-  @media (min-width: 768px) {
-    .footer-container {
-      grid-template-columns: 1fr 2fr;
-    }
-  }
-  
-  .footer-logo {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .logo-text {
-    font-size: 1.5rem;
-    font-weight: 700;
-    background: linear-gradient(90deg, #e5e7eb, #60a5fa);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-  }
-  
-  .footer-tagline {
-    font-size: 0.875rem;
-    color: #d1d5db;
-    margin: 0;
-  }
-  
-  .footer-links {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
-  }
-  
-  @media (min-width: 640px) {
-    .footer-links {
-      grid-template-columns: repeat(4, 1fr);
-    }
-  }
-  
-  .footer-heading {
-    font-size: 1rem;
-    font-weight: 600;
-    margin: 0 0 1rem;
-    color: #f9fafb;
-  }
-  
-  .footer-nav {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .footer-nav a {
-    color: #d1d5db;
-    text-decoration: none;
-    font-size: 0.875rem;
-    transition: color 0.2s;
-  }
-  
-  .footer-nav a:hover {
-    color: #60a5fa;
-  }
-  
-  .social-links {
-    display: flex;
-    gap: 1rem;
-  }
-  
-  .social-links a {
-    color: #d1d5db;
-    transition: color 0.2s;
-  }
-  
-  .social-links a:hover {
-    color: #60a5fa;
-  }
-  
-  .footer-bottom {
-    grid-column: 1 / -1;
-    border-top: 1px solid #374151;
-    padding-top: 2rem;
-    text-align: center;
-  }
-  
-  .copyright {
-    font-size: 0.875rem;
-    color: #9ca3af;
-    margin: 0;
-  }
-  
-  /* Light Mode Footer */
-  :global(.light) .site-footer {
-    background-color: #f9fafb;
-    color: #1f2937;
-  }
-  
-  :global(.light) .logo-text {
-    background: linear-gradient(90deg, #1f2937, #3b82f6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  
-  :global(.light) .footer-tagline {
-    color: #4b5563;
-  }
-  
-  :global(.light) .footer-heading {
-    color: #1f2937;
-  }
-  
-  :global(.light) .footer-nav a {
-    color: #4b5563;
-  }
-  
-  :global(.light) .footer-nav a:hover {
-    color: #3b82f6;
-  }
-  
-  :global(.light) .social-links a {
-    color: #4b5563;
-  }
-  
-  :global(.light) .social-links a:hover {
-    color: #3b82f6;
-  }
-  
-  :global(.light) .footer-bottom {
-    border-top-color: #e5e7eb;
-  }
-  
-  :global(.light) .copyright {
-    color: #6b7280;
-  }
-</style>
-
-<BaseLayout title="ChakrirChain - Modern Magazine">
-  <Header slot="header" />
-  
-  <PageTransition type="fade" />
-  
-  <MainGrid articles={articles} />
-  
-  <script>
-    import { initAnimations, createFadeInAnimation } from '../utils/animations';
-    import { initContentSectionAnimations, initDataAttributeAnimations } from '../utils/scrollAnimations';
-    
-    // Initialize animations when the DOM is ready
-    document.addEventListener('DOMContentLoaded', async () => {
-      // Initialize the core animation system
-      await initAnimations();
-      
-      // Initialize content section animations
-      initContentSectionAnimations();
-      
-      // Initialize animations based on data attributes
-      initDataAttributeAnimations();
-      
-      // Apply fade-in animation to specific elements
-      createFadeInAnimation('h1, h2, .category-badge', {
-        duration: 0.7,
-        stagger: 0.1,
-        from: 'bottom',
-        distance: 20
-      });
-    });
-  </script>
-</BaseLayout>
+    <section>
+      <h2 class="text-3xl font-bold mb-6">Browse by Category</h2>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {categories.map(category => (
+          <a 
+            href={`/category/${category.slug}`}
+            class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 text-center hover:bg-blue-50 dark:hover:bg-gray-700 transition"
+          >
+            <h3 class="font-bold mb-1">{category.name}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{category.count} articles</p>
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+</MainLayout>

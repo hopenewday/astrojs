@@ -1,0 +1,472 @@
+---
+/**
+ * SmartLink.astro - A versatile and reusable link component
+ * 
+ * Features:
+ * - Dynamically generates semantic anchor text based on content and context
+ * - Visually distinguishes trending or featured content with customizable highlighting
+ * - Implements robust click tracking for analytics
+ * - Ensures accessibility compliance with ARIA attributes
+ * - Supports lazy loading for improved performance
+ * - Integrates with i18n system for multilingual support
+ * - Provides fallback mechanisms for unavailable link data
+ */
+
+import { extractLanguageFromPath } from '../../utils/i18nSeoUtils';
+
+interface Props {
+  /** URL to link to (required) */
+  href: string;
+  
+  /** Link text content (optional, will generate semantic text if not provided) */
+  text?: string;
+  
+  /** Alternative text for screen readers (optional) */
+  ariaLabel?: string;
+  
+  /** Whether this link points to trending or featured content */
+  trending?: boolean;
+  
+  /** Whether this link points to featured content */
+  featured?: boolean;
+  
+  /** Custom CSS class to apply to the link */
+  class?: string;
+  
+  /** Whether to open link in a new tab */
+  newTab?: boolean;
+  
+  /** Whether to add nofollow attribute */
+  nofollow?: boolean;
+  
+  /** Whether to add sponsored attribute */
+  sponsored?: boolean;
+  
+  /** Whether to add ugc (user-generated content) attribute */
+  ugc?: boolean;
+  
+  /** Whether to enable lazy loading of the link */
+  lazyLoad?: boolean;
+  
+  /** Threshold for lazy loading (0-1, percentage of viewport) */
+  lazyThreshold?: number;
+  
+  /** Custom data to include in analytics events */
+  analyticsData?: Record<string, any>;
+  
+  /** Custom event name for analytics tracking */
+  analyticsEvent?: string;
+  
+  /** Custom color scheme (primary, secondary, accent, etc.) */
+  colorScheme?: 'primary' | 'secondary' | 'accent' | 'neutral' | 'success' | 'warning' | 'error' | 'info';
+  
+  /** Custom hover effect */
+  hoverEffect?: 'underline' | 'highlight' | 'scale' | 'glow' | 'none';
+  
+  /** Current language code for i18n support */
+  lang?: string;
+  
+  /** Supported languages for i18n */
+  supportedLanguages?: string[];
+  
+  /** Default language */
+  defaultLang?: string;
+  
+  /** Fallback text if link data is unavailable */
+  fallbackText?: string;
+  
+  /** Whether to disable the link */
+  disabled?: boolean;
+  
+  /** Whether to show an icon */
+  showIcon?: boolean;
+  
+  /** Icon name or URL */
+  icon?: string;
+  
+  /** Icon position (before or after text) */
+  iconPosition?: 'before' | 'after';
+}
+
+const {
+  href,
+  text,
+  ariaLabel,
+  trending = false,
+  featured = false,
+  class: className = '',
+  newTab = false,
+  nofollow = false,
+  sponsored = false,
+  ugc = false,
+  lazyLoad = false,
+  lazyThreshold = 0.1,
+  analyticsData = {},
+  analyticsEvent = 'link_click',
+  colorScheme = 'primary',
+  hoverEffect = 'underline',
+  lang = 'en',
+  supportedLanguages = ['en'],
+  defaultLang = 'en',
+  fallbackText = 'Read more',
+  disabled = false,
+  showIcon = false,
+  icon = '',
+  iconPosition = 'after'
+} = Astro.props;
+
+// Generate semantic link text if not provided
+let linkText = text;
+if (!linkText) {
+  try {
+    // Extract path segments for semantic text generation
+    const url = new URL(href, Astro.url);
+    const pathSegments = url.pathname.split('/').filter(Boolean);
+    
+    // Extract language from URL if present
+    const { lang: urlLang } = extractLanguageFromPath(url.pathname, supportedLanguages, defaultLang);
+    
+    // Remove language segment if present
+    if (urlLang && pathSegments[0] === urlLang) {
+      pathSegments.shift();
+    }
+    
+    // Generate semantic text based on URL structure
+    if (pathSegments.length > 0) {
+      const lastSegment = pathSegments[pathSegments.length - 1];
+      // Convert slug to readable text
+      linkText = lastSegment
+        .replace(/[-_]/g, ' ')
+        .replace(/\b\w/g, l => l.toUpperCase());
+      
+      // Add context based on URL structure
+      if (pathSegments.includes('article')) {
+        linkText = `Article: ${linkText}`;
+      } else if (pathSegments.includes('category')) {
+        linkText = `Category: ${linkText}`;
+      } else if (pathSegments.includes('tag')) {
+        linkText = `Tag: ${linkText}`;
+      } else if (pathSegments.includes('author')) {
+        linkText = `Author: ${linkText}`;
+      }
+    }
+  } catch (e) {
+    // Fallback if URL parsing fails
+    linkText = fallbackText;
+  }
+}
+
+// If still no text, use fallback
+if (!linkText) {
+  linkText = fallbackText;
+}
+
+// Determine if link is external
+let isExternal = false;
+try {
+  const url = new URL(href, Astro.url);
+  isExternal = url.origin !== Astro.url.origin;
+} catch (e) {
+  // If URL parsing fails, assume it's not external
+  isExternal = false;
+}
+
+// Build rel attribute
+let relAttributes = [];
+if (newTab) relAttributes.push('noopener');
+if (nofollow) relAttributes.push('nofollow');
+if (sponsored) relAttributes.push('sponsored');
+if (ugc) relAttributes.push('ugc');
+if (isExternal) relAttributes.push('external');
+const rel = relAttributes.length > 0 ? relAttributes.join(' ') : undefined;
+
+// Build class attribute
+const classes = [
+  'smart-link',
+  `scheme-${colorScheme}`,
+  `hover-${hoverEffect}`,
+  trending ? 'trending' : '',
+  featured ? 'featured' : '',
+  disabled ? 'disabled' : '',
+  isExternal ? 'external' : '',
+  lazyLoad ? 'lazy-load' : '',
+  className
+].filter(Boolean).join(' ');
+
+// Prepare analytics data attributes
+const analyticsAttributes = {
+  'data-analytics-event': analyticsEvent,
+  'data-analytics-url': href,
+  'data-analytics-text': linkText,
+  ...Object.entries(analyticsData).reduce((acc, [key, value]) => {
+    acc[`data-analytics-${key.toLowerCase()}`] = value?.toString() || '';
+    return acc;
+  }, {})
+};
+
+// Prepare lazy loading attributes
+const lazyLoadAttributes = lazyLoad ? {
+  'data-lazy-load': 'true',
+  'data-lazy-threshold': lazyThreshold.toString()
+} : {};
+
+// Prepare accessibility attributes
+const a11yAttributes = {
+  'aria-label': ariaLabel || undefined,
+  'aria-disabled': disabled ? 'true' : undefined
+};
+
+// Determine icon HTML
+let iconHTML = '';
+if (showIcon && icon) {
+  // Check if icon is a URL or a name
+  if (icon.startsWith('http') || icon.startsWith('/')) {
+    iconHTML = `<img src="${icon}" alt="" class="smart-link-icon" />`;
+  } else {
+    // Assume it's a named icon (could be expanded to support icon libraries)
+    iconHTML = `<span class="icon icon-${icon}"></span>`;
+  }
+}
+---
+
+{disabled ? (
+  <span 
+    class={classes}
+    {...a11yAttributes}
+  >
+    {iconPosition === 'before' && showIcon && <Fragment set:html={iconHTML} />}
+    {linkText}
+    {iconPosition === 'after' && showIcon && <Fragment set:html={iconHTML} />}
+  </span>
+) : (
+  <a 
+    href={href}
+    class={classes}
+    target={newTab ? '_blank' : undefined}
+    rel={rel}
+    {...analyticsAttributes}
+    {...lazyLoadAttributes}
+    {...a11yAttributes}
+  >
+    {iconPosition === 'before' && showIcon && <Fragment set:html={iconHTML} />}
+    {linkText}
+    {iconPosition === 'after' && showIcon && <Fragment set:html={iconHTML} />}
+  </a>
+)}
+
+<style>
+  .smart-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    text-decoration: none;
+    position: relative;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  /* Color schemes */
+  .smart-link.scheme-primary {
+    color: var(--color-primary, #0077cc);
+  }
+  
+  .smart-link.scheme-secondary {
+    color: var(--color-secondary, #6c757d);
+  }
+  
+  .smart-link.scheme-accent {
+    color: var(--color-accent, #f72585);
+  }
+  
+  .smart-link.scheme-neutral {
+    color: var(--color-text, #333333);
+  }
+  
+  .smart-link.scheme-success {
+    color: var(--color-success, #28a745);
+  }
+  
+  .smart-link.scheme-warning {
+    color: var(--color-warning, #ffc107);
+  }
+  
+  .smart-link.scheme-error {
+    color: var(--color-error, #dc3545);
+  }
+  
+  .smart-link.scheme-info {
+    color: var(--color-info, #17a2b8);
+  }
+  
+  /* Hover effects */
+  .smart-link.hover-underline:hover {
+    text-decoration: underline;
+  }
+  
+  .smart-link.hover-highlight:hover {
+    background-color: rgba(var(--color-primary-rgb, 0, 119, 204), 0.1);
+    border-radius: 2px;
+  }
+  
+  .smart-link.hover-scale:hover {
+    transform: scale(1.05);
+  }
+  
+  .smart-link.hover-glow:hover {
+    text-shadow: 0 0 8px rgba(var(--color-primary-rgb, 0, 119, 204), 0.5);
+  }
+  
+  /* Trending and featured styles */
+  .smart-link.trending {
+    font-weight: bold;
+    position: relative;
+  }
+  
+  .smart-link.trending::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--color-primary, #0077cc), var(--color-accent, #f72585));
+    border-radius: 2px;
+  }
+  
+  .smart-link.featured {
+    padding: 0.25rem 0.5rem;
+    background-color: rgba(var(--color-primary-rgb, 0, 119, 204), 0.1);
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  
+  /* Disabled state */
+  .smart-link.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  
+  /* External link indicator */
+  .smart-link.external::after {
+    content: '↗';
+    display: inline-block;
+    margin-left: 0.25rem;
+    font-size: 0.8em;
+    vertical-align: super;
+  }
+  
+  /* Icon styles */
+  .smart-link-icon {
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+  }
+  
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .smart-link.scheme-primary {
+      color: var(--color-primary-dark, #4dabf7);
+    }
+    
+    .smart-link.scheme-secondary {
+      color: var(--color-secondary-dark, #adb5bd);
+    }
+    
+    .smart-link.scheme-neutral {
+      color: var(--color-text-dark, #e9ecef);
+    }
+    
+    .smart-link.hover-highlight:hover {
+      background-color: rgba(var(--color-primary-dark-rgb, 77, 171, 247), 0.2);
+    }
+  }
+</style>
+
+<script>
+  // Initialize lazy loading for smart links
+  function initLazyLoadLinks() {
+    const lazyLinks = document.querySelectorAll('a.smart-link.lazy-load');
+    
+    if (!lazyLinks.length || typeof IntersectionObserver === 'undefined') {
+      // If no lazy links or no IntersectionObserver support, exit early
+      return;
+    }
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const link = entry.target as HTMLAnchorElement;
+          
+          // Add visible class for CSS transitions
+          link.classList.add('visible');
+          
+          // Stop observing this link
+          observer.unobserve(link);
+        }
+      });
+    }, {
+      rootMargin: '100px',
+      threshold: parseFloat(document.querySelector('a.smart-link.lazy-load')?.getAttribute('data-lazy-threshold') || '0.1')
+    });
+    
+    lazyLinks.forEach(link => {
+      observer.observe(link);
+    });
+  }
+  
+  // Track link clicks for analytics
+  function setupLinkTracking() {
+    document.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      const link = target.closest('a.smart-link');
+      
+      if (!link) return;
+      
+      // Get analytics data from data attributes
+      const eventName = link.getAttribute('data-analytics-event') || 'link_click';
+      const url = link.getAttribute('data-analytics-url') || link.getAttribute('href');
+      const text = link.getAttribute('data-analytics-text') || link.textContent?.trim();
+      
+      // Collect all data-analytics-* attributes
+      const analyticsData = {};
+      for (const attr of link.attributes) {
+        if (attr.name.startsWith('data-analytics-') && attr.name !== 'data-analytics-event') {
+          const key = attr.name.replace('data-analytics-', '');
+          analyticsData[key] = attr.value;
+        }
+      }
+      
+      // Add timestamp and user info if available
+      analyticsData['timestamp'] = new Date().toISOString();
+      if (typeof window.userId !== 'undefined') {
+        analyticsData['user_id'] = window.userId;
+      }
+      
+      // Send to analytics if available
+      if (typeof window.trackEvent === 'function') {
+        window.trackEvent(eventName, {
+          url,
+          text,
+          ...analyticsData
+        });
+      } else if (typeof window.umami?.track === 'function') {
+        window.umami.track(eventName, {
+          url,
+          text,
+          ...analyticsData
+        });
+      }
+    });
+  }
+  
+  // Initialize when the DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    initLazyLoadLinks();
+    setupLinkTracking();
+  });
+  
+  // Re-initialize when content changes (for SPAs or partial page updates)
+  document.addEventListener('astro:page-load', () => {
+    initLazyLoadLinks();
+  });
+</script>

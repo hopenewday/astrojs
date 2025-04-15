@@ -1,0 +1,183 @@
+---
+/**
+ * [lang]/index.astro - Localized homepage template
+ * 
+ * This is an example of a localized page using Astro's file-based routing with [lang] parameter
+ * to create language-specific versions of the homepage.
+ */
+
+import { I18nSEO } from '../../components/seo';
+import { LanguageSwitcher } from '../../components/i18n/LanguageSwitcher.astro';
+import MainLayout from '../../layouts/MainLayout.astro';
+import { getLocalizedSeoData } from '../../utils/i18nSeoUtils';
+
+// Define supported languages
+const supportedLanguages = ['en', 'es', 'fr', 'de'];
+const defaultLang = 'en';
+
+// Get the language from the URL parameter
+const { lang = defaultLang } = Astro.params;
+
+// Validate the language parameter
+if (!supportedLanguages.includes(lang)) {
+  return Astro.redirect(`/${defaultLang}`);
+}
+
+// Define language display names for the language switcher
+const languages = [
+  { code: 'en', name: 'English' },
+  { code: 'es', name: 'Español' },
+  { code: 'fr', name: 'Français' },
+  { code: 'de', name: 'Deutsch' },
+];
+
+// Define localized SEO data for each language
+const localizedSeoData = {
+  en: {
+    title: 'Welcome to Our Website',
+    description: 'Discover our products and services tailored for your needs',
+    keywords: ['website', 'products', 'services', 'english'],
+    imageAlt: 'Welcome image'
+  },
+  es: {
+    title: 'Bienvenido a Nuestro Sitio Web',
+    description: 'Descubra nuestros productos y servicios adaptados a sus necesidades',
+    keywords: ['sitio web', 'productos', 'servicios', 'español'],
+    imageAlt: 'Imagen de bienvenida'
+  },
+  fr: {
+    title: 'Bienvenue sur Notre Site Web',
+    description: 'Découvrez nos produits et services adaptés à vos besoins',
+    keywords: ['site web', 'produits', 'services', 'français'],
+    imageAlt: 'Image de bienvenue'
+  },
+  de: {
+    title: 'Willkommen auf Unserer Website',
+    description: 'Entdecken Sie unsere Produkte und Dienstleistungen, die auf Ihre Bedürfnisse zugeschnitten sind',
+    keywords: ['webseite', 'produkte', 'dienstleistungen', 'deutsch'],
+    imageAlt: 'Willkommensbild'
+  }
+};
+
+// Get the localized SEO data for the current language
+const seoData = getLocalizedSeoData(localizedSeoData, lang, defaultLang);
+
+// Define language-region mapping for hreflang tags
+const langRegionMap = {
+  en: 'en-US',
+  es: 'es-ES',
+  fr: 'fr-FR',
+  de: 'de-DE'
+};
+
+// Define localized content for the page
+const content = {
+  en: {
+    greeting: 'Hello, World!',
+    intro: 'Welcome to our multilingual website. This page demonstrates how to implement localized SEO with Astro.',
+    features: [
+      'Route-based i18n with [lang] parameter',
+      'Proper hreflang and canonical tags',
+      'Localized keywords and meta descriptions',
+      'Language switcher component'
+    ]
+  },
+  es: {
+    greeting: '¡Hola, Mundo!',
+    intro: 'Bienvenido a nuestro sitio web multilingüe. Esta página demuestra cómo implementar SEO localizado con Astro.',
+    features: [
+      'i18n basado en rutas con parámetro [lang]',
+      'Etiquetas hreflang y canónicas adecuadas',
+      'Palabras clave y meta descripciones localizadas',
+      'Componente de cambio de idioma'
+    ]
+  },
+  fr: {
+    greeting: 'Bonjour, Monde !',
+    intro: 'Bienvenue sur notre site web multilingue. Cette page démontre comment implémenter un SEO localisé avec Astro.',
+    features: [
+      'i18n basé sur les routes avec paramètre [lang]',
+      'Balises hreflang et canoniques appropriées',
+      'Mots-clés et méta descriptions localisés',
+      'Composant de changement de langue'
+    ]
+  },
+  de: {
+    greeting: 'Hallo, Welt!',
+    intro: 'Willkommen auf unserer mehrsprachigen Website. Diese Seite zeigt, wie man lokalisiertes SEO mit Astro implementiert.',
+    features: [
+      'Routenbasiertes i18n mit [lang]-Parameter',
+      'Korrekte hreflang- und kanonische Tags',
+      'Lokalisierte Keywords und Meta-Beschreibungen',
+      'Sprachumschalter-Komponente'
+    ]
+  }
+};
+
+// Get the localized content for the current language
+const pageContent = content[lang] || content[defaultLang];
+---
+
+<MainLayout>
+  <!-- Implement the I18nSEO component with all necessary props -->
+  <I18nSEO
+    title={seoData.title}
+    description={seoData.description}
+    keywords={seoData.keywords}
+    currentLang={lang}
+    supportedLanguages={supportedLanguages}
+    defaultLang={defaultLang}
+    langRegionMap={langRegionMap}
+    localizedData={localizedSeoData}
+    type="website"
+    siteName="Multilingual Astro Site"
+  />
+  
+  <header>
+    <!-- Language switcher component for user navigation between languages -->
+    <LanguageSwitcher
+      currentLang={lang}
+      languages={languages}
+      defaultLang={defaultLang}
+    />
+  </header>
+  
+  <main>
+    <h1>{pageContent.greeting}</h1>
+    <p>{pageContent.intro}</p>
+    
+    <h2>Features:</h2>
+    <ul>
+      {pageContent.features.map(feature => (
+        <li>{feature}</li>
+      ))}
+    </ul>
+  </main>
+</MainLayout>
+
+<style>
+  main {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  p {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+  
+  ul {
+    margin-left: 1.5rem;
+  }
+  
+  li {
+    margin-bottom: 0.5rem;
+  }
+</style>

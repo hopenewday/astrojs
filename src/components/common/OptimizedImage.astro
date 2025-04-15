@@ -2,10 +2,19 @@
 /**
  * OptimizedImage Component
  * 
- * A high-performance image component that uses web workers to offload
- * image processing tasks from the main thread.
+ * A high-performance image component that uses @astrojs/image to automatically
+ * resize and serve images in WebP and AVIF formats with lazy-loading.
+ * 
+ * Features:
+ * - Automatic image optimization with @astrojs/image
+ * - WebP and AVIF format conversion based on browser support
+ * - Responsive images with srcset and sizes
+ * - Lazy loading for better performance
+ * - Preserves alt text for accessibility
+ * - Blur-up image loading effect
  */
 
+import { Image } from '@astrojs/image/components';
 import { generateBlurhashWithWorker } from '../../utils/imageWorkerIntegration';
 import { getImageKitUrl } from '../../utils/imageHelpers';
 
@@ -19,9 +28,13 @@ interface Props {
   decoding?: 'async' | 'sync' | 'auto';
   sizes?: string;
   quality?: number;
-  format?: 'auto' | 'webp' | 'avif' | 'jpg' | 'png';
+  format?: 'auto' | 'webp' | 'avif' | 'jpg' | 'png' | 'jpeg';
   blurhash?: boolean;
   priority?: boolean;
+  aspectRatio?: number | string;
+  fit?: 'cover' | 'contain' | 'fill' | 'inside' | 'outside';
+  position?: 'top' | 'right top' | 'right' | 'right bottom' | 'bottom' | 'left bottom' | 'left' | 'left top' | 'center';
+  background?: string;
 }
 
 const {
@@ -56,48 +69,54 @@ if (blurhash) {
   }
 }
 
-// Generate responsive image URLs
-const breakpoints = [640, 768, 1024, 1280, 1536];
-const srcset = breakpoints
-  .filter(bp => !width || bp <= width * 2) // Don't generate sizes larger than 2x the display size
-  .map(bp => {
-    const url = getImageKitUrl(src, {
-      width: bp,
-      quality,
-      format
-    });
-    return `${url} ${bp}w`;
-  })
-  .join(', ');
-
-// Generate the main image URL
-const imageUrl = getImageKitUrl(src, {
-  width,
-  height,
-  quality,
-  format
-});
+// Generate widths for responsive images
+const breakpoints = [400, 640, 768, 1024, 1280, 1536];
+const widths = breakpoints.filter(bp => !width || bp <= width * 2); // Don't generate sizes larger than 2x the display size
 
 // Set appropriate loading attribute based on priority
 const loadingAttr = priority ? 'eager' : loading;
 
 // Set fetchpriority attribute for high-priority images
 const fetchPriority = priority ? 'high' : 'auto';
+
+// Generate formats array for multiple format support
+const formats = ['webp'];
+
+// Add AVIF if requested or if format is auto
+if (format === 'avif' || format === 'auto') {
+  formats.unshift('avif');
+}
+
+// Add original format as fallback if it's not webp or avif
+if (format !== 'webp' && format !== 'avif' && format !== 'auto') {
+  formats.push(format);
+}
+
+// Calculate aspect ratio if width and height are provided but aspectRatio is not
+const calculatedAspectRatio = Astro.props.aspectRatio || (width && height ? width / height : undefined);
 ---
 
 <div class={`optimized-image-container ${className}`}>
   {placeholder && (
     <div class="placeholder" data-blurhash={placeholder}></div>
   )}
-  <img
-    src={imageUrl}
+  
+  {/* Use @astrojs/image component for optimized images */}
+  <Image
+    src={src}
     alt={alt}
     width={width}
     height={height}
+    widths={widths}
+    sizes={sizes}
+    aspectRatio={calculatedAspectRatio}
+    format={format === 'auto' ? 'webp' : format}
+    quality={quality}
+    fit={Astro.props.fit || 'cover'}
+    position={Astro.props.position || 'center'}
+    background={Astro.props.background}
     loading={loadingAttr}
     decoding={decoding}
-    srcset={srcset}
-    sizes={sizes}
     fetchpriority={fetchPriority}
     class="optimized-image"
     onload="this.parentNode.classList.add('loaded')"

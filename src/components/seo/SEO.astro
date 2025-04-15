@@ -1,0 +1,260 @@
+---
+/**
+ * SEO.astro - Comprehensive SEO component
+ * 
+ * This component combines all SEO-related components into a single, easy-to-use component
+ * that handles meta tags, structured data, canonical URLs, and social media tags.
+ */
+
+import { MetaTags } from './index';
+import { SocialMeta } from './index';
+import { CanonicalUrl } from './index';
+import { JsonLd } from './index';
+import * as SchemaGenerators from '../../utils/schemaGenerators';
+import * as AdditionalSchemaGenerators from '../../utils/additionalSchemaGenerators';
+
+interface Props {
+  // Basic SEO properties
+  title: string;
+  description: string;
+  canonicalURL?: string;
+  image?: string;
+  noindex?: boolean;
+  nofollow?: boolean;
+  keywords?: string[];
+  
+  // Content type
+  type?: 'website' | 'article' | 'profile' | 'product' | 'event' | 'recipe' | 'video';
+  
+  // Social media properties
+  siteName?: string;
+  locale?: string;
+  twitterUsername?: string;
+  twitterCard?: 'summary' | 'summary_large_image';
+  
+  // Article specific properties
+  publishDate?: Date;
+  modifiedDate?: Date;
+  author?: {
+    name: string;
+    url?: string;
+    image?: string;
+  };
+  articleSection?: string;
+  articleTags?: string[];
+  
+  // Product specific properties
+  product?: {
+    name: string;
+    description: string;
+    image: string;
+    brand: {
+      name: string;
+      url?: string;
+    };
+    offers?: {
+      price: number;
+      priceCurrency: string;
+      availability: string;
+      url: string;
+    };
+    sku?: string;
+    category?: string;
+    aggregateRating?: {
+      ratingValue: number;
+      reviewCount: number;
+    };
+  };
+  
+  // Event specific properties
+  event?: {
+    name: string;
+    startDate: string;
+    endDate?: string;
+    location: {
+      name: string;
+      address: string;
+      url?: string;
+    };
+    description?: string;
+    image?: string;
+    organizer?: {
+      name: string;
+      url?: string;
+    };
+    offers?: {
+      price: number;
+      priceCurrency: string;
+      availability: string;
+      url: string;
+      validFrom?: string;
+    };
+  };
+  
+  // Organization properties
+  organization?: {
+    name: string;
+    url: string;
+    logo: string;
+    sameAs?: string[];
+    description?: string;
+  };
+  
+  // Breadcrumb properties
+  breadcrumb?: {
+    name: string;
+    item: string;
+    position: number;
+  }[];
+  
+  // Additional schema data
+  additionalSchemas?: object[];
+}
+
+const {
+  title,
+  description,
+  canonicalURL = Astro.url.href,
+  image,
+  noindex = false,
+  nofollow = false,
+  keywords = [],
+  type = 'website',
+  siteName,
+  locale,
+  twitterUsername,
+  twitterCard,
+  publishDate,
+  modifiedDate,
+  author,
+  articleSection,
+  articleTags,
+  product,
+  event,
+  organization,
+  breadcrumb,
+  additionalSchemas = []
+} = Astro.props;
+
+// Generate schema data based on content type
+const schemas = [];
+
+// Website schema (always included)
+const websiteSchema = SchemaGenerators.generateWebSiteSchema({
+  name: siteName || 'ChakrirChain',
+  url: new URL('/', Astro.url).toString(),
+  description: description
+});
+schemas.push(websiteSchema);
+
+// WebPage schema (always included)
+const webPageSchema = SchemaGenerators.generateWebPageSchema({
+  title: title,
+  description: description,
+  url: canonicalURL,
+  image: image,
+  datePublished: publishDate?.toISOString(),
+  dateModified: modifiedDate?.toISOString(),
+  breadcrumb: breadcrumb
+});
+schemas.push(webPageSchema);
+
+// Organization schema (if provided or default)
+if (organization) {
+  const orgSchema = SchemaGenerators.generateOrganizationSchema(organization);
+  schemas.push(orgSchema);
+}
+
+// Content type specific schemas
+if (type === 'article' && author) {
+  const articleSchema = SchemaGenerators.generateArticleSchema({
+    headline: title,
+    description: description,
+    image: image || '/images/default-og.jpg',
+    datePublished: publishDate?.toISOString() || new Date().toISOString(),
+    dateModified: modifiedDate?.toISOString(),
+    author: {
+      name: author.name,
+      url: author.url,
+      image: author.image
+    },
+    publisher: organization || {
+      name: siteName || 'ChakrirChain',
+      url: new URL('/', Astro.url).toString(),
+      logo: '/icons/icon-512x512.svg'
+    },
+    url: canonicalURL,
+    articleSection: articleSection,
+    keywords: articleTags
+  });
+  schemas.push(articleSchema);
+}
+
+// Product schema
+if (type === 'product' && product) {
+  const productSchema = AdditionalSchemaGenerators.generateProductSchema(product);
+  schemas.push(productSchema);
+}
+
+// Event schema
+if (type === 'event' && event) {
+  const eventSchema = AdditionalSchemaGenerators.generateEventSchema(event);
+  schemas.push(eventSchema);
+}
+
+// Breadcrumb schema (if provided)
+if (breadcrumb && breadcrumb.length > 0) {
+  const breadcrumbSchema = SchemaGenerators.generateBreadcrumbSchema(breadcrumb);
+  schemas.push(breadcrumbSchema);
+}
+
+// Add any additional schemas
+schemas.push(...additionalSchemas);
+
+// Combine all schemas into a single graph
+const combinedSchema = SchemaGenerators.generateCombinedSchema(...schemas);
+---
+
+<!-- SEO Meta Tags -->
+<MetaTags
+  title={title}
+  description={description}
+  canonicalURL={canonicalURL}
+  image={image}
+  type={type}
+  publishDate={publishDate}
+  modifiedDate={modifiedDate}
+  author={author?.name}
+  locale={locale}
+  siteName={siteName}
+  twitterUsername={twitterUsername}
+  twitterCard={twitterCard}
+  noindex={noindex}
+  nofollow={nofollow}
+  keywords={keywords}
+/>
+
+<!-- Social Media Tags -->
+<SocialMeta
+  title={title}
+  description={description}
+  url={canonicalURL}
+  image={image}
+  type={type}
+  siteName={siteName}
+  locale={locale}
+  twitterCard={twitterCard}
+  twitterSite={twitterUsername}
+  twitterCreator={twitterUsername}
+  articlePublishedTime={publishDate}
+  articleModifiedTime={modifiedDate}
+  articleAuthor={author?.name}
+  articleSection={articleSection}
+  articleTags={articleTags}
+/>
+
+<!-- Canonical URL -->
+<CanonicalUrl url={canonicalURL} />
+
+<!-- Structured Data -->
+<JsonLd type="WebSite" data={combinedSchema} space={0} />

@@ -3,7 +3,8 @@
  * Provides functions to protect routes with Auth0 token validation
  */
 
-import { validateToken, validatePermissions, validateScopes, isTokenExpiringSoon } from './tokenValidator.js';
+import { validateToken, validatePermissions, validateScopes, isTokenExpiringSoon, createJwksClient } from './tokenValidator.js';
+import { JwksClient } from 'jwks-rsa';
 
 /**
  * Extracts the bearer token from the Authorization header
@@ -46,16 +47,19 @@ export function withAuth(handler, options = {}) {
       }
       
       // Configure JWKS client
-      const jwksClient = new JwksClient({
-        jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`
+      const jwksClient = createJwksClient(process.env.AUTH0_DOMAIN)
       });
 
       // Get signing key from JWKS endpoint
       const getKey = (header, callback) => {
-        jwksClient.getSigningKey(header.kid, (err, key) => {
-          if(err) return callback(err);
-          callback(null, key.getPublicKey());
-        });
+        jwksClient.getSigningKey(header.kid)
+          .then(key => {
+            const signingKey = key.getPublicKey();
+            callback(null, signingKey);
+          })
+          .catch(err => {
+            callback(err);
+          });
       };
 
       // Validate token with JWKS
@@ -115,6 +119,45 @@ export function withAuth(handler, options = {}) {
     } catch (error) {
       console.error('Auth middleware error:', error);
       return new Response(JSON.stringify({ error: 'Authentication failed' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  };
+}
+
+/**
+ * Middleware to protect GraphQL mutations
+ * 
+ * @param {Function} handler - The GraphQL handler function
+ * @param {Object} options - Configuration options
+ * @returns {Function} - The protected GraphQL handler
+ */
+export function withGraphQLAuth(handler, options = {}) {
+  return async (context) => {
+    try {
+      const { request, query, variables } = context;
+      
+      // Apply authentication middleware
+      const authMiddleware = withAuth((authContext) => {
+        // Add user to GraphQL context
+        return handler({
+          ...context,
+          user: authContext.user,
+          // Add user to GraphQL context for resolvers
+          contextValue: {
+            ...context.contextValue,
+            user: authContext.user
+          }
+        });
+      }, options);
+      
+      return authMiddleware(context);
+    } catch (error) {
+      console.error('GraphQL Auth middleware error:', error);
+      return new Response(JSON.stringify({
+        errors: [{ message: 'Authentication failed' }]
+      }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });

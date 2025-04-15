@@ -10,6 +10,7 @@ import { getImageWithFailover } from './cdnFailover';
 import sharp from 'sharp';
 import fs from 'fs/promises';
 import path from 'path';
+import { startHealthMonitor, getHealthMetrics } from './cdnHealthMonitor';
 
 // Types for image optimization options
 export interface OptimizationOptions {
@@ -20,10 +21,17 @@ export interface OptimizationOptions {
   aspectRatio?: string;
   crop?: 'maintain_ratio' | 'force' | 'at_least' | 'at_max';
   focus?: 'center' | 'top' | 'left' | 'bottom' | 'right' | 'top_left' | 'top_right' | 'bottom_left' | 'bottom_right';
+  cloudflare?: boolean; // Flag to use Cloudflare's image optimization service
 }
 
 // Cache directory for optimized images
 const CACHE_DIR = path.join(process.cwd(), '.image-cache');
+
+// Initialize CDN health monitor on module load
+startHealthMonitor({
+  checkInterval: 120000, // Check every 2 minutes
+  logLevel: 'info'
+});
 
 /**
  * Ensure the cache directory exists
@@ -82,6 +90,11 @@ export async function optimizeImage(src: string, options: OptimizationOptions = 
     return getImageWithFailover(src, options);
   }
   
+  // Check if we should use Cloudflare's image optimization service
+  if (options.cloudflare) {
+    return getCloudflareOptimizedImage(src, options);
+  }
+  
   // For server-side optimization with specific formats
   // Generate a cache key for this image and options
   const cacheKey = generateCacheKey(src, options);
@@ -106,13 +119,11 @@ export async function optimizeImage(src: string, options: OptimizationOptions = 
     // Process the image in the worker
     const result = await processImageWithWorker(src, operation, options);
     
-    // In a real implementation, we would save the result to the cache
-    // and return the URL to the cached image
-    
-    // For now, we'll continue with the main thread implementation
-    // if the worker returns a result that indicates it didn't actually process the image
+    // Save the result to the cache
     if (result.processed) {
-      return result.result;
+      const cachePath = path.join(CACHE_DIR, `${cacheKey}.${format}`);
+      await fs.writeFile(cachePath, Buffer.from(result.data));
+      return cachePath;
     }
   } catch (workerError) {
     console.warn('Failed to use worker for image optimization, falling back to main thread:', workerError);
@@ -234,8 +245,102 @@ export async function generateResponsiveImages(
 export async function detectAvifSupport(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
   
+  // Check if we've already tested and cached the result
+  try {
+    const cachedResult = localStorage.getItem('avif-support');
+    if (cachedResult !== null) {
+      return cachedResult === 'true';
+    }
+  } catch (e) {
+    // localStorage might not be available in some contexts
+    console.warn('Failed to access localStorage for AVIF support check:', e);
+  }
+  
   return new Promise((resolve) => {
     const img = new Image();
-    img.onload = () => resolve(true);
-    img.onerror = () => resolve(false);
-    img.src = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAAB0AAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAIAAAACAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQ0MAAAAABNjb2xybmNseAACAAIAAYAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAACVtZGF0EgAKCBgANogQEAwgMg8f8D///8WfhwB8+ErK42A=
+    img.onload = () => {
+      // Cache the positive result for future checks
+      try {
+        localStorage.setItem('avif-support', 'true');
+      } catch (e) {
+        // Ignore localStorage errors
+      }
+      resolve(true);
+    };
+    img.onerror = () => {
+      // Cache the negative result for future checks
+      try {
+        localStorage.setItem('avif-support', 'false');
+      } catch (e) {
+        // Ignore localStorage errors
+      }
+      resolve(false);
+    };
+    
+    // Use a small, valid AVIF test image
+    img.src = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAAB0AAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAIAAAACAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQ0MAAAAABNjb2xybmNseAACAAIAAYAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAACVtZGF0EgAKCBgANogQEAwgMg8f8D///8WfhwB8+ErK42A=';
+  });
+}
+
+/**
+ * Get an optimized image URL from Cloudflare's image optimization service
+ * @param src Original image URL
+ * @param options Optimization options
+ * @returns Optimized image URL
+ */
+export function getCloudflareOptimizedImage(src: string, options: OptimizationOptions = {}): string {
+  // Check if we're using Cloudflare Pages or Workers
+  const cfImageBaseUrl = import.meta.env.CLOUDFLARE_IMAGE_URL || '/cdn-image';
+  
+  // Build the query parameters for Cloudflare's image optimization service
+  const params = new URLSearchParams();
+  
+  // Add width and height if specified
+  if (options.width) params.append('width', options.width.toString());
+  if (options.height) params.append('height', options.height.toString());
+  
+  // Add quality if specified
+  if (options.quality) params.append('quality', options.quality.toString());
+  
+  // Add format if specified
+  if (options.format && options.format !== 'auto') {
+    params.append('format', options.format);
+  }
+  
+  // Add fit parameter based on crop option
+  if (options.crop) {
+    switch (options.crop) {
+      case 'force':
+        params.append('fit', 'fill');
+        break;
+      case 'at_least':
+        params.append('fit', 'contain');
+        break;
+      case 'at_max':
+        params.append('fit', 'scale-down');
+        break;
+      default:
+        params.append('fit', 'cover');
+    }
+  }
+  
+  // Add position parameter based on focus option
+  if (options.focus) {
+    params.append('position', options.focus.replace('_', '-'));
+  }
+  
+  // Encode the source URL
+  const encodedSrc = encodeURIComponent(src);
+  
+  // Construct the final URL
+  return `${cfImageBaseUrl}?url=${encodedSrc}&${params.toString()}`;
+}
+
+/**
+ * Get the current CDN health status
+ * @returns Health metrics object
+ */
+export function getCdnHealthStatus() {
+  return getHealthMetrics();
+}';
+  });

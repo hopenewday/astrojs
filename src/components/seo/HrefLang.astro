@@ -1,0 +1,96 @@
+---
+/**
+ * HrefLang.astro - Language alternate link tags for multilingual SEO
+ * 
+ * This component generates hreflang tags for multilingual websites to help search engines
+ * understand the language and regional targeting of your content.
+ */
+
+interface Props {
+  /** Base URL for the current page without language prefix */
+  baseUrl?: string;
+  /** Current language code (e.g., 'en', 'es', 'fr') */
+  currentLang: string;
+  /** List of all supported languages */
+  supportedLanguages: string[];
+  /** Default/fallback language code */
+  defaultLang?: string;
+  /** Optional mapping of language codes to region-specific codes (e.g., 'en' to 'en_US') */
+  langRegionMap?: Record<string, string>;
+  /** Whether to include x-default tag */
+  includeXDefault?: boolean;
+}
+
+const {
+  baseUrl = Astro.url.pathname,
+  currentLang,
+  supportedLanguages,
+  defaultLang = 'en',
+  langRegionMap = {},
+  includeXDefault = true,
+} = Astro.props;
+
+// Validate required fields
+if (!currentLang || !supportedLanguages || supportedLanguages.length === 0) {
+  throw new Error('HrefLang component requires currentLang and supportedLanguages');
+}
+
+// Ensure baseUrl doesn't have language prefix
+let normalizedBaseUrl = baseUrl;
+
+// If the baseUrl starts with the current language, remove it
+if (normalizedBaseUrl.startsWith(`/${currentLang}/`)) {
+  normalizedBaseUrl = normalizedBaseUrl.replace(`/${currentLang}/`, '/');
+} else {
+  // Check if it starts with any of the supported languages
+  for (const lang of supportedLanguages) {
+    if (normalizedBaseUrl.startsWith(`/${lang}/`)) {
+      normalizedBaseUrl = normalizedBaseUrl.replace(`/${lang}/`, '/');
+      break;
+    }
+  }
+}
+
+// Ensure normalizedBaseUrl starts with a slash
+if (!normalizedBaseUrl.startsWith('/')) {
+  normalizedBaseUrl = `/${normalizedBaseUrl}`;
+}
+
+// If normalizedBaseUrl is just '/', make sure it doesn't end with a slash (except for root)
+if (normalizedBaseUrl !== '/' && normalizedBaseUrl.endsWith('/')) {
+  normalizedBaseUrl = normalizedBaseUrl.slice(0, -1);
+}
+
+// Generate the base site URL
+const siteUrl = new URL(Astro.url.origin).toString();
+
+// Generate URLs for each language
+const languageUrls = supportedLanguages.map(lang => {
+  // For default language, we might not include the language code in the URL
+  const path = lang === defaultLang 
+    ? normalizedBaseUrl 
+    : `/${lang}${normalizedBaseUrl}`;
+  
+  // Get the region-specific code if available, otherwise use the language code
+  const hreflangAttr = langRegionMap[lang] || lang;
+  
+  return {
+    url: new URL(path, siteUrl).toString(),
+    hreflang: hreflangAttr
+  };
+});
+---
+
+{/* Generate hreflang tags for all supported languages */}
+{languageUrls.map(({ url, hreflang }) => (
+  <link rel="alternate" hreflang={hreflang} href={url} />
+))}
+
+{/* Add x-default tag if requested */}
+{includeXDefault && (
+  <link 
+    rel="alternate" 
+    hreflang="x-default" 
+    href={new URL(normalizedBaseUrl, siteUrl).toString()} 
+  />
+)}

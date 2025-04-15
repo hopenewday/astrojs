@@ -2,6 +2,7 @@
 // Main content grid for the homepage
 import { getImageKitUrl } from "@utils/imageHelpers";
 import { formatShortDate, calculateReadingTime, formatReadingTime } from "@utils/dateFormatters";
+import VideoPlayer from "../common/VideoPlayer.astro";
 
 interface Article {
   id: string;
@@ -92,8 +93,22 @@ const featuredReadingTime = featuredArticle?.content
           {/* Gradient Overlay */}
           <div class={`gradient-overlay bg-gradient-to-t ${getCategoryGradientClass(featuredArticle.category.slug)}`}></div>
           
-          {/* Play Button for Video Content */}
-          {featuredArticle.videoUrl && (
+          {/* Video Player Integration */}
+          {featuredArticle.videoUrl ? (
+            <div class="video-container">
+              <VideoPlayer 
+                src={featuredArticle.videoUrl}
+                poster={getImageKitUrl(featuredArticle.image, { width: 1200, quality: 80 })}
+                title={featuredArticle.title}
+                autoplay={false}
+                muted={true}
+                controls={true}
+                loop={false}
+                aspectRatio="16/9"
+                className="featured-video"
+              />
+            </div>
+          ) : (
             <div class="play-button-container">
               <div class="play-button">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="white" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

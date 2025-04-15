@@ -13,8 +13,11 @@
 
 import { defineMiddleware } from 'astro:middleware';
 import { sanitizeHtml } from './utils/sanitizer';
+import { sanitizeInput, InputType, sanitizeObject } from './utils/inputSanitizer';
 import { generateCSP, generatePermissionsPolicy } from './config/security.config';
+import { corsMiddleware } from './middleware/corsMiddleware';
 import { ampMiddleware } from './middleware/ampMiddleware';
+import { isAmpUrl, getCanonicalUrl, getAmpUrl } from './utils/ampUtils';
 
 // Generate a unique nonce for each request
 function generateNonce() {
@@ -24,6 +27,26 @@ function generateNonce() {
 // Rate limiting for sensitive endpoints
 const rateLimits = new Map();
 
+// Sanitize request inputs
+const sanitizeRequestInputs = (context) => {
+  const { request } = context;
+  
+  // Sanitize URL query parameters
+  if (request.url.includes('?')) {
+    const url = new URL(request.url);
+    for (const [key, value] of url.searchParams.entries()) {
+      url.searchParams.set(key, sanitizeInput(value, InputType.QUERY));
+    }
+    // Update the request URL with sanitized parameters
+    context.url = url;
+  }
+  
+  // Add sanitization functions to locals for use in components
+  context.locals.sanitizeInput = sanitizeInput;
+  context.locals.sanitizeObject = sanitizeObject;
+  context.locals.InputType = InputType;
+};
+
 // Compose middleware functions
 const securityMiddleware = async (context, next) => {
   const { request } = context;
@@ -32,6 +55,12 @@ const securityMiddleware = async (context, next) => {
   
   // Store nonce in locals for use in components
   context.locals.nonce = nonce;
+  
+  // Store AMP status in locals for use in components
+  context.locals.isAmp = isAmpUrl(url.toString());
+  
+  // Sanitize request inputs
+  sanitizeRequestInputs(context);
   
   // Apply rate limiting for sensitive endpoints
   if (url.pathname.startsWith('/api/')) {
@@ -100,6 +129,23 @@ const securityMiddleware = async (context, next) => {
 
 // Compose middleware chain
 export const onRequest = defineMiddleware(async (context, next) => {
+  const { request } = context;
+  const url = new URL(request.url);
+  
+  // Store AMP-related information in context for use in components
+  const isAmp = isAmpUrl(url.toString());
+  context.locals.isAmp = isAmp;
+  context.locals.canonicalUrl = isAmp ? getCanonicalUrl(url.toString()) : url.toString();
+  context.locals.ampUrl = isAmp ? url.toString() : getAmpUrl(url.toString());
+  
+  // Log AMP detection for debugging
+  if (import.meta.env.DEV) {
+    console.log(`[AMP Middleware] URL: ${url.toString()}`);
+    console.log(`[AMP Middleware] Is AMP: ${isAmp}`);
+    console.log(`[AMP Middleware] Canonical URL: ${context.locals.canonicalUrl}`);
+    console.log(`[AMP Middleware] AMP URL: ${context.locals.ampUrl}`);
+  }
+  
   // First apply AMP middleware
   const ampResult = await ampMiddleware(context, next);
   

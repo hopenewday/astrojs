@@ -1,0 +1,361 @@
+---
+/**
+ * SmartLink Demo Page
+ * 
+ * This page demonstrates the various features and configurations of the SmartLink component.
+ */
+
+import MainLayout from '../../layouts/MainLayout.astro';
+import { SmartLink } from '../../components/common';
+
+// Define supported languages for the demo
+const supportedLanguages = ['en', 'es', 'fr', 'de'];
+const defaultLang = 'en';
+
+// Sample trending articles
+const trendingArticles = [
+  { slug: 'artificial-intelligence-trends-2023', title: 'AI Trends in 2023' },
+  { slug: 'web-development-frameworks-comparison', title: 'Comparing Modern Web Frameworks' },
+  { slug: 'sustainable-tech-innovations', title: 'Sustainable Tech Innovations' },
+];
+
+// Sample featured articles
+const featuredArticles = [
+  { slug: 'astro-js-performance-benefits', title: 'Performance Benefits of Astro.js' },
+  { slug: 'serverless-architecture-guide', title: 'Complete Guide to Serverless Architecture' },
+];
+
+// Sample categories
+const categories = [
+  { slug: 'technology', name: 'Technology' },
+  { slug: 'science', name: 'Science' },
+  { slug: 'culture', name: 'Culture' },
+];
+
+// Sample analytics data
+const sampleAnalyticsData = {
+  source: 'demo-page',
+  campaign: 'smart-link-showcase',
+  section: 'examples'
+};
+---
+
+<MainLayout>
+  <div class="container">
+    <h1>SmartLink Component Demo</h1>
+    <p class="intro">
+      This page demonstrates the <code>SmartLink</code> component's features and configurations.
+      The component provides enhanced link functionality with analytics tracking, visual styling,
+      accessibility features, and i18n support.
+    </p>
+
+    <section class="demo-section">
+      <h2>Basic Usage</h2>
+      <div class="example-row">
+        <div class="example">
+          <h3>Default Link</h3>
+          <SmartLink href="/article/sample-article" />
+          <pre><code>&lt;SmartLink href="/article/sample-article" /&gt;</code></pre>
+        </div>
+
+        <div class="example">
+          <h3>With Custom Text</h3>
+          <SmartLink href="/article/sample-article" text="Read our sample article" />
+          <pre><code>&lt;SmartLink href="/article/sample-article" text="Read our sample article" /&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="demo-section">
+      <h2>Visual Styling</h2>
+      
+      <div class="example-row">
+        <div class="example">
+          <h3>Trending Content</h3>
+          {trendingArticles.map(article => (
+            <div class="demo-link">
+              <SmartLink 
+                href={`/article/${article.slug}`} 
+                text={article.title} 
+                trending={true} 
+              />
+            </div>
+          ))}
+          <pre><code>&lt;SmartLink href="/article/slug" text="Article Title" trending={true} /&gt;</code></pre>
+        </div>
+
+        <div class="example">
+          <h3>Featured Content</h3>
+          {featuredArticles.map(article => (
+            <div class="demo-link">
+              <SmartLink 
+                href={`/article/${article.slug}`} 
+                text={article.title} 
+                featured={true} 
+              />
+            </div>
+          ))}
+          <pre><code>&lt;SmartLink href="/article/slug" text="Article Title" featured={true} /&gt;</code></pre>
+        </div>
+      </div>
+
+      <div class="example-row">
+        <div class="example">
+          <h3>Color Schemes</h3>
+          <div class="demo-link">
+            <SmartLink href="#" text="Primary Link" colorScheme="primary" />
+          </div>
+          <div class="demo-link">
+            <SmartLink href="#" text="Secondary Link" colorScheme="secondary" />
+          </div>
+          <div class="demo-link">
+            <SmartLink href="#" text="Accent Link" colorScheme="accent" />
+          </div>
+          <div class="demo-link">
+            <SmartLink href="#" text="Success Link" colorScheme="success" />
+          </div>
+          <div class="demo-link">
+            <SmartLink href="#" text="Warning Link" colorScheme="warning" />
+          </div>
+          <div class="demo-link">
+            <SmartLink href="#" text="Error Link" colorScheme="error" />
+          </div>
+          <pre><code>&lt;SmartLink href="#" text="Colored Link" colorScheme="primary" /&gt;</code></pre>
+        </div>
+
+        <div class="example">
+          <h3>Hover Effects</h3>
+          <div class="demo-link">
+            <SmartLink href="#" text="Underline Effect" hoverEffect="underline" />
+          </div>
+          <div class="demo-link">
+            <SmartLink href="#" text="Highlight Effect" hoverEffect="highlight" />
+          </div>
+          <div class="demo-link">
+            <SmartLink href="#" text="Scale Effect" hoverEffect="scale" />
+          </div>
+          <div class="demo-link">
+            <SmartLink href="#" text="Glow Effect" hoverEffect="glow" />
+          </div>
+          <pre><code>&lt;SmartLink href="#" text="Hover Effect" hoverEffect="highlight" /&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="demo-section">
+      <h2>Accessibility & UX Features</h2>
+      
+      <div class="example-row">
+        <div class="example">
+          <h3>ARIA Labels</h3>
+          <SmartLink 
+            href="/contact" 
+            text="Contact Us" 
+            ariaLabel="Navigate to our contact page for support"
+          />
+          <pre><code>&lt;SmartLink href="/contact" text="Contact Us" ariaLabel="Navigate to our contact page for support" /&gt;</code></pre>
+        </div>
+
+        <div class="example">
+          <h3>External Links</h3>
+          <SmartLink 
+            href="https://astro.build" 
+            text="Astro.js Website" 
+            newTab={true} 
+          />
+          <pre><code>&lt;SmartLink href="https://astro.build" text="Astro.js Website" newTab={true} /&gt;</code></pre>
+        </div>
+      </div>
+
+      <div class="example-row">
+        <div class="example">
+          <h3>Disabled State</h3>
+          <SmartLink 
+            href="/coming-soon" 
+            text="Coming Soon" 
+            disabled={true} 
+          />
+          <pre><code>&lt;SmartLink href="/coming-soon" text="Coming Soon" disabled={true} /&gt;</code></pre>
+        </div>
+
+        <div class="example">
+          <h3>With Icons</h3>
+          <div class="demo-link">
+            <SmartLink 
+              href="/download" 
+              text="Download PDF" 
+              showIcon={true} 
+              icon="/icons/icon-512x512.svg" 
+              iconPosition="before" 
+            />
+          </div>
+          <div class="demo-link">
+            <SmartLink 
+              href="/share" 
+              text="Share Article" 
+              showIcon={true} 
+              icon="/icons/icon-512x512.svg" 
+              iconPosition="after" 
+            />
+          </div>
+          <pre><code>&lt;SmartLink href="/download" text="Download PDF" showIcon={true} icon="/path/to/icon.svg" iconPosition="before" /&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="demo-section">
+      <h2>Analytics Integration</h2>
+      
+      <div class="example-row">
+        <div class="example">
+          <h3>Custom Analytics Data</h3>
+          <SmartLink 
+            href="/premium-content" 
+            text="Access Premium Content" 
+            analyticsEvent="premium_content_click"
+            analyticsData={sampleAnalyticsData}
+          />
+          <pre><code>&lt;SmartLink 
+  href="/premium-content" 
+  text="Access Premium Content" 
+  analyticsEvent="premium_content_click"
+  analyticsData={{ source: 'demo-page', campaign: 'showcase' }}
+/&gt;</code></pre>
+        </div>
+
+        <div class="example">
+          <h3>Lazy Loaded Links</h3>
+          <SmartLink 
+            href="/large-gallery" 
+            text="View Image Gallery" 
+            lazyLoad={true}
+            lazyThreshold={0.2}
+          />
+          <pre><code>&lt;SmartLink href="/large-gallery" text="View Image Gallery" lazyLoad={true} lazyThreshold={0.2} /&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="demo-section">
+      <h2>Internationalization Support</h2>
+      
+      <div class="example-row">
+        <div class="example">
+          <h3>Language-Aware Links</h3>
+          {supportedLanguages.map(lang => (
+            <div class="demo-link">
+              <SmartLink 
+                href={`/${lang}/about`} 
+                lang={lang}
+                supportedLanguages={supportedLanguages}
+                defaultLang={defaultLang}
+              />
+            </div>
+          ))}
+          <pre><code>&lt;SmartLink 
+  href="/es/about" 
+  lang="es"
+  supportedLanguages={['en', 'es', 'fr', 'de']}
+  defaultLang="en"
+/&gt;</code></pre>
+        </div>
+
+        <div class="example">
+          <h3>Fallback Mechanism</h3>
+          <SmartLink 
+            href="/invalid-url-path" 
+            fallbackText="Visit this page"
+          />
+          <pre><code>&lt;SmartLink href="/invalid-url-path" fallbackText="Visit this page" /&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+  </div>
+</MainLayout>
+
+<style>
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--color-primary, #0077cc);
+  }
+
+  .intro {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    max-width: 800px;
+  }
+
+  .demo-section {
+    margin-bottom: 3rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 2rem;
+  }
+
+  h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    color: var(--color-secondary, #6c757d);
+  }
+
+  .example-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .example {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: var(--color-text, #333);
+  }
+
+  .demo-link {
+    margin-bottom: 0.75rem;
+  }
+
+  pre {
+    background-color: #f1f3f5;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-top: 1rem;
+    overflow-x: auto;
+    font-size: 0.9rem;
+  }
+
+  code {
+    font-family: 'Courier New', Courier, monospace;
+  }
+
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .example {
+      background-color: #2a2a2a;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    pre {
+      background-color: #333;
+      color: #f8f9fa;
+    }
+
+    h3 {
+      color: #e9ecef;
+    }
+  }
+</style>

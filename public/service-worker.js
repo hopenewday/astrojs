@@ -5,6 +5,7 @@
  * - Offline support with cache-first strategy for assets
  * - Network-first strategy for HTML content
  * - Background sync for form submissions
+ * - Push notification handling
  * - Periodic cache cleanup
  */
 
@@ -19,9 +20,12 @@ const CACHE_NAMES = {
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/styles/theme.css',
+  '/styles/global.css',
   '/images/placeholder.svg',
-  '/offline.html' // Fallback page for when offline
+  '/offline.html', // Fallback page for when offline
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.svg',
+  '/manifest.json'
 ];
 
 // Install event - pre-cache static assets
@@ -104,28 +108,57 @@ self.addEventListener('sync', event => {
 self.addEventListener('push', event => {
   if (!event.data) return;
   
-  const data = event.data.json();
-  const options = {
-    body: data.body,
-    icon: '/images/notification-icon.png',
-    badge: '/images/notification-badge.png',
-    data: {
-      url: data.url
-    }
-  };
-  
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
+  try {
+    const data = event.data.json();
+    const options = {
+      body: data.body || 'New notification from Astro News',
+      icon: data.icon || '/icons/icon-192x192.png',
+      badge: '/icons/icon-72x72.png',
+      data: {
+        url: data.url || '/'
+      },
+      actions: data.actions || [],
+      vibrate: [100, 50, 100],
+      timestamp: data.timestamp || Date.now()
+    };
+    
+    event.waitUntil(
+      self.registration.showNotification(data.title || 'Astro News', options)
+    );
+  } catch (error) {
+    console.error('Error showing notification:', error);
+    
+    // Fallback to a simple notification if JSON parsing fails
+    event.waitUntil(
+      self.registration.showNotification('Astro News', {
+        body: 'You have a new notification',
+        icon: '/icons/icon-192x192.png'
+      })
+    );
+  }
 });
 
 // Notification click handler
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   
+  // Handle notification click - open the URL if provided
   if (event.notification.data && event.notification.data.url) {
     event.waitUntil(
-      clients.openWindow(event.notification.data.url)
+      clients.matchAll({type: 'window'}).then(windowClients => {
+        // Check if there is already a window/tab open with the target URL
+        for (let i = 0; i < windowClients.length; i++) {
+          const client = windowClients[i];
+          // If so, just focus it.
+          if (client.url === event.notification.data.url && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // If not, then open the target URL in a new window/tab.
+        if (clients.openWindow) {
+          return clients.openWindow(event.notification.data.url);
+        }
+      })
     );
   }
 });
@@ -170,7 +203,10 @@ async function networkFirstStrategy(request, cacheName) {
   
   // If no cache match, try to return the offline page for navigation requests
   if (request.mode === 'navigate') {
-    return caches.match('/offline.html');
+    const offlineResponse = await caches.match('/offline.html');
+    if (offlineResponse) {
+      return offlineResponse;
+    }
   }
   
   return new Response('Network error and no cache available', { status: 504 });

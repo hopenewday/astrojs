@@ -14,6 +14,51 @@ export interface SecurityConfig {
   rateLimiting: RateLimitingConfig;
 }
 
+/**
+ * Generate Content Security Policy header value
+ * 
+ * @param nonce Optional nonce for inline scripts
+ * @returns CSP header value
+ */
+export function generateCSP(nonce?: string): string {
+  const config = getSecurityConfig();
+  const { directives } = config.contentSecurityPolicy;
+  
+  // Clone directives to avoid modifying the original
+  const cspDirectives = JSON.parse(JSON.stringify(directives));
+  
+  // Add nonce to script-src and style-src if provided
+  if (nonce) {
+    if (cspDirectives['script-src']) {
+      cspDirectives['script-src'].push(`'nonce-${nonce}'`);
+    }
+    if (cspDirectives['style-src']) {
+      cspDirectives['style-src'].push(`'nonce-${nonce}'`);
+    }
+  }
+  
+  // Build CSP string
+  return Object.entries(cspDirectives)
+    .map(([directive, values]) => {
+      return `${directive} ${values.join(' ')}`;
+    })
+    .join('; ');
+}
+
+/**
+ * Generate Permissions Policy header value
+ * 
+ * @returns Permissions Policy header value
+ */
+export function generatePermissionsPolicy(): string {
+  const config = getSecurityConfig();
+  const { features } = config.permissionsPolicy;
+  
+  return Object.entries(features)
+    .map(([feature, value]) => `${feature}=${value}`)
+    .join(', ');
+}
+
 interface CSPConfig {
   directives: Record<string, string[]>;
   reportUri: string;

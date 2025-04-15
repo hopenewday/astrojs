@@ -1,0 +1,375 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Header from "../components/header/Header.astro";
+import MainGrid from "../components/home/MainGrid.astro";
+import ResponsiveImage from "../components/common/ResponsiveImage.astro";
+import Image from "../components/common/Image.astro";
+import { getImageWithFailover } from "../lib/media";
+import { detectAvifSupport } from "../utils/imageOptimizer";
+import { checkImageKitStatus } from "../utils/cdnFailover";
+
+// Test data for all components
+const articles = [
+  {
+    id: "1",
+    title: "Testing Responsive Images with CDN Failover",
+    slug: "test-responsive-images",
+    excerpt: "This article tests the ResponsiveImage component with automatic CDN failover between ImageKit and Tebi S3 storage.",
+    image: "/images/tech/ai-future.jpg",
+    category: {
+      name: "Tech",
+      slug: "tech"
+    },
+    author: {
+      name: "Test Author",
+      slug: "test-author",
+      avatar: "/images/authors/alex-johnson.jpg"
+    },
+    publishDate: new Date(),
+    trending: true,
+    featured: true,
+    videoUrl: "https://example.com/video.mp4", // Testing video integration
+    content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+  },
+  {
+    id: "2",
+    title: "Testing AVIF Format Support",
+    slug: "test-avif-support",
+    excerpt: "This article tests the automatic AVIF format detection and fallback to WebP or JPEG.",
+    image: "/images/tech/web-dev.jpg",
+    category: {
+      name: "Tech",
+      slug: "tech"
+    },
+    author: {
+      name: "AVIF Tester",
+      slug: "avif-tester",
+      avatar: "/images/authors/sarah-chen.jpg"
+    },
+    publishDate: new Date(Date.now() - 86400000), // Yesterday
+    trending: false
+  },
+  {
+    id: "3",
+    title: "Testing Image Optimization with Different Widths",
+    slug: "test-image-optimization",
+    excerpt: "This article tests image optimization with different widths, formats, and quality settings.",
+    image: "/images/culture/indie-film.jpg",
+    category: {
+      name: "Culture",
+      slug: "culture"
+    },
+    author: {
+      name: "Image Optimizer",
+      slug: "image-optimizer",
+      avatar: "/images/authors/michael-rivera.jpg"
+    },
+    publishDate: new Date(Date.now() - 172800000), // 2 days ago
+    trending: true
+  },
+  {
+    id: "4",
+    title: "Testing CDN Failover System",
+    slug: "test-cdn-failover",
+    excerpt: "This article tests the automatic failover between ImageKit and Tebi S3 storage when one service is unavailable.",
+    image: "/images/science/climate.jpg",
+    category: {
+      name: "Science",
+      slug: "science"
+    },
+    author: {
+      name: "CDN Tester",
+      slug: "cdn-tester",
+      avatar: "/images/authors/emily-wong.jpg"
+    },
+    publishDate: new Date(Date.now() - 259200000), // 3 days ago
+    trending: false
+  },
+  {
+    id: "5",
+    title: "Testing Art Direction with Responsive Images",
+    slug: "test-art-direction",
+    excerpt: "This article tests art direction with different image crops for different screen sizes.",
+    image: "/images/business/economy.jpg",
+    category: {
+      name: "Business",
+      slug: "business"
+    },
+    author: {
+      name: "Art Director",
+      slug: "art-director",
+      avatar: "/images/authors/robert-kiyosaki.jpg"
+    },
+    publishDate: new Date(Date.now() - 345600000), // 4 days ago
+    trending: false
+  },
+  {
+    id: "6",
+    title: "Testing LQIP (Low Quality Image Placeholders)",
+    slug: "test-lqip",
+    excerpt: "This article tests low quality image placeholders with blur-up effect for better perceived performance.",
+    image: "/images/tech/quantum.jpg",
+    category: {
+      name: "Tech",
+      slug: "tech"
+    },
+    author: {
+      name: "LQIP Tester",
+      slug: "lqip-tester",
+      avatar: "/images/authors/john-doe.jpg"
+    },
+    publishDate: new Date(Date.now() - 432000000), // 5 days ago
+    trending: true
+  }
+];
+
+// Test CDN status
+let imageKitAvailable = true;
+try {
+  imageKitAvailable = await checkImageKitStatus();
+} catch (error) {
+  console.error("Error checking ImageKit status:", error);
+}
+
+// Test AVIF support
+let avifSupported = false;
+try {
+  avifSupported = await detectAvifSupport();
+} catch (error) {
+  console.error("Error detecting AVIF support:", error);
+}
+
+// Test image URLs with different parameters
+const testImageUrls = {
+  original: "/images/tech/ai-future.jpg",
+  withWidth: getImageWithFailover("/images/tech/ai-future.jpg", { width: 800 }),
+  withFormat: getImageWithFailover("/images/tech/ai-future.jpg", { format: "webp" }),
+  withQuality: getImageWithFailover("/images/tech/ai-future.jpg", { quality: 60 }),
+  withCrop: getImageWithFailover("/images/tech/ai-future.jpg", { crop: "force", width: 400, height: 300 }),
+  withFocus: getImageWithFailover("/images/tech/ai-future.jpg", { focus: "top", width: 400, height: 300 }),
+};
+
+// Test responsive image widths
+const testWidths = [400, 800, 1200, 1600];
+
+// Test art directed images
+const artDirectedImages = [
+  {
+    media: "(max-width: 640px)",
+    src: "/images/tech/mobile-ai-future.jpg",
+    widths: [320, 480, 640]
+  },
+  {
+    media: "(max-width: 1024px)",
+    src: "/images/tech/tablet-ai-future.jpg",
+    widths: [640, 768, 1024]
+  }
+];
+---
+
+<BaseLayout 
+  title="Test Homepage - All Features"
+  description="A comprehensive test page for all features and components"
+  animationsEnabled={true}
+>
+  <Header activeCategory="tech" />
+  
+  <main class="container mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold mb-8 text-center">Test Homepage - All Features</h1>
+    
+    <section class="mb-12 bg-gray-100 p-6 rounded-lg">
+      <h2 class="text-2xl font-bold mb-4">System Status</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white p-4 rounded shadow">
+          <h3 class="text-lg font-semibold mb-2">CDN Status</h3>
+          <p>ImageKit Available: <span class={imageKitAvailable ? "text-green-600" : "text-red-600"}>{imageKitAvailable ? "Yes" : "No"}</span></p>
+          <p>Using Failover: <span class={!imageKitAvailable ? "text-green-600" : "text-gray-600"}>{!imageKitAvailable ? "Yes (Tebi S3)" : "No (ImageKit Primary)"}</span></p>
+        </div>
+        <div class="bg-white p-4 rounded shadow">
+          <h3 class="text-lg font-semibold mb-2">Browser Capabilities</h3>
+          <p>AVIF Support: <span id="avif-status" class={avifSupported ? "text-green-600" : "text-yellow-600"}>{avifSupported ? "Yes" : "No (Using WebP)"}</span></p>
+        </div>
+      </div>
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Image Component Tests</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-4 rounded shadow">
+          <h3 class="text-lg font-semibold mb-2">Basic Image</h3>
+          <Image 
+            src={testImageUrls.original}
+            alt="Basic image test"
+            width={400}
+            height={300}
+            loading="eager"
+          />
+        </div>
+        
+        <div class="bg-white p-4 rounded shadow">
+          <h3 class="text-lg font-semibold mb-2">Responsive Image</h3>
+          <ResponsiveImage 
+            src={testImageUrls.original}
+            alt="Responsive image test"
+            widths={testWidths}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            loading="eager"
+          />
+        </div>
+        
+        <div class="bg-white p-4 rounded shadow">
+          <h3 class="text-lg font-semibold mb-2">Image with LQIP</h3>
+          <Image 
+            src={testImageUrls.original}
+            alt="Image with LQIP test"
+            width={400}
+            height={300}
+            lqip={true}
+            loading="eager"
+          />
+        </div>
+        
+        <div class="bg-white p-4 rounded shadow">
+          <h3 class="text-lg font-semibold mb-2">Image with Format</h3>
+          <Image 
+            src={testImageUrls.original}
+            alt="Image with format test"
+            width={400}
+            height={300}
+            format={avifSupported ? "avif" : "webp"}
+            loading="eager"
+          />
+        </div>
+        
+        <div class="bg-white p-4 rounded shadow">
+          <h3 class="text-lg font-semibold mb-2">Image with Crop</h3>
+          <Image 
+            src={testImageUrls.original}
+            alt="Image with crop test"
+            width={400}
+            height={300}
+            crop="force"
+            loading="eager"
+          />
+        </div>
+        
+        <div class="bg-white p-4 rounded shadow">
+          <h3 class="text-lg font-semibold mb-2">Image with Focus</h3>
+          <Image 
+            src={testImageUrls.original}
+            alt="Image with focus test"
+            width={400}
+            height={300}
+            focus="top"
+            loading="eager"
+          />
+        </div>
+      </div>
+      
+      <div class="bg-white p-4 rounded shadow mb-8">
+        <h3 class="text-lg font-semibold mb-2">Art Directed Image</h3>
+        <Image 
+          src={testImageUrls.original}
+          alt="Art directed image test"
+          width={800}
+          height={600}
+          artDirected={artDirectedImages}
+          loading="eager"
+        />
+      </div>
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Main Grid Component Test</h2>
+      <MainGrid 
+        articles={articles}
+        featuredArticle={articles[0]}
+        showAds={true}
+      />
+    </section>
+    
+    <section class="mb-12 bg-gray-100 p-6 rounded-lg">
+      <h2 class="text-2xl font-bold mb-4">Image URLs Test</h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white">
+          <thead>
+            <tr>
+              <th class="py-2 px-4 border-b">Type</th>
+              <th class="py-2 px-4 border-b">URL</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(testImageUrls).map(([type, url]) => (
+              <tr>
+                <td class="py-2 px-4 border-b font-medium">{type}</td>
+                <td class="py-2 px-4 border-b break-all">{url}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<script>
+// Import the detectAvifSupport function for client-side use
+import { detectAvifSupport } from "../utils/imageFormatDetection";
+
+// Test client-side image format detection
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    // Update AVIF support status from client side
+    const avifSupported = await detectAvifSupport();
+    const avifStatusElement = document.querySelector('#avif-status');
+    if (avifStatusElement) {
+      avifStatusElement.textContent = avifSupported ? 'Yes' : 'No (Using WebP)';
+      avifStatusElement.className = avifSupported ? 'text-green-600' : 'text-yellow-600';
+    }
+    
+    // Test image loading events
+    const images = document.querySelectorAll('img');
+    images.forEach(img => {
+      img.addEventListener('load', () => {
+        console.log(`Image loaded: ${img.src}`);
+      });
+      img.addEventListener('error', () => {
+        console.error(`Image failed to load: ${img.src}`);
+      });
+    });
+  } catch (error) {
+    console.error('Error in client-side script:', error);
+  }
+});
+</script>
+
+<style>
+.container {
+  max-width: 1200px;
+}
+
+.text-tech {
+  color: #3b82f6;
+}
+
+.bg-tech {
+  background-color: #3b82f6;
+}
+
+.text-culture {
+  color: #8b5cf6;
+}
+
+.bg-culture {
+  background-color: #8b5cf6;
+}
+
+.text-science {
+  color: #10b981;
+}
+
+.bg-science {
+  background-color: #10b981;
+}
+</style>

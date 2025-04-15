@@ -4,10 +4,31 @@
  * This utility provides functions to easily integrate animations across the site.
  * It serves as a bridge between the core animation utilities and the site components,
  * making it easy to apply consistent animations throughout the application.
+ * 
+ * Features:
+ * - Centralized animation management
+ * - Performance-optimized animations with requestAnimationFrame
+ * - Automatic detection of device capabilities
+ * - Reduced motion support for accessibility
+ * - Integration with Core Web Vitals metrics
  */
 
 import { initAnimations, createFadeInAnimation, createScrollAnimation, createPageTransition } from './animations';
 import { initContentSectionAnimations, animateChildrenOnScroll } from './scrollAnimations';
+
+// Track animation performance metrics
+const performanceMetrics = {
+  animationsInitialized: false,
+  firstAnimationTime: 0,
+  totalAnimations: 0,
+  heavyAnimations: 0,
+  reducedMotionEnabled: false,
+  // Check if reduced motion is preferred
+  checkReducedMotion: () => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+};
 
 /**
  * Initialize all animations across the site
@@ -17,23 +38,191 @@ export async function initSiteAnimations() {
   if (typeof window === 'undefined') return;
   
   try {
+    // Check for reduced motion preference
+    performanceMetrics.reducedMotionEnabled = performanceMetrics.checkReducedMotion();
+    
     // Initialize the core animation system
     await initAnimations();
     
     // Initialize content section animations
     initContentSectionAnimations();
     
-    // Apply animations to common site elements
+    // Apply animations to common site elements based on page type
+    const pageType = document.body.dataset.pageType || 'default';
+    
+    // Start performance measurement
+    const animationStartTime = performance.now();
+    
+    // Apply animations based on page type for better performance
     applyHeaderAnimations();
-    applyHeroAnimations();
+    
+    if (['home', 'landing', 'default'].includes(pageType)) {
+      applyHeroAnimations();
+    }
+    
+    if (['article', 'blog', 'post'].includes(pageType)) {
+      applyArticleAnimations();
+    }
+    
+    // Apply common animations
     applyCardAnimations();
     applyFormAnimations();
     applyFooterAnimations();
     
-    console.log('Site-wide animations initialized');
+    // Apply page-specific animations
+    applyPageSpecificAnimations(pageType);
+    
+    // Mark animations as initialized
+    performanceMetrics.animationsInitialized = true;
+    performanceMetrics.firstAnimationTime = performance.now() - animationStartTime;
+    
+    // Log performance metrics
+    console.log(`Site-wide animations initialized in ${performanceMetrics.firstAnimationTime.toFixed(2)}ms`);
+    
+    // Monitor for long animations that might impact performance
+    monitorAnimationPerformance();
   } catch (error) {
     console.error('Failed to initialize site animations:', error);
   }
+}
+
+/**
+ * Apply animations specific to the current page type
+ * @param pageType - The type of page being animated
+ */
+export function applyPageSpecificAnimations(pageType: string) {
+  if (typeof window === 'undefined') return;
+  
+  switch (pageType) {
+    case 'home':
+      // Home page specific animations
+      animateChildrenOnScroll('.featured-section', {
+        childSelector: '.featured-item',
+        animationType: 'fade',
+        staggerDelay: 0.15,
+        start: 'top 75%'
+      });
+      break;
+      
+    case 'article':
+    case 'blog':
+      // Article page specific animations
+      createScrollAnimation('.article-header, .blog-header', {
+        animationType: 'fade',
+        start: 'top 80%',
+        toggleActions: 'play none none none'
+      });
+      
+      animateChildrenOnScroll('.related-articles', {
+        childSelector: '.related-article',
+        animationType: 'fade',
+        staggerDelay: 0.1,
+        start: 'top 85%'
+      });
+      break;
+      
+    case 'product':
+      // Product page specific animations
+      createScrollAnimation('.product-gallery', {
+        animationType: 'fade',
+        start: 'top 80%',
+        toggleActions: 'play none none none'
+      });
+      
+      animateChildrenOnScroll('.product-features', {
+        childSelector: '.feature',
+        animationType: 'slide',
+        staggerDelay: 0.1,
+        start: 'top 80%'
+      });
+      break;
+      
+    case 'contact':
+      // Contact page specific animations
+      createScrollAnimation('.contact-form', {
+        animationType: 'fade',
+        start: 'top 80%',
+        toggleActions: 'play none none none'
+      });
+      break;
+      
+    default:
+      // Default animations for other page types
+      animateChildrenOnScroll('.content-section', {
+        childSelector: '.content-block',
+        animationType: 'fade',
+        staggerDelay: 0.1,
+        start: 'top 80%'
+      });
+  }
+}
+
+/**
+ * Monitor animation performance and adjust if needed
+ * Helps ensure animations don't negatively impact Core Web Vitals
+ */
+function monitorAnimationPerformance() {
+  if (typeof window === 'undefined') return;
+  
+  // Check if we have too many heavy animations
+  if (performanceMetrics.heavyAnimations > 5) {
+    console.warn(`Detected ${performanceMetrics.heavyAnimations} heavy animations. Consider reducing for better performance.`);
+  }
+  
+  // Monitor frame rate during animations
+  let lastTime = 0;
+  let frameRateDrops = 0;
+  const frameThreshold = 50; // ms (equivalent to 20fps - anything slower is a problem)
+  
+  const checkFrameRate = (timestamp) => {
+    if (lastTime) {
+      const delta = timestamp - lastTime;
+      if (delta > frameThreshold) {
+        frameRateDrops++;
+        if (frameRateDrops > 5) {
+          console.warn('Animation performance issues detected. Consider reducing animation complexity.');
+          // Automatically reduce animation complexity if performance issues detected
+          simplifyAnimations();
+          return; // Stop monitoring after simplifying
+        }
+      }
+    }
+    lastTime = timestamp;
+    requestAnimationFrame(checkFrameRate);
+  };
+  
+  // Start monitoring frame rate
+  requestAnimationFrame(checkFrameRate);
+}
+
+/**
+ * Simplify animations when performance issues are detected
+ * This helps maintain good Core Web Vitals even on lower-end devices
+ */
+function simplifyAnimations() {
+  if (typeof window === 'undefined' || !window.gsap) return;
+  
+  // Reduce animation duration globally
+  window.gsap.defaults({
+    duration: 0.3,
+    ease: 'power1.out'
+  });
+  
+  // Disable staggered animations
+  const staggeredElements = document.querySelectorAll('[data-staggered="true"]');
+  staggeredElements.forEach(el => {
+    window.gsap.set(el, { clearProps: 'all' });
+    window.gsap.to(el, { opacity: 1, y: 0, duration: 0.2 });
+  });
+  
+  // Disable parallax effects
+  const parallaxElements = document.querySelectorAll('[data-parallax="true"]');
+  parallaxElements.forEach(el => {
+    window.gsap.killTweensOf(el);
+    window.gsap.set(el, { clearProps: 'all' });
+  });
+  
+  console.log('Animations simplified for better performance');
 }
 
 /**
@@ -198,6 +387,9 @@ export function applyFooterAnimations() {
     toggleActions: 'play none none none'
   });
   
+  // Track this animation
+  performanceMetrics.totalAnimations++;
+  
   // Animate footer columns with a staggered effect
   animateChildrenOnScroll('footer', {
     childSelector: '.footer-column, .footer-section',
@@ -213,11 +405,28 @@ export function applyFooterAnimations() {
  * @param duration - Duration of the transition in seconds
  */
 export function applyPageTransition(type: 'fade' | 'slide' | 'zoom' = 'fade', duration: number = 0.5) {
+  // Skip heavy animations if reduced motion is preferred
+  if (performanceMetrics.reducedMotionEnabled && type !== 'fade') {
+    // Use a simpler fade transition for reduced motion
+    createPageTransition({
+      type: 'fade',
+      duration: 0.3,
+      easing: 'power1.out'
+    });
+    return;
+  }
+  
   createPageTransition({
     type,
     duration,
     easing: 'power2.inOut'
   });
+  
+  // Track this as a potentially heavy animation
+  performanceMetrics.totalAnimations++;
+  if (type === 'zoom' || duration > 0.4) {
+    performanceMetrics.heavyAnimations++;
+  }
 }
 
 /**
@@ -271,6 +480,25 @@ export function applyModalAnimations(modalSelector: string = '.modal, [role="dia
     // Set up the open animation
     const openModal = () => {
       if (window.gsap) {
+        // Use simpler animations if reduced motion is preferred
+        if (performanceMetrics.reducedMotionEnabled) {
+          // Simple fade for backdrop
+          window.gsap.to(modal, {
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            duration: 0.3,
+            ease: 'power1.out'
+          });
+          
+          // Simple fade for content
+          window.gsap.to(modalContent, {
+            opacity: 1,
+            duration: 0.3,
+            ease: 'power1.out'
+          });
+          return;
+        }
+        
+        // Standard animation for normal motion preference
         // Animate the backdrop
         window.gsap.to(modal, {
           backgroundColor: 'rgba(0, 0, 0, 0.5)',

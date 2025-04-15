@@ -99,6 +99,248 @@ interface VideoObject {
   };
 }
 
+/**
+ * Generate Product schema
+ */
+export function generateProductSchema(product: Product) {
+  const schema: any = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description,
+    image: product.image,
+    brand: {
+      '@type': 'Brand',
+      name: product.brand.name
+    }
+  };
+
+  if (product.brand.url) {
+    schema.brand.url = product.brand.url;
+  }
+
+  if (product.offers) {
+    schema.offers = {
+      '@type': 'Offer',
+      price: product.offers.price,
+      priceCurrency: product.offers.priceCurrency,
+      availability: `https://schema.org/${product.offers.availability}`,
+      url: product.offers.url
+    };
+  }
+
+  if (product.sku) {
+    schema.sku = product.sku;
+  }
+
+  if (product.gtin) {
+    schema.gtin = product.gtin;
+  }
+
+  if (product.category) {
+    schema.category = product.category;
+  }
+
+  if (product.aggregateRating) {
+    schema.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: product.aggregateRating.ratingValue,
+      reviewCount: product.aggregateRating.reviewCount
+    };
+  }
+
+  return schema;
+}
+
+/**
+ * Generate Event schema
+ */
+export function generateEventSchema(event: Event) {
+  const schema: any = {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: event.name,
+    startDate: event.startDate,
+    location: {
+      '@type': 'Place',
+      name: event.location.name,
+      address: event.location.address
+    }
+  };
+
+  if (event.endDate) {
+    schema.endDate = event.endDate;
+  }
+
+  if (event.location.url) {
+    schema.location.url = event.location.url;
+  }
+
+  if (event.description) {
+    schema.description = event.description;
+  }
+
+  if (event.image) {
+    schema.image = event.image;
+  }
+
+  if (event.organizer) {
+    schema.organizer = {
+      '@type': 'Organization',
+      name: event.organizer.name
+    };
+
+    if (event.organizer.url) {
+      schema.organizer.url = event.organizer.url;
+    }
+  }
+
+  if (event.offers) {
+    schema.offers = {
+      '@type': 'Offer',
+      price: event.offers.price,
+      priceCurrency: event.offers.priceCurrency,
+      availability: `https://schema.org/${event.offers.availability}`,
+      url: event.offers.url
+    };
+
+    if (event.offers.validFrom) {
+      schema.offers.validFrom = event.offers.validFrom;
+    }
+  }
+
+  if (event.performer) {
+    schema.performer = {
+      '@type': 'Person',
+      name: event.performer.name
+    };
+
+    if (event.performer.url) {
+      schema.performer.url = event.performer.url;
+    }
+  }
+
+  return schema;
+}
+
+/**
+ * Generate Recipe schema
+ */
+export function generateRecipeSchema(recipe: Recipe) {
+  const schema: any = {
+    '@context': 'https://schema.org',
+    '@type': 'Recipe',
+    name: recipe.name,
+    image: recipe.image,
+    author: {
+      '@type': 'Person',
+      name: recipe.author.name
+    },
+    description: recipe.description,
+    prepTime: recipe.prepTime,
+    cookTime: recipe.cookTime,
+    totalTime: recipe.totalTime,
+    recipeYield: recipe.recipeYield,
+    recipeIngredient: recipe.recipeIngredient,
+    recipeInstructions: recipe.recipeInstructions.map(instruction => ({
+      '@type': 'HowToStep',
+      text: instruction
+    }))
+  };
+
+  if (recipe.author.url) {
+    schema.author.url = recipe.author.url;
+  }
+
+  if (recipe.recipeCategory) {
+    schema.recipeCategory = recipe.recipeCategory;
+  }
+
+  if (recipe.recipeCuisine) {
+    schema.recipeCuisine = recipe.recipeCuisine;
+  }
+
+  if (recipe.nutrition) {
+    schema.nutrition = {
+      '@type': 'NutritionInformation',
+      calories: recipe.nutrition.calories
+    };
+
+    if (recipe.nutrition.fatContent) {
+      schema.nutrition.fatContent = recipe.nutrition.fatContent;
+    }
+
+    if (recipe.nutrition.proteinContent) {
+      schema.nutrition.proteinContent = recipe.nutrition.proteinContent;
+    }
+
+    if (recipe.nutrition.carbohydrateContent) {
+      schema.nutrition.carbohydrateContent = recipe.nutrition.carbohydrateContent;
+    }
+  }
+
+  if (recipe.keywords && recipe.keywords.length > 0) {
+    schema.keywords = recipe.keywords.join(', ');
+  }
+
+  if (recipe.suitableForDiet && recipe.suitableForDiet.length > 0) {
+    schema.suitableForDiet = recipe.suitableForDiet.map(diet => `https://schema.org/${diet}`);
+  }
+
+  return schema;
+}
+
+/**
+ * Generate VideoObject schema
+ */
+export function generateVideoSchema(video: VideoObject) {
+  const schema: any = {
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    name: video.name,
+    description: video.description,
+    thumbnailUrl: video.thumbnailUrl,
+    uploadDate: video.uploadDate,
+    duration: video.duration,
+    publisher: {
+      '@type': 'Organization',
+      name: video.publisher.name
+    }
+  };
+
+  if (video.contentUrl) {
+    schema.contentUrl = video.contentUrl;
+  }
+
+  if (video.embedUrl) {
+    schema.embedUrl = video.embedUrl;
+  }
+
+  if (video.publisher.url) {
+    schema.publisher.url = video.publisher.url;
+  }
+
+  if (video.publisher.logo) {
+    schema.publisher.logo = {
+      '@type': 'ImageObject',
+      url: video.publisher.logo
+    };
+  }
+
+  if (video.author) {
+    schema.author = {
+      '@type': 'Person',
+      name: video.author.name
+    };
+
+    if (video.author.url) {
+      schema.author.url = video.author.url;
+    }
+  }
+
+  return schema;
+}
+
 interface JobPosting {
   title: string;
   description: string;

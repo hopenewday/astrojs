@@ -1,0 +1,61 @@
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]  # or your default branch
+  pull_request:
+    branches: [main]  # for preview deployments
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Cloudflare Pages
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build
+        run: npm run build
+        env:
+          # Add your environment variables here
+          PUBLIC_SITE_URL: ${{ secrets.PUBLIC_SITE_URL }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          # Add other environment variables as needed
+          
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: astrojs-project  # Your Cloudflare Pages project name
+          directory: dist  # The directory with your built assets
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          
+      # Optional: Run tests after deployment
+      - name: Run post-deployment tests
+        if: success()
+        run: |
+          echo "Running post-deployment tests..."
+          # Add your test commands here
+          
+      # Optional: Notify on deployment status
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "Deployment successful!"
+          # Add notification commands (e.g., Slack webhook)
+          
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Deployment failed!"
+          # Add failure notification commands

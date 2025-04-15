@@ -299,20 +299,38 @@ const resolvers = {
       };
     },
     
-    relatedArticles: async (parent) => {
+    relatedArticles: async (parent, args, context) => {
       if (!parent.relatedArticles || parent.relatedArticles.length === 0) return [];
       
       const articles = await getCollection('articles');
+      
+      // Filter articles by slugs in relatedArticles array
       const relatedArticles = articles.filter(article => 
         parent.relatedArticles.includes(article.slug)
       );
       
-      return relatedArticles.map(article => ({
+      // Sort by publish date (newest first)
+      relatedArticles.sort((a, b) => 
+        new Date(b.data.publishDate).getTime() - new Date(a.data.publishDate).getTime()
+      );
+      
+      // Apply pagination if provided in parent query
+      let paginatedArticles = relatedArticles;
+      const limit = context?.variables?.limit || null;
+      const offset = context?.variables?.offset || 0;
+      
+      if (limit !== null) {
+        paginatedArticles = relatedArticles.slice(offset, offset + limit);
+      }
+      
+      // Transform to match GraphQL schema
+      return paginatedArticles.map(article => ({
         id: article.id,
         slug: article.slug,
         ...article.data,
         publishDate: article.data.publishDate.toISOString(),
-        updatedDate: article.data.updatedDate?.toISOString()
+        updatedDate: article.data.updatedDate?.toISOString(),
+        content: article.body
       }));
     }
   },

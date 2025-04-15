@@ -8,6 +8,24 @@
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
+// Forward declaration to avoid circular dependency
+type ResponsiveImageOptions = {
+  src: string;
+  alt: string;
+  widths: number[];
+  sizes?: string;
+  baseWidth?: number;
+  baseHeight?: number;
+  quality?: number;
+  format?: 'auto' | 'webp' | 'avif' | 'jpg' | 'png';
+  aspectRatio?: string;
+  focus?: string;
+  lqip?: boolean;
+};
+
+// This will be imported from image-utils.ts in the actual implementation
+declare function getResponsiveImageAttributes(options: ResponsiveImageOptions): Promise<any>;
+
 // Types for image transformations
 interface ImageTransformOptions {
   width?: number;

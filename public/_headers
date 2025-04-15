@@ -9,7 +9,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://analytics.yourdomain.com https://cusdis.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https://ik.imagekit.io *.tebi.io https://cusdis.com; font-src 'self' data:; connect-src 'self' https://ik.imagekit.io *.tebi.io https://analytics.yourdomain.com https://cusdis.com; frame-src 'self' https://cusdis.com; frame-ancestors 'self'; form-action 'self'; base-uri 'self'; object-src 'none'; report-uri https://your-endpoint.report-uri.com/r/d/csp
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://analytics.yourdomain.com https://cusdis.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https://ik.imagekit.io *.tebi.io https://cusdis.com; font-src 'self' data:; connect-src 'self' https://ik.imagekit.io *.tebi.io https://analytics.yourdomain.com https://cusdis.com; frame-src 'self' https://cusdis.com; frame-ancestors 'self'; form-action 'self'; base-uri 'self'; object-src 'none'; report-uri /api/csp-report
   
   # Cache control
   Cache-Control: public, max-age=3600

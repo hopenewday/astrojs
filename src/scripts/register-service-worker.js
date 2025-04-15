@@ -2,7 +2,10 @@
  * Service Worker Registration Script
  * 
  * This script handles the registration of the service worker
- * and provides utilities for managing PWA functionality.
+ * and provides utilities for managing PWA functionality including:
+ * - Service worker registration and updates
+ * - Offline support
+ * - Push notifications
  */
 
 // Check if service workers are supported
@@ -25,7 +28,10 @@ export async function registerServiceWorker() {
     // Set up update handling
     setupUpdateHandling(registration);
     
-    return true;
+    // Set up message handling for service worker communication
+    setupMessageHandling();
+    
+    return registration;
   } catch (error) {
     console.error('Service worker registration failed:', error);
     return false;

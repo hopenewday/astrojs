@@ -134,10 +134,40 @@ async function handleImageProcessing(id, payload) {
     
     const arrayBuffer = await response.arrayBuffer();
     
+    // Import the image processing library if needed
+    // In a real implementation, you'd use a bundled library
+    if (!self.ImageBitmap) {
+      throw new Error('ImageBitmap not supported in this environment');
+    }
+    
     // Process the image based on the operation type
     let result;
     switch (operation) {
       case 'resize':
+        result = await resizeImage(arrayBuffer, options);
+        break;
+      case 'crop':
+        result = await cropImage(arrayBuffer, options);
+        break;
+      case 'format':
+        result = await convertFormat(arrayBuffer, options);
+        break;
+      default:
+        throw new Error(`Unknown image operation: ${operation}`);
+    }
+    
+    // Send the result back to the main thread
+    self.postMessage({
+      id,
+      result: {
+        processed: true,
+        data: result.data,
+        url: result.url,
+        width: result.width,
+        height: result.height,
+        format: result.format
+      }
+    });
         result = await resizeImage(arrayBuffer, options);
         break;
       case 'crop':
@@ -163,6 +193,165 @@ async function handleImageProcessing(id, payload) {
       processed: false
     });
   }
+}
+
+/**
+ * Resize an image
+ * @param {ArrayBuffer} buffer - Image data buffer
+ * @param {Object} options - Resize options
+ * @returns {Object} Processed image data
+ */
+async function resizeImage(buffer, options) {
+  const { width, height, quality = 80, format = 'webp' } = options;
+  
+  // Create a bitmap from the buffer
+  const blob = new Blob([buffer]);
+  const imageBitmap = await createImageBitmap(blob);
+  
+  // Create a canvas with the target dimensions
+  const canvas = new OffscreenCanvas(width || imageBitmap.width, height || imageBitmap.height);
+  const ctx = canvas.getContext('2d');
+  
+  // Draw the image onto the canvas with the specified dimensions
+  ctx.drawImage(imageBitmap, 0, 0, canvas.width, canvas.height);
+  
+  // Convert to the requested format
+  let outputBlob;
+  if (format === 'webp') {
+    outputBlob = await canvas.convertToBlob({ type: 'image/webp', quality: quality / 100 });
+  } else if (format === 'avif') {
+    outputBlob = await canvas.convertToBlob({ type: 'image/avif', quality: quality / 100 });
+  } else if (format === 'png') {
+    outputBlob = await canvas.convertToBlob({ type: 'image/png' });
+  } else {
+    outputBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality: quality / 100 });
+  }
+  
+  // Convert blob to array buffer
+  const outputBuffer = await outputBlob.arrayBuffer();
+  
+  return {
+    data: new Uint8Array(outputBuffer),
+    url: URL.createObjectURL(outputBlob),
+    width: canvas.width,
+    height: canvas.height,
+    format
+  };
+}
+
+/**
+ * Crop an image
+ * @param {ArrayBuffer} buffer - Image data buffer
+ * @param {Object} options - Crop options
+ * @returns {Object} Processed image data
+ */
+async function cropImage(buffer, options) {
+  const { width, height, quality = 80, format = 'webp', focus = 'center' } = options;
+  
+  // Create a bitmap from the buffer
+  const blob = new Blob([buffer]);
+  const imageBitmap = await createImageBitmap(blob);
+  
+  // Calculate crop dimensions
+  const sourceWidth = imageBitmap.width;
+  const sourceHeight = imageBitmap.height;
+  
+  // Default to the full image if no dimensions are specified
+  const targetWidth = width || sourceWidth;
+  const targetHeight = height || sourceHeight;
+  
+  // Create a canvas with the target dimensions
+  const canvas = new OffscreenCanvas(targetWidth, targetHeight);
+  const ctx = canvas.getContext('2d');
+  
+  // Calculate the crop position based on focus
+  let sx = 0, sy = 0;
+  
+  if (focus.includes('left')) {
+    sx = 0;
+  } else if (focus.includes('right')) {
+    sx = Math.max(0, sourceWidth - targetWidth);
+  } else {
+    sx = Math.max(0, (sourceWidth - targetWidth) / 2);
+  }
+  
+  if (focus.includes('top')) {
+    sy = 0;
+  } else if (focus.includes('bottom')) {
+    sy = Math.max(0, sourceHeight - targetHeight);
+  } else {
+    sy = Math.max(0, (sourceHeight - targetHeight) / 2);
+  }
+  
+  // Draw the cropped image onto the canvas
+  ctx.drawImage(imageBitmap, sx, sy, targetWidth, targetHeight, 0, 0, targetWidth, targetHeight);
+  
+  // Convert to the requested format
+  let outputBlob;
+  if (format === 'webp') {
+    outputBlob = await canvas.convertToBlob({ type: 'image/webp', quality: quality / 100 });
+  } else if (format === 'avif') {
+    outputBlob = await canvas.convertToBlob({ type: 'image/avif', quality: quality / 100 });
+  } else if (format === 'png') {
+    outputBlob = await canvas.convertToBlob({ type: 'image/png' });
+  } else {
+    outputBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality: quality / 100 });
+  }
+  
+  // Convert blob to array buffer
+  const outputBuffer = await outputBlob.arrayBuffer();
+  
+  return {
+    data: new Uint8Array(outputBuffer),
+    url: URL.createObjectURL(outputBlob),
+    width: canvas.width,
+    height: canvas.height,
+    format
+  };
+}
+
+/**
+ * Convert an image to a different format
+ * @param {ArrayBuffer} buffer - Image data buffer
+ * @param {Object} options - Format options
+ * @returns {Object} Processed image data
+ */
+async function convertFormat(buffer, options) {
+  const { quality = 80, format = 'webp' } = options;
+  
+  // Create a bitmap from the buffer
+  const blob = new Blob([buffer]);
+  const imageBitmap = await createImageBitmap(blob);
+  
+  // Create a canvas with the same dimensions as the image
+  const canvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
+  const ctx = canvas.getContext('2d');
+  
+  // Draw the image onto the canvas
+  ctx.drawImage(imageBitmap, 0, 0);
+  
+  // Convert to the requested format
+  let outputBlob;
+  if (format === 'webp') {
+    outputBlob = await canvas.convertToBlob({ type: 'image/webp', quality: quality / 100 });
+  } else if (format === 'avif') {
+    outputBlob = await canvas.convertToBlob({ type: 'image/avif', quality: quality / 100 });
+  } else if (format === 'png') {
+    outputBlob = await canvas.convertToBlob({ type: 'image/png' });
+  } else {
+    outputBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality: quality / 100 });
+  }
+  
+  // Convert blob to array buffer
+  const outputBuffer = await outputBlob.arrayBuffer();
+  
+  return {
+    data: new Uint8Array(outputBuffer),
+    url: URL.createObjectURL(outputBlob),
+    width: imageBitmap.width,
+    height: imageBitmap.height,
+    format
+  };
 }
 
 /**

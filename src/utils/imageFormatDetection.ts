@@ -20,17 +20,22 @@ export async function detectAvifSupport(): Promise<boolean> {
   
   return new Promise((resolve) => {
     const img = new Image();
+    
+    // Set up event handlers
     img.onload = () => {
-      // Cache the result for future checks
+      // Cache the positive result for future checks
       localStorage.setItem('avif-support', 'true');
       resolve(true);
     };
+    
     img.onerror = () => {
-      // Cache the result for future checks
+      // Cache the negative result for future checks
       localStorage.setItem('avif-support', 'false');
       resolve(false);
     };
-    // This is a tiny AVIF image
+    
+    // Use the avifDetectionImage from image-utils.ts
+    // This is a complete, valid AVIF test image
     img.src = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAAB0AAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAIAAAACAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQ0MAAAAABNjb2xybmNseAACAAIAAYAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAACVtZGF0EgAKCBgANogQEAwgMg8f8D///8WfhwB8+ErK42A=';
   });
 }

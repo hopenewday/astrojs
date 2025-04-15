@@ -165,15 +165,15 @@ export async function decodeBlurhashWithWorker(
 /**
  * Process an image using a web worker
  * @param src - The source URL of the image
- * @param operation - The operation to perform (resize, crop, format)
+ * @param operation - The operation to perform (resize, crop, etc.)
  * @param options - Options for the operation
  * @returns The processed image data
  */
 export async function processImageWithWorker(
   src: string,
-  operation: 'resize' | 'crop' | 'format',
+  operation: string,
   options: ImageProcessingOptions = {}
-): Promise<{ result: string; processed: boolean }> {
+): Promise<{ processed: boolean; data?: Uint8Array; result?: string }> {
   try {
     // Send the request to the worker
     const result = await sendWorkerRequest('processImage', {
@@ -182,10 +182,20 @@ export async function processImageWithWorker(
       options
     });
     
-    return { result, processed: true };
+    // Check if the worker successfully processed the image
+    if (result && result.processed) {
+      return {
+        processed: true,
+        data: result.data,
+        result: result.url
+      };
+    }
+    
+    // If the worker didn't process the image, return a failure
+    return { processed: false };
   } catch (error) {
-    console.error(`Failed to ${operation} image with worker:`, error);
-    return { result: src, processed: false };
+    console.error('Failed to process image with worker:', error);
+    return { processed: false };
   }
 }
 

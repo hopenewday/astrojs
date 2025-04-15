@@ -1,0 +1,58 @@
+# Wrangler configuration for Cloudflare Workers deployment
+# This file configures how your Astro project is deployed to Cloudflare Workers
+
+name = "astrojs-project"
+type = "javascript"
+workers_dev = true
+compatibility_date = "2023-06-28"
+
+# Leave these empty for local development
+# Fill them with your actual values for production deployment
+account_id = "" # Your Cloudflare account ID
+route = ""     # e.g., "https://yourdomain.com/*"
+zone_id = ""   # Your Cloudflare zone ID
+
+[site]
+bucket = "./dist"
+entry-point = "."
+
+[build]
+command = "npm run build"
+
+[build.upload]
+format = "service-worker"
+
+# Environment variables
+# Add your environment variables here for local development
+# For production, set these in the Cloudflare dashboard
+[vars]
+# PUBLIC_SITE_URL = "https://yourdomain.com"
+# Add other variables as needed
+
+# KV Namespace bindings (if needed)
+# [[kv_namespaces]]
+# binding = "MY_KV_NAMESPACE"
+# id = "your-kv-namespace-id"
+
+# Durable Object bindings (if needed)
+# [[durable_objects.bindings]]
+# name = "MY_DURABLE_OBJECT"
+# class_name = "MyDurableObject"
+
+# Caching options
+[site.bucket_config]
+cache_max_age = "31536000"
+cache_stale_while_revalidate = "86400"
+cache_control = "public, max-age=31536000, immutable"
+
+# Add custom headers for specific routes
+[[routes]]
+pattern = "^/assets/.*"
+cache_max_age = "31536000"
+cache_stale_while_revalidate = "86400"
+cache_control = "public, max-age=31536000, immutable"
+
+[[routes]]
+pattern = "^/api/.*"
+cache_max_age = "0"
+cache_control = "no-cache, no-store, must-revalidate"

@@ -210,8 +210,9 @@ const {
         window.location.reload();
       });
     </script>
-    <!-- PWA Install Prompt -->
+    <!-- PWA Components -->
     <PwaInstallPrompt />
+    <PushNotificationManager />
     
     <!-- Analytics Components -->
     <UmamiAnalytics />
@@ -219,17 +220,13 @@ const {
     
     <!-- Service Worker Registration -->
     <script>
-      // Register service worker for PWA support
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js')
-            .then(registration => {
-              console.log('Service Worker registered with scope:', registration.scope);
-            })
-            .catch(error => {
-              console.error('Service Worker registration failed:', error);
-            });
-        });
+      import { initializePwa } from '../scripts/register-service-worker';
+      
+      // Initialize PWA features including service worker registration
+      if (document.readyState === 'complete') {
+        initializePwa();
+      } else {
+        window.addEventListener('load', initializePwa);
       }
     </script>
     

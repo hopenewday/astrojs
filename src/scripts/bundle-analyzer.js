@@ -187,7 +187,22 @@ function generateReport() {
   let totalSize = 0;
   let totalGzippedSize = 0;
   
-  Object.entries(fileGroups).forEach(([type, files]) => {
+  // Analyze dependencies for optimization opportunities
+const dependencyAnalysis = analyzeDependencies(config.buildDir);
+const optimizationSuggestions = generateOptimizationSuggestions({
+  sizeData,
+  dependencies: dependencyAnalysis,
+  thresholds: config.thresholds
+});
+
+Object.entries(fileGroups).forEach(([type, files]) => {
+  // Analyze dependencies for optimization opportunities
+  const dependencyAnalysis = analyzeDependencies(config.buildDir);
+  const optimizationSuggestions = generateOptimizationSuggestions({
+    sizeData,
+    dependencies: dependencyAnalysis,
+    thresholds: config.thresholds
+  });
     sizeData[type] = {
       files: [],
       totalSize: 0,
@@ -367,6 +382,53 @@ function generateHtmlReport(report) {
     .suggestions h3 {
       margin-top: 0;
     }
+    .suggestion {
+      margin-bottom: 20px;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    .suggestion.critical {
+      background-color: #fdedec;
+      border-left: 4px solid #e74c3c;
+    }
+    .suggestion.warning {
+      background-color: #fef9e7;
+      border-left: 4px solid #f39c12;
+    }
+    .suggestion.info {
+      background-color: #eaf2f8;
+      border-left: 4px solid #3498db;
+    }
+    .suggestion h4 {
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+    }
+    .suggestion h4 span {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    .suggestion.critical h4 span {
+      background-color: #e74c3c;
+      color: white;
+    }
+    .suggestion.warning h4 span {
+      background-color: #f39c12;
+      color: white;
+    }
+    .suggestion.info h4 span {
+      background-color: #3498db;
+      color: white;
+    }
+    .actions {
+      margin-top: 10px;
+    }
+    .actions h5 {
+      margin-bottom: 5px;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -405,6 +467,22 @@ function generateHtmlReport(report) {
     <canvas id="trendsChart"></canvas>
   </div>
   ` : ''}
+  
+  <h2>Optimization Suggestions</h2>
+  <div class="suggestions">
+    ${report.suggestions.map(suggestion => `
+      <div class="suggestion ${suggestion.type}">
+        <h4>${suggestion.title} <span>${suggestion.area}</span></h4>
+        <p>${suggestion.description}</p>
+        <div class="actions">
+          <h5>Recommended Actions:</h5>
+          <ul>
+            ${suggestion.actions.map(action => `<li>${action}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+    `).join('')}
+  </div>
   
   <h2>JavaScript Files</h2>
   <table class="file-table">
@@ -445,20 +523,6 @@ function generateHtmlReport(report) {
       `).join('')}
     </tbody>
   </table>
-  
-  <div class="suggestions">
-    <h3>Optimization Suggestions</h3>
-    <ul>
-      ${report.data.js.files.filter(f => f.warningLevel === 'error').length > 0 ? 
-        '<li>Consider code splitting for large JavaScript files</li>' : ''}
-      ${report.data.js.files.filter(f => f.size > 50000).length > 0 ? 
-        '<li>Review large dependencies and consider alternatives</li>' : ''}
-      ${report.data.image.files.filter(f => f.warningLevel).length > 0 ? 
-        '<li>Optimize large images with better compression or responsive sizes</li>' : ''}
-      <li>Enable tree-shaking to eliminate unused code</li>
-      <li>Consider lazy loading for non-critical resources</li>
-    </ul>
-  </div>
   
   <script>
     ${history.length > 1 ? `
@@ -568,3 +632,323 @@ function run() {
 
 // Run the analyzer
 run();
+
+/**
+ * Analyze project dependencies for optimization opportunities
+ * @param {string} buildDir - Build directory path
+ * @returns {Object} Analysis results
+ */
+function analyzeDependencies(buildDir) {
+  try {
+    const packageJsonPath = path.resolve(process.cwd(), 'package.json');
+    if (!fs.existsSync(packageJsonPath)) {
+      return {
+        duplicateDependencies: [],
+        unusedDependencies: [],
+        largePackages: []
+      };
+    }
+    
+    const packageJson = require(packageJsonPath);
+    const dependencies = {
+      prod: Object.keys(packageJson.dependencies || {}),
+      dev: Object.keys(packageJson.devDependencies || {})
+    };
+
+    return {
+      duplicateDependencies: findDuplicatePackages(buildDir),
+      unusedDependencies: findUnusedDependencies(dependencies, buildDir),
+      largePackages: findLargePackages(dependencies.prod)
+    };
+  } catch (error) {
+    console.error('Error analyzing dependencies:', error);
+    return {
+      duplicateDependencies: [],
+      unusedDependencies: [],
+      largePackages: []
+    };
+  }
+}
+
+/**
+ * Find duplicate packages in the build
+ * @param {string} buildDir - Build directory path
+ * @returns {Array} List of duplicate packages with versions
+ */
+function findDuplicatePackages(buildDir) {
+  const duplicates = [];
+  const packageVersions = {};
+  
+  try {
+    // Get all JS files
+    const jsFiles = getAllFiles(buildDir).filter(file => 
+      getFileExtension(file) === 'js' || getFileExtension(file) === 'mjs'
+    );
+    
+    // Simple regex to find import statements and package names
+    const importRegex = /from\s+['"]([\w\-@][\w\-\/@\.]+)[\'"]/g;
+    const requireRegex = /require\(['"]([\w\-@][\w\-\/@\.]+)[\'"]/g;
+    
+    // Scan files for imports
+    jsFiles.forEach(file => {
+      const content = fs.readFileSync(file, 'utf8');
+      let match;
+      
+      // Check import statements
+      while ((match = importRegex.exec(content)) !== null) {
+        const packageName = match[1].split('/')[0];
+        if (!packageName.startsWith('.')) {
+          if (!packageVersions[packageName]) {
+            packageVersions[packageName] = new Set();
+          }
+          packageVersions[packageName].add(file);
+        }
+      }
+      
+      // Check require statements
+      while ((match = requireRegex.exec(content)) !== null) {
+        const packageName = match[1].split('/')[0];
+        if (!packageName.startsWith('.')) {
+          if (!packageVersions[packageName]) {
+            packageVersions[packageName] = new Set();
+          }
+          packageVersions[packageName].add(file);
+        }
+      }
+    });
+    
+    // Find packages with multiple versions
+    for (const [pkg, files] of Object.entries(packageVersions)) {
+      if (files.size > 1) {
+        duplicates.push({
+          package: pkg,
+          count: files.size,
+          files: Array.from(files).map(f => path.relative(buildDir, f))
+        });
+      }
+    }
+    
+    return duplicates;
+  } catch (error) {
+    console.error('Error finding duplicate packages:', error);
+    return [];
+  }
+}
+
+/**
+ * Find unused dependencies in the project
+ * @param {Object} dependencies - Project dependencies
+ * @param {string} buildDir - Build directory path
+ * @returns {Array} List of potentially unused dependencies
+ */
+function findUnusedDependencies(dependencies, buildDir) {
+  const unused = [];
+  const allJsContent = [];
+  
+  try {
+    // Get all JS files
+    const jsFiles = getAllFiles(buildDir).filter(file => 
+      getFileExtension(file) === 'js' || getFileExtension(file) === 'mjs'
+    );
+    
+    // Combine all JS content
+    jsFiles.forEach(file => {
+      allJsContent.push(fs.readFileSync(file, 'utf8'));
+    });
+    
+    const combinedContent = allJsContent.join('\n');
+    
+    // Check each production dependency
+    dependencies.prod.forEach(pkg => {
+      // Skip common packages that might be used indirectly
+      if (['react', 'react-dom', 'vue', 'astro'].includes(pkg)) {
+        return;
+      }
+      
+      // Create regex patterns to match imports
+      const patterns = [
+        new RegExp(`from\\s+['\"]${pkg}[\\'\"]`),
+        new RegExp(`from\\s+['\"]${pkg}/`),
+        new RegExp(`require\\(['\"]${pkg}[\\'\"]`),
+        new RegExp(`require\\(['\"]${pkg}/`),
+        new RegExp(`import\\s+['\"]${pkg}[\\'\"]`),
+        new RegExp(`import\\s+['\"]${pkg}/`)
+      ];
+      
+      // Check if any pattern matches
+      const isUsed = patterns.some(pattern => pattern.test(combinedContent));
+      
+      if (!isUsed) {
+        unused.push(pkg);
+      }
+    });
+    
+    return unused;
+  } catch (error) {
+    console.error('Error finding unused dependencies:', error);
+    return [];
+  }
+}
+
+/**
+ * Find large packages in node_modules
+ * @param {Array} dependencies - List of production dependencies
+ * @returns {Array} List of large packages with sizes
+ */
+function findLargePackages(dependencies) {
+  const large = [];
+  const nodeModulesPath = path.resolve(process.cwd(), 'node_modules');
+  
+  try {
+    dependencies.forEach(pkg => {
+      const pkgPath = path.join(nodeModulesPath, pkg);
+      
+      if (fs.existsSync(pkgPath) && fs.statSync(pkgPath).isDirectory()) {
+        // Get all files in the package
+        const files = getAllFiles(pkgPath);
+        
+        // Calculate total size
+        let totalSize = 0;
+        files.forEach(file => {
+          totalSize += fs.statSync(file).size;
+        });
+        
+        // Check if it's a large package (> 1MB)
+        if (totalSize > 1024 * 1024) {
+          large.push({
+            package: pkg,
+            size: totalSize,
+            formattedSize: formatBytes(totalSize)
+          });
+        }
+      }
+    });
+    
+    // Sort by size (largest first)
+    large.sort((a, b) => b.size - a.size);
+    
+    return large;
+  } catch (error) {
+    console.error('Error finding large packages:', error);
+    return [];
+  }
+}
+
+/**
+ * Generate optimization suggestions based on analysis
+ * @param {Object} params - Analysis parameters
+ * @returns {Array} List of optimization suggestions
+ */
+function generateOptimizationSuggestions({ sizeData, dependencies, thresholds }) {
+  const suggestions = [];
+
+  // Check for large JavaScript bundles
+  if (sizeData.js?.totalSize > thresholds.js.warning * 2) {
+    suggestions.push({
+      type: 'critical',
+      area: 'JavaScript',
+      title: 'Large JavaScript bundles detected',
+      description: 'Your JavaScript bundles exceed recommended size limits. Consider code splitting to improve initial load time.',
+      actions: [
+        'Implement dynamic imports for route-based code splitting',
+        'Use React.lazy() or Vue's defineAsyncComponent() for component-level code splitting',
+        'Consider using a lighter alternative for large dependencies'
+      ]
+    });
+  }
+
+  // Check for duplicate dependencies
+  if (dependencies.duplicateDependencies.length > 0) {
+    const duplicates = dependencies.duplicateDependencies.slice(0, 3).map(d => d.package).join(', ');
+    suggestions.push({
+      type: 'warning',
+      area: 'Dependencies',
+      title: 'Duplicate dependencies detected',
+      description: `Multiple versions of the same package found (${duplicates}${dependencies.duplicateDependencies.length > 3 ? ', and more' : ''}). This increases bundle size unnecessarily.`,
+      actions: [
+        'Update package.json to use consistent versions',
+        'Consider using npm dedupe or yarn dedupe',
+        'Add resolutions field to package.json to force specific versions'
+      ]
+    });
+  }
+
+  // Check for unused dependencies
+  if (dependencies.unusedDependencies.length > 0) {
+    const unused = dependencies.unusedDependencies.slice(0, 3).join(', ');
+    suggestions.push({
+      type: 'info',
+      area: 'Dependencies',
+      title: 'Potentially unused dependencies',
+      description: `Some dependencies may not be used directly (${unused}${dependencies.unusedDependencies.length > 3 ? ', and more' : ''}).`,
+      actions: [
+        'Review and remove unnecessary dependencies',
+        'Consider using bundle analyzer to verify usage'
+      ]
+    });
+  }
+
+  // Check for large dependencies
+  if (dependencies.largePackages.length > 0) {
+    const largePackages = dependencies.largePackages.slice(0, 3).map(p => `${p.package} (${p.formattedSize})`).join(', ');
+    suggestions.push({
+      type: 'warning',
+      area: 'Dependencies',
+      title: 'Large dependencies detected',
+      description: `Some dependencies are very large: ${largePackages}${dependencies.largePackages.length > 3 ? ', and more' : ''}.`,
+      actions: [
+        'Consider lighter alternatives where possible',
+        'Import only needed components instead of the entire library',
+        'Use tree-shaking compatible imports (e.g., import { x } from "y" instead of import x from "y/x")'
+      ]
+    });
+  }
+
+  // Check for large images
+  if (sizeData.image?.files.filter(f => f.warningLevel).length > 0) {
+    suggestions.push({
+      type: 'warning',
+      area: 'Images',
+      title: 'Large images detected',
+      description: 'Some images exceed recommended size limits. This can slow down page loading.',
+      actions: [
+        'Use responsive images with appropriate sizes for different devices',
+        'Consider using modern formats like WebP or AVIF',
+        'Implement proper image compression',
+        'Use lazy loading for below-the-fold images'
+      ]
+    });
+  }
+
+  // Check for CSS size
+  if (sizeData.css?.totalSize > thresholds.css.warning * 2) {
+    suggestions.push({
+      type: 'warning',
+      area: 'CSS',
+      title: 'Large CSS bundles',
+      description: 'Your CSS exceeds recommended size limits.',
+      actions: [
+        'Consider using CSS-in-JS or CSS Modules to avoid unused styles',
+        'Split CSS by route or component',
+        'Remove unused CSS with tools like PurgeCSS'
+      ]
+    });
+  }
+
+  // Add general performance suggestions
+  suggestions.push({
+    type: 'info',
+    area: 'Performance',
+    title: 'General performance optimizations',
+    description: 'Consider these general optimizations to improve performance:',
+    actions: [
+      'Enable tree-shaking by using ES modules and proper import syntax',
+      'Implement code splitting for routes and large components',
+      'Use preload for critical resources',
+      'Implement proper caching strategies',
+      'Consider server-side rendering or static generation for improved First Contentful Paint'
+    ]
+  });
+
+  return suggestions;
+}
